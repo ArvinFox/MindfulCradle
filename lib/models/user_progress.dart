@@ -11,6 +11,18 @@ class UserProgressModel {
     required this.completed,
   });
 
+  factory UserProgressModel.initial({
+    required String userId,
+    required String videoId,
+  }) {
+    return UserProgressModel(
+      userId: userId,
+      videoId: videoId,
+      progress: 0.0,
+      completed: false,
+    );
+  }
+
   factory UserProgressModel.fromMap(Map<String, dynamic> map) {
     return UserProgressModel(
       userId: map['userId'] ?? '',

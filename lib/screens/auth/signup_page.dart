@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../utils/validators.dart';
+import '../../services/auth_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -11,11 +12,13 @@ class SignupPage extends StatefulWidget {
 
 class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
-
   final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmController = TextEditingController();
+
+  final AuthService _authService = AuthService();
+  bool loading = false;
 
   @override
   void dispose() {
@@ -34,30 +37,9 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image
-          SizedBox(
-            width: double.infinity,
-            height: double.infinity,
-            child: Image.asset(
-              'assets/login/login_screen_woman.jpg',
-              fit: BoxFit.cover,
-            ),
-          ),
+          // Background color
+          Container(color: AppColors.background),
 
-          // Bottom fade overlay
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Colors.black54, Colors.transparent],
-              ),
-            ),
-          ),
-
-          // Signup Card
           Center(
             child: Container(
               width: isMobile ? size.width * 0.9 : 400,
@@ -168,15 +150,41 @@ class _SignupPageState extends State<SignupPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            print(
-                              "Full Name: ${_fullNameController.text}, Email: ${_emailController.text}, Password: ${_passwordController.text}",
-                            );
-                          }
-                        },
+                        onPressed: loading
+                            ? null
+                            : () async {
+                                if (_formKey.currentState!.validate()) {
+                                  setState(() => loading = true);
+
+                                  final result = await _authService.signUp(
+                                    email: _emailController.text.trim(),
+                                    password: _passwordController.text.trim(),
+                                    fullName: _fullNameController.text.trim(),
+                                  );
+
+                                  setState(() => loading = false);
+
+                                  if (result == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Account created successfully! Please login.",
+                                        ),
+                                      ),
+                                    );
+                                    Navigator.pushReplacementNamed(
+                                      context,
+                                      '/login',
+                                    );
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(result)),
+                                    );
+                                  }
+                                }
+                              },
                         child: Text(
-                          "Sign Up",
+                          loading ? "Loading..." : "Sign Up",
                           style: TextStyle(
                             fontSize: isMobile ? 16 : 18,
                             color: AppColors.buttonText,
@@ -196,10 +204,7 @@ class _SignupPageState extends State<SignupPage> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/login',
-                            ); // Navigate to login page
+                            Navigator.pushReplacementNamed(context, '/login');
                           },
                           child: Text(
                             "Login",

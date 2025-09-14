@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../utils/validators.dart';
+import '../../services/auth_service.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -11,7 +12,15 @@ class ForgotPasswordPage extends StatefulWidget {
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   final _formKey = GlobalKey<FormState>();
-  String email = '';
+  final TextEditingController _emailController = TextEditingController();
+  final AuthService _authService = AuthService();
+  bool loading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,30 +30,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image
-          SizedBox(
-            width: double.infinity,
-            height: double.infinity,
-            child: Image.asset(
-              'assets/login/login_screen_woman.jpg',
-              fit: BoxFit.cover,
-            ),
-          ),
+          // Background color
+          Container(color: AppColors.background),
 
-          // Bottom fade overlay
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Colors.black54, Colors.transparent],
-              ),
-            ),
-          ),
-
-          // Card
           Center(
             child: Container(
               width: isMobile ? size.width * 0.9 : 400,
@@ -77,6 +65,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
                     // Email
                     TextFormField(
+                      controller: _emailController,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.inputBackground,
@@ -87,7 +76,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         prefixIcon: const Icon(Icons.email),
                       ),
                       validator: Validators.validateEmail,
-                      onSaved: (val) => email = val ?? '',
                     ),
                     const SizedBox(height: 30),
 
@@ -102,15 +90,35 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            print("Reset link sent to: $email");
-                            // TODO: Implement actual password reset logic
-                          }
-                        },
+                        onPressed: loading
+                            ? null
+                            : () async {
+                                if (_formKey.currentState!.validate()) {
+                                  setState(() => loading = true);
+                                  final result = await _authService.resetPassword(
+                                    email: _emailController.text.trim(),
+                                  );
+                                  setState(() => loading = false);
+
+                                  if (result == null) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                          "Password reset link sent! Check your email.",
+                                        ),
+                                      ),
+                                    );
+                                    Navigator.pushReplacementNamed(
+                                        context, '/login');
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(result)),
+                                    );
+                                  }
+                                }
+                              },
                         child: Text(
-                          "Send Reset Link",
+                          loading ? "Loading..." : "Send Reset Link",
                           style: TextStyle(
                             fontSize: isMobile ? 16 : 18,
                             color: AppColors.buttonText,
@@ -131,7 +139,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pushNamed(context, '/login');
+                            Navigator.pushReplacementNamed(context, '/login');
                           },
                           child: Text(
                             "Login",

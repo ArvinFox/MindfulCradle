@@ -167,3 +167,6 @@ app.*.map.json
 # Ignore .env file 
 .env
 node_modules/
+
+# Test asset
+assets/login/1.mp4

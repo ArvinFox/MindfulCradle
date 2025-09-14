@@ -22,6 +22,7 @@ class HomePage extends StatelessWidget {
         title: const Text("MamaMind"),
         centerTitle: true,
         elevation: 0,
+        automaticallyImplyLeading: false,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),

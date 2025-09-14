@@ -1,0 +1,12 @@
+import 'package:flutter/material.dart';
+
+class AppColors {
+  static const Color primary = Color(0xFF7F5AF0);
+  static const Color accent = Color(0xFFFFC3A0);
+  static const Color background = Color(0xFFFDF7F0);
+  static const Color text = Color(0xFF4B4B4B);
+  static const Color inputBackground = Color(0xFFFFFFFF);
+  static const Color buttonText = Colors.white;
+
+  static const Color cardBackground = Color(0xFFFFFFFF);
+}

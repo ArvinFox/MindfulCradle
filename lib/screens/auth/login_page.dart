@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../utils/validators.dart';
+import '../../services/auth_service.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -13,6 +14,8 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   String email = '';
   String password = '';
+  final AuthService _authService = AuthService();
+  bool loading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -22,30 +25,12 @@ class _LoginPageState extends State<LoginPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background Image
-          SizedBox(
-            width: double.infinity,
-            height: double.infinity,
-            child: Image.asset(
-              'assets/login/login_screen_woman.jpg',
-              fit: BoxFit.cover,
-            ),
-          ),
-
-          // Bottom fade overlay
+          // Background image and fade overlay
           Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.bottomCenter,
-                end: Alignment.topCenter,
-                colors: [Colors.black54, Colors.transparent],
-              ),
-            ),
+            color: AppColors.background,
           ),
-
-          // Login Card
           Center(
             child: Container(
               width: isMobile ? size.width * 0.9 : 400,
@@ -76,7 +61,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Email Field
+                    // Email
                     TextFormField(
                       decoration: InputDecoration(
                         filled: true,
@@ -92,7 +77,7 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Password Field
+                    // Password
                     TextFormField(
                       obscureText: true,
                       decoration: InputDecoration(
@@ -120,14 +105,33 @@ class _LoginPageState extends State<LoginPage> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        onPressed: () {
-                          if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            print("Email: $email, Password: $password");
-                          }
-                        },
+                        onPressed: loading
+                            ? null
+                            : () async {
+                                if (_formKey.currentState!.validate()) {
+                                  _formKey.currentState!.save();
+                                  setState(() => loading = true);
+
+                                  final result = await _authService.login(
+                                    email: email,
+                                    password: password,
+                                  );
+
+                                  setState(() => loading = false);
+
+                                  if (result == null) {
+                                    // Login success, navigate to home
+                                    Navigator.pushReplacementNamed(
+                                        context, '/main-screen');
+                                  } else {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      SnackBar(content: Text(result)),
+                                    );
+                                  }
+                                }
+                              },
                         child: Text(
-                          "Login",
+                          loading ? "Loading..." : "Login",
                           style: TextStyle(
                             fontSize: isMobile ? 16 : 18,
                             color: AppColors.buttonText,
@@ -137,15 +141,12 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Forgot Password Link
+                    // Forgot Password
                     Align(
                       alignment: Alignment.centerRight,
                       child: GestureDetector(
                         onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/forgot-password',
-                          ); // Navigate to Forgot Password page
+                          Navigator.pushNamed(context, '/forgot-password');
                         },
                         child: Text(
                           "Forgot Password?",
@@ -168,10 +169,7 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/signup',
-                            ); // Navigate to signup page
+                            Navigator.pushNamed(context, '/signup');
                           },
                           child: Text(
                             "Sign Up",

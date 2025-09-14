@@ -2,17 +2,29 @@ import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../../utils/validators.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class SignupPage extends StatefulWidget {
+  const SignupPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<SignupPage> createState() => _SignupPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _SignupPageState extends State<SignupPage> {
   final _formKey = GlobalKey<FormState>();
-  String email = '';
-  String password = '';
+
+  final TextEditingController _fullNameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _confirmController = TextEditingController();
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -40,15 +52,12 @@ class _LoginPageState extends State<LoginPage> {
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [
-                  Colors.black54,
-                  Colors.transparent,
-                ],
+                colors: [Colors.black54, Colors.transparent],
               ),
             ),
           ),
 
-          // Login Card
+          // Signup Card
           Center(
             child: Container(
               width: isMobile ? size.width * 0.9 : 400,
@@ -70,7 +79,7 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      "MamaMind",
+                      "Sign Up",
                       style: TextStyle(
                         fontSize: isMobile ? 32 : 36,
                         fontWeight: FontWeight.bold,
@@ -79,8 +88,25 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 30),
 
-                    // Email Field
+                    // Full Name
                     TextFormField(
+                      controller: _fullNameController,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        labelText: "Full Name",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.person),
+                      ),
+                      validator: Validators.validateName,
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Email
+                    TextFormField(
+                      controller: _emailController,
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: AppColors.inputBackground,
@@ -91,12 +117,12 @@ class _LoginPageState extends State<LoginPage> {
                         prefixIcon: const Icon(Icons.email),
                       ),
                       validator: Validators.validateEmail,
-                      onSaved: (val) => email = val ?? '',
                     ),
                     const SizedBox(height: 20),
 
-                    // Password Field
+                    // Password
                     TextFormField(
+                      controller: _passwordController,
                       obscureText: true,
                       decoration: InputDecoration(
                         filled: true,
@@ -108,11 +134,30 @@ class _LoginPageState extends State<LoginPage> {
                         prefixIcon: const Icon(Icons.lock),
                       ),
                       validator: Validators.validatePassword,
-                      onSaved: (val) => password = val ?? '',
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Confirm Password
+                    TextFormField(
+                      controller: _confirmController,
+                      obscureText: true,
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: AppColors.inputBackground,
+                        labelText: "Confirm Password",
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        prefixIcon: const Icon(Icons.lock_outline),
+                      ),
+                      validator: (val) => Validators.validateConfirmPassword(
+                        _passwordController.text,
+                        val,
+                      ),
                     ),
                     const SizedBox(height: 30),
 
-                    // Login Button
+                    // Signup Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -125,12 +170,13 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
-                            _formKey.currentState!.save();
-                            print("Email: $email, Password: $password");
+                            print(
+                              "Full Name: ${_fullNameController.text}, Email: ${_emailController.text}, Password: ${_passwordController.text}",
+                            );
                           }
                         },
                         child: Text(
-                          "Login",
+                          "Sign Up",
                           style: TextStyle(
                             fontSize: isMobile ? 16 : 18,
                             color: AppColors.buttonText,
@@ -140,18 +186,23 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     const SizedBox(height: 20),
 
-                    // Signup Link
+                    // Login Link
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          "Don't have an account? ",
+                          "Already have an account? ",
                           style: TextStyle(color: AppColors.text),
                         ),
                         GestureDetector(
-                          onTap: () => print("Navigate to Signup Page"),
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/login',
+                            ); // Navigate to login page
+                          },
                           child: Text(
-                            "Sign Up",
+                            "Login",
                             style: TextStyle(
                               color: AppColors.primary,
                               fontWeight: FontWeight.bold,

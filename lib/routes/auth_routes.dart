@@ -1,10 +1,14 @@
-// import 'package:flutter/material.dart';
-// import 'package:pregnancy_meditation/screens/login/login_page.dart';
-// import 'package:pregnancy_meditation/screens/signup/signup_page.dart';
+import 'package:flutter/material.dart';
+import 'package:mamamind/screens/splashScreen/splash_screen.dart';
+import 'package:mamamind/screens/auth/login_page.dart';
+import 'package:mamamind/screens/auth/signup_page.dart';
+import 'package:mamamind/screens/auth/forgot_password_page.dart';
 
-// class AuthRoutes {
-//   static Map<String, WidgetBuilder> routes = {
-//     '/login': (context) => const LoginPage(),
-//     '/signup': (context) => const SignupPage(),
-//   };
-// }
+class AuthRoutes {
+  static Map<String, WidgetBuilder> routes = {
+    '/splash': (context) => const SplashPage(),
+    '/login': (context) => const LoginPage(),
+    '/signup': (context) => const SignupPage(),
+    '/forgot-password': (context) => const ForgotPasswordPage(),
+  };
+}

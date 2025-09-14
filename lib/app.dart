@@ -38,10 +38,11 @@ import 'package:flutter/material.dart';
 import 'package:mamamind/screens/home/home_page.dart';
 import 'package:mamamind/screens/home/video_player.dart';
 import 'package:mamamind/screens/main_screen.dart';
-import 'package:mamamind/screens/signup/signup_page.dart';
+import 'package:mamamind/screens/auth/signup_page.dart';
 import 'package:video_player/video_player.dart';
-import 'screens/login/login_page.dart';
+import 'screens/auth/login_page.dart';
 import 'constants/colors.dart';
+import 'routes/app_routes.dart';
 
 class MamaMindApp extends StatelessWidget {
   const MamaMindApp({super.key});
@@ -59,7 +60,8 @@ class MamaMindApp extends StatelessWidget {
               displayColor: AppColors.text,
             ),
       ),
-      home: const MainScreen(), // simple UI page for now
+      initialRoute: '/splash',
+      routes: AppRoutes.routes,
     );
   }
 }

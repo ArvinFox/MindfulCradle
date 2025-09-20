@@ -46,6 +46,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MamaMindApp(); // your main app widget
+    return const MamaMindApp();
   }
 }

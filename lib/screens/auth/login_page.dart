@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/constants/app_config.dart';
 import '../../constants/colors.dart';
 import '../../utils/validators.dart';
 import '../../services/auth_service.dart';
@@ -29,7 +30,14 @@ class _LoginPageState extends State<LoginPage> {
           Container(
             width: double.infinity,
             height: double.infinity,
-            color: AppColors.background,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(
+                  "assets/login/app_background.png",
+                ),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
           Center(
             child: Container(
@@ -52,7 +60,7 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      "MamaMind",
+                      AppConfig.appName,
                       style: TextStyle(
                         fontSize: isMobile ? 32 : 36,
                         fontWeight: FontWeight.bold,
@@ -122,7 +130,9 @@ class _LoginPageState extends State<LoginPage> {
                                   if (result == null) {
                                     // Login success, navigate to home
                                     Navigator.pushReplacementNamed(
-                                        context, '/main-screen');
+                                      context,
+                                      '/main-screen',
+                                    );
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(content: Text(result)),

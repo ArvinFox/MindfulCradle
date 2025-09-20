@@ -37,9 +37,19 @@ class _SignupPageState extends State<SignupPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background color
-          Container(color: AppColors.background),
-
+          // Background image
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(
+                  "assets/login/app_background.png",
+                ),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
           Center(
             child: Container(
               width: isMobile ? size.width * 0.9 : 400,

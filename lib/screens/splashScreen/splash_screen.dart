@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/constants/app_config.dart';
 import '/constants/colors.dart';
 
 class SplashPage extends StatefulWidget {
@@ -56,7 +57,7 @@ class _SplashPageState extends State<SplashPage>
               ClipRRect(
                 borderRadius: BorderRadius.circular(30), // rounded corners
                 child: Image.asset(
-                  'assets/login/mamamind_logo.png',
+                  'assets/login/app_logo.jpg',
                   width: isMobile ? 120 : 150,
                   height: isMobile ? 120 : 150,
                   fit: BoxFit.cover,
@@ -64,7 +65,7 @@ class _SplashPageState extends State<SplashPage>
               ),
               const SizedBox(height: 20),
               Text(
-                "MamaMind",
+                AppConfig.appName,
                 style: TextStyle(
                   fontSize: isMobile ? 32 : 40,
                   fontWeight: FontWeight.bold,

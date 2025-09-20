@@ -7,6 +7,6 @@ class HomeRoutes {
   static Map<String, WidgetBuilder> routes = {
     '/main-screen' : (context) => const MainScreen(),
     '/home': (context) => const HomePage(),
-    // '/video-player': (context) => const VideoPlayerPage(videoUrl: "",),
+    '/video-player': (context) => const VideoPlayerPage(videoUrl: "assets/login/1.mp4",),
   };
 }

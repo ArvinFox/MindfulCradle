@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/constants/app_config.dart';
 import '../../constants/colors.dart';
 import 'video_tile.dart';
 
@@ -19,7 +20,7 @@ class HomePage extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: const Text("MamaMind"),
+        title: const Text(AppConfig.appName),
         centerTitle: true,
         elevation: 0,
         automaticallyImplyLeading: false,

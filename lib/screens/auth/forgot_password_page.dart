@@ -30,9 +30,19 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     return Scaffold(
       body: Stack(
         children: [
-          // Background color
-          Container(color: AppColors.background),
-
+          // Background image
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage(
+                  "assets/login/app_background.png",
+                ),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
           Center(
             child: Container(
               width: isMobile ? size.width * 0.9 : 400,
@@ -95,9 +105,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                             : () async {
                                 if (_formKey.currentState!.validate()) {
                                   setState(() => loading = true);
-                                  final result = await _authService.resetPassword(
-                                    email: _emailController.text.trim(),
-                                  );
+                                  final result = await _authService
+                                      .resetPassword(
+                                        email: _emailController.text.trim(),
+                                      );
                                   setState(() => loading = false);
 
                                   if (result == null) {
@@ -109,7 +120,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                                       ),
                                     );
                                     Navigator.pushReplacementNamed(
-                                        context, '/login');
+                                      context,
+                                      '/login',
+                                    );
                                   } else {
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(content: Text(result)),

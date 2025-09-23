@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:mamamind/constants/app_config.dart';
+import 'package:provider/provider.dart';
+import 'package:mamamind/providers/auth_provider.dart';
+import 'package:mamamind/screens/main_screen.dart';
+import 'package:mamamind/screens/auth/login_page.dart';
 import '/constants/colors.dart';
+import '/constants/app_config.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -18,19 +22,37 @@ class _SplashPageState extends State<SplashPage>
   void initState() {
     super.initState();
 
-    // Animation controller for fade
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
     );
 
     _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(_controller);
+    _controller.forward();
 
-    _controller.forward(); // start fade-in
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-    // After 3 seconds, navigate to login
-    Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, '/login');
+      // Load user from prefs
+      await authProvider.loadUserFromPrefs();
+
+      // 👇 Force splash to show for at least 2 seconds
+      await Future.delayed(const Duration(seconds: 2));
+
+      if (!mounted) return;
+
+      // Navigate based on login state
+      if (authProvider.isLoggedIn) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const LoginPage()),
+        );
+      }
     });
   }
 
@@ -46,16 +68,15 @@ class _SplashPageState extends State<SplashPage>
     final isMobile = size.width < 600;
 
     return Scaffold(
-      backgroundColor: AppColors.primary.withOpacity(0.9), // theme color
+      backgroundColor: AppColors.primary.withOpacity(0.9),
       body: FadeTransition(
         opacity: _fadeAnimation,
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Rounded logo
               ClipRRect(
-                borderRadius: BorderRadius.circular(30), // rounded corners
+                borderRadius: BorderRadius.circular(30),
                 child: Image.asset(
                   'assets/login/app_logo.jpg',
                   width: isMobile ? 120 : 150,

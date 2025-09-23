@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../constants/colors.dart';
+import '../constants/colors.dart';
 
 class VideoTile extends StatelessWidget {
   final String title;
@@ -15,7 +15,7 @@ class VideoTile extends StatelessWidget {
     required this.onTap,
   });
 
-  void _showLockedDialog(BuildContext context) {
+  static void _showLockedDialog(BuildContext context) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(

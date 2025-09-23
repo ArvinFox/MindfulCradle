@@ -6,14 +6,13 @@ class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  // Signup with email, password & fullName
+  /// Sign up
   Future<String?> signUp({
     required String email,
     required String password,
     required String fullName,
   }) async {
     try {
-      // Create user in Firebase Auth
       UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
@@ -21,14 +20,12 @@ class AuthService {
 
       String uid = userCredential.user!.uid;
 
-      // Create user model with defaults (first video unlocked etc.)
       UserModel user = UserModel.newUser(
         id: uid,
         fullName: fullName,
         email: email,
       );
 
-      // Save in Firestore
       await _firestore.collection('users').doc(uid).set(user.toMap());
 
       return null; // success
@@ -43,7 +40,7 @@ class AuthService {
     }
   }
 
-  // Login with email & password
+  /// Login
   Future<String?> login({
     required String email,
     required String password,
@@ -58,11 +55,11 @@ class AuthService {
     }
   }
 
-  // Reset password
+  /// Reset password
   Future<String?> resetPassword({required String email}) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
-      return null; // success
+      return null;
     } on FirebaseAuthException catch (e) {
       return e.message;
     } catch (e) {
@@ -70,7 +67,7 @@ class AuthService {
     }
   }
 
-  // Logout
+  /// Logout
   Future<void> signOut() async {
     await _auth.signOut();
   }

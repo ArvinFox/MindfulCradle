@@ -48,7 +48,9 @@ class AuthProvider with ChangeNotifier {
   /// Start listening to Firestore user doc
   void _listenToUser(String uid) {
     _userSub?.cancel();
-    _userSub = _firestore.collection('users').doc(uid).snapshots().listen((doc) {
+    _userSub = _firestore.collection('users').doc(uid).snapshots().listen((
+      doc,
+    ) {
       if (doc.exists) {
         _user = UserModel.fromMap(doc.data()!, doc.id);
       } else {
@@ -59,7 +61,11 @@ class AuthProvider with ChangeNotifier {
   }
 
   /// Login user
-  Future<String?> login(String email, String password, {bool rememberMe = false}) async {
+  Future<String?> login(
+    String email,
+    String password, {
+    bool rememberMe = false,
+  }) async {
     _isLoading = true;
     notifyListeners();
 
@@ -97,7 +103,6 @@ class AuthProvider with ChangeNotifier {
 
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('userId');
-
       _userSub?.cancel();
       _userSub = null;
     } catch (e) {

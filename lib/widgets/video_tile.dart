@@ -69,7 +69,6 @@ class VideoTile extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Play button with its own InkWell
                     Material(
                       color: Colors.transparent,
                       shape: const CircleBorder(),

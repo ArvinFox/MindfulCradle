@@ -5,14 +5,8 @@ class UserModel {
   final List<String> achievements;
   final List<int> unlockedVideos;
   final List<int> lockedVideos;
-
-  /// Total meditation time in minutes (or seconds if you prefer)
   final int totalSessionTime;
-
-  /// Map of videoId -> last watched seconds (resume point)
   final Map<String, int> videoProgress;
-
-  /// Map of videoId -> total watched time in seconds (for stats)
   final Map<String, int> videoWatchTime;
 
   UserModel({
@@ -27,7 +21,6 @@ class UserModel {
     required this.videoWatchTime,
   });
 
-  /// Factory for creating a new user with defaults
   factory UserModel.newUser({
     required String id,
     required String fullName,
@@ -38,7 +31,7 @@ class UserModel {
       fullName: fullName,
       email: email,
       achievements: [],
-      unlockedVideos: [1], // First video unlocked
+      unlockedVideos: [1],
       lockedVideos: [2, 3, 4, 5, 6, 7, 8],
       totalSessionTime: 0,
       videoProgress: {},
@@ -46,7 +39,6 @@ class UserModel {
     );
   }
 
-  /// Firestore -> UserModel
   factory UserModel.fromMap(Map<String, dynamic> map, String docId) {
     return UserModel(
       id: docId,
@@ -61,7 +53,6 @@ class UserModel {
     );
   }
 
-  /// UserModel -> Firestore
   Map<String, dynamic> toMap() {
     return {
       'fullName': fullName,

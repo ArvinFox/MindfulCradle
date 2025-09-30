@@ -76,7 +76,7 @@ class VideoProvider extends ChangeNotifier {
     }
   }
 
-  /// Unlock logic
+  /// Unlock logic (90% watched)
   void _checkUnlocks() {
     if (_user == null) return;
 
@@ -85,7 +85,8 @@ class VideoProvider extends ChangeNotifier {
       final nextVideo = _videos[i];
       final watched = _userProgress[prevVideo.id] ?? 0;
 
-      if (watched >= (prevVideo.duration ~/ 2) &&
+      // Unlock if watched >= 90% of previous video
+      if (watched >= ((prevVideo.duration * 0.9).ceil()) &&
           !_user!.unlockedVideos.contains(nextVideo.sessionNumber)) {
         _user!.unlockedVideos.add(nextVideo.sessionNumber);
       }
@@ -100,9 +101,11 @@ class VideoProvider extends ChangeNotifier {
 
     final index = _videos.indexWhere((v) => v.id == video.id);
     if (index == 0) return true;
+
     final prevVideo = _videos[index - 1];
     final prevWatched = _userProgress[prevVideo.id] ?? 0;
-    return prevWatched >= (prevVideo.duration ~/ 2);
+
+    return prevWatched >= ((prevVideo.duration * 0.9).ceil());
   }
 
   /// Get last watched seconds for this user & video

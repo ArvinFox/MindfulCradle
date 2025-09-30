@@ -8,6 +8,7 @@ class UserModel {
   final int totalSessionTime;
   final Map<String, int> videoProgress;
   final Map<String, int> videoWatchTime;
+  final bool isUserRegistrationComplete;
 
   UserModel({
     required this.id,
@@ -19,6 +20,7 @@ class UserModel {
     required this.totalSessionTime,
     required this.videoProgress,
     required this.videoWatchTime,
+    required this.isUserRegistrationComplete,
   });
 
   factory UserModel.newUser({
@@ -36,6 +38,7 @@ class UserModel {
       totalSessionTime: 0,
       videoProgress: {},
       videoWatchTime: {},
+      isUserRegistrationComplete: false, // 👈 default false
     );
   }
 
@@ -50,6 +53,7 @@ class UserModel {
       totalSessionTime: map['totalSessionTime'] ?? 0,
       videoProgress: Map<String, int>.from(map['videoProgress'] ?? {}),
       videoWatchTime: Map<String, int>.from(map['videoWatchTime'] ?? {}),
+      isUserRegistrationComplete: map['isUserRegistrationComplete'] ?? false,
     );
   }
 
@@ -63,6 +67,7 @@ class UserModel {
       'totalSessionTime': totalSessionTime,
       'videoProgress': videoProgress,
       'videoWatchTime': videoWatchTime,
+      'isUserRegistrationComplete': isUserRegistrationComplete,
     };
   }
 }

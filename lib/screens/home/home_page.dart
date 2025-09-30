@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/constants/app_config.dart';
 import 'package:provider/provider.dart';
 import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
@@ -107,7 +108,7 @@ class _HomePageState extends State<HomePage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: const Text("MamaMind"),
+        title: const Text(AppConfig.appName),
         elevation: 4,
         iconTheme: const IconThemeData(color: AppColors.buttonText),
         actions: [

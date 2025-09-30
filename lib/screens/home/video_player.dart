@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:flutter/cupertino.dart';
 import '../../constants/colors.dart';
 import '../../models/video_model.dart';
 import '../../providers/video_provider.dart';
@@ -20,7 +21,8 @@ class YouTubeVideoPlayerPage extends StatefulWidget {
   State<YouTubeVideoPlayerPage> createState() => _YouTubeVideoPlayerPageState();
 }
 
-class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage> {
+class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
+    with WidgetsBindingObserver {
   late YoutubePlayerController _controller;
   int _watchedSeconds = 0;
   Timer? _progressTimer;
@@ -29,9 +31,9 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage> {
   @override
   void initState() {
     super.initState();
-    final videoProvider = Provider.of<VideoProvider>(context, listen: false);
+    WidgetsBinding.instance.addObserver(this);
 
-    // get last watched seconds for current user
+    final videoProvider = Provider.of<VideoProvider>(context, listen: false);
     _watchedSeconds = videoProvider.getLastWatchedSecond(widget.video.id);
 
     _controller = YoutubePlayerController(
@@ -53,17 +55,15 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage> {
   }
 
   void _youtubeListener() {
-    setState(() {}); // refresh play/pause button
+    setState(() {});
   }
 
   void _startProgressTimer() {
     final videoProvider = Provider.of<VideoProvider>(context, listen: false);
-
-    // cancel previous timer just in case
     _progressTimer?.cancel();
 
     _progressTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_controller.value.isPlaying) {
+      if (_controller.value.isPlaying && mounted) {
         _watchedSeconds += 1;
         if (_watchedSeconds % 5 == 0) {
           videoProvider.updateProgress(
@@ -77,21 +77,33 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
+      _progressTimer?.cancel(); // stop timer in background
+    } else if (state == AppLifecycleState.resumed) {
+      _startProgressTimer(); // resume timer in foreground
+    }
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopAndSaveProgress();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _stopAndSaveProgress() {
     final videoProvider = Provider.of<VideoProvider>(context, listen: false);
     _progressTimer?.cancel();
     _controller.removeListener(_youtubeListener);
     _controller.pause();
-
-    // save last watched progress
     videoProvider.updateProgress(
       userId: widget.userId,
       videoId: widget.video.id,
       watchedSeconds: _watchedSeconds,
     );
-
-    _controller.dispose();
-    super.dispose();
   }
 
   void _toggleControls() {
@@ -100,58 +112,119 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage> {
 
   @override
   Widget build(BuildContext context) {
-    return YoutubePlayerBuilder(
-      player: YoutubePlayer(
-        controller: _controller,
-        showVideoProgressIndicator: true,
-        progressIndicatorColor: AppColors.primary,
-        onReady: () {},
-      ),
-      builder: (context, player) {
-        return Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            backgroundColor: AppColors.primary,
-            title: Text(widget.video.title),
-            centerTitle: true,
-          ),
-          body: Column(
-            children: [
-              const SizedBox(height: 16),
-              GestureDetector(
-                onTap: _toggleControls,
-                child: Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    player,
-                    if (_showControls)
-                      IconButton(
-                        iconSize: 64,
-                        icon: Icon(
-                          _controller.value.isPlaying
-                              ? Icons.pause_circle_filled
-                              : Icons.play_circle_filled,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          _controller.value.isPlaying
-                              ? _controller.pause()
-                              : _controller.play();
-                          _toggleControls();
-                        },
-                      ),
-                  ],
+    double progress = widget.video.duration > 0
+        ? (_watchedSeconds / widget.video.duration).clamp(0.0, 1.0)
+        : 0.0;
+
+    return WillPopScope(
+      onWillPop: () async {
+        _stopAndSaveProgress(); // stop timer & save progress
+        return true;
+      },
+      child: YoutubePlayerBuilder(
+        player: YoutubePlayer(
+          controller: _controller,
+          showVideoProgressIndicator: false,
+          onReady: () {},
+        ),
+        builder: (context, player) {
+          return Scaffold(
+            backgroundColor: AppColors.background,
+            appBar: AppBar(
+              backgroundColor: AppColors.primary,
+              elevation: 0,
+              leading: CupertinoNavigationBarBackButton(
+                color: Colors.white,
+                onPressed: () {
+                  _stopAndSaveProgress();
+                  Navigator.of(context).pop();
+                },
+              ),
+              title: Text(
+                widget.video.title,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
-              Text(
-                'Watched: $_watchedSeconds sec / ${widget.video.duration} sec',
-                style: const TextStyle(fontSize: 16, color: AppColors.text),
-              ),
-            ],
-          ),
-        );
-      },
+              centerTitle: true,
+            ),
+            body: Column(
+              children: [
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: _toggleControls,
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      player,
+                      if (_showControls)
+                        IconButton(
+                          iconSize: 64,
+                          icon: Icon(
+                            _controller.value.isPlaying
+                                ? Icons.pause_circle_filled
+                                : Icons.play_circle_filled,
+                            color: Colors.white,
+                          ),
+                          onPressed: () {
+                            _controller.value.isPlaying
+                                ? _controller.pause()
+                                : _controller.play();
+                            _toggleControls();
+                          },
+                        ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: Container(
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: Colors.grey.shade300,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Stack(
+                        children: [
+                          FractionallySizedBox(
+                            alignment: Alignment.centerLeft,
+                            widthFactor: progress,
+                            child: Container(
+                              decoration: const BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    Colors.purple,
+                                    Color.fromARGB(255, 53, 20, 240),
+                                    Colors.green,
+                                  ],
+                                ),
+                                borderRadius: BorderRadius.all(Radius.circular(20)),
+                              ),
+                            ),
+                          ),
+                          Center(
+                            child: Text(
+                              '${(progress * 100).toStringAsFixed(0)}%',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          )
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
   }
 }

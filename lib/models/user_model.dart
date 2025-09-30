@@ -38,7 +38,7 @@ class UserModel {
       totalSessionTime: 0,
       videoProgress: {},
       videoWatchTime: {},
-      isUserRegistrationComplete: false, // 👈 default false
+      isUserRegistrationComplete: false,
     );
   }
 

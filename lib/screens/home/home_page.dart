@@ -93,24 +93,29 @@ class _HomePageState extends State<HomePage> {
     final isMobile = size.width < 600;
 
     if (_loading || authProvider.isInitializing) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text("User not found")),
-      );
+      return const Scaffold(body: Center(child: Text("User not found")));
     }
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: const Text(AppConfig.appName),
+        title: const Text(
+          AppConfig.appName,
+          style: TextStyle(
+            color: Colors.white, // White title
+            fontWeight: FontWeight.bold,
+            fontSize: 22,
+          ),
+        ),
         elevation: 4,
-        iconTheme: const IconThemeData(color: AppColors.buttonText),
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ), // Back button color
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -131,32 +136,33 @@ class _HomePageState extends State<HomePage> {
       body: videos.isEmpty
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     "Welcome, ${user.fullName}!",
                     style: TextStyle(
-                      fontSize: isMobile ? 24 : 32,
-                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 26 : 34,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.text,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 8),
                   Text(
                     "Take a moment to relax and meditate daily.",
                     style: TextStyle(
                       fontSize: isMobile ? 16 : 20,
-                      color: AppColors.text,
+                      fontWeight: FontWeight.w400,
+                      color: Colors.grey.shade700, // soft gray for body text
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
                     "Meditation Sessions",
                     style: TextStyle(
-                      fontSize: isMobile ? 20 : 24,
-                      fontWeight: FontWeight.bold,
+                      fontSize: isMobile ? 20 : 26,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.primary,
                     ),
                   ),
@@ -180,8 +186,11 @@ class _HomePageState extends State<HomePage> {
                         isLocked: !isUnlocked,
                         isMobile: isMobile,
                         onTap: isUnlocked
-                            ? () =>
-                                HomeRoutes.goToVideoPlayer(context, video, user.id)
+                            ? () => HomeRoutes.goToVideoPlayer(
+                                context,
+                                video,
+                                user.id,
+                              )
                             : () {},
                       );
                     },

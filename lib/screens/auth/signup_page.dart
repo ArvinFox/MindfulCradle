@@ -41,11 +41,9 @@ class _SignupPageState extends State<SignupPage> {
           Container(
             width: double.infinity,
             height: double.infinity,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage(
-                  "assets/login/app_background.png",
-                ),
+                image: AssetImage("assets/login/app_background.png"),
                 fit: BoxFit.cover,
               ),
             ),
@@ -163,18 +161,20 @@ class _SignupPageState extends State<SignupPage> {
                         onPressed: loading
                             ? null
                             : () async {
-                                if (_formKey.currentState!.validate()) {
-                                  setState(() => loading = true);
+                                if (!_formKey.currentState!.validate()) return;
 
+                                setState(() => loading = true);
+
+                                try {
                                   final result = await _authService.signUp(
                                     email: _emailController.text.trim(),
                                     password: _passwordController.text.trim(),
                                     fullName: _fullNameController.text.trim(),
                                   );
 
-                                  setState(() => loading = false);
-
                                   if (result == null) {
+                                    if (!mounted) return;
+
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       const SnackBar(
                                         content: Text(
@@ -182,24 +182,44 @@ class _SignupPageState extends State<SignupPage> {
                                         ),
                                       ),
                                     );
-                                    Navigator.pushReplacementNamed(
-                                      context,
-                                      '/login',
-                                    );
+
+                                    _fullNameController.clear();
+                                    _emailController.clear();
+                                    _passwordController.clear();
+                                    _confirmController.clear();
+
+                                    Navigator.pushReplacementNamed(context, '/login');
                                   } else {
+                                    if (!mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
                                       SnackBar(content: Text(result)),
                                     );
                                   }
+                                } catch (e) {
+                                  if (!mounted) return;
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text(e.toString())),
+                                  );
+                                } finally {
+                                  if (mounted) setState(() => loading = false);
                                 }
                               },
-                        child: Text(
-                          loading ? "Loading..." : "Sign Up",
-                          style: TextStyle(
-                            fontSize: isMobile ? 16 : 18,
-                            color: AppColors.buttonText,
-                          ),
-                        ),
+                        child: loading
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  fontSize: isMobile ? 16 : 18,
+                                  color: AppColors.buttonText,
+                                ),
+                              ),
                       ),
                     ),
                     const SizedBox(height: 20),

@@ -35,9 +35,11 @@
 // }
 
 import 'package:flutter/material.dart';
+import 'package:mamamind/constants/app_config.dart';
 import 'package:mamamind/screens/auth/login_page.dart';
 import 'package:mamamind/screens/main_screen.dart';
 import 'package:mamamind/screens/splashScreen/splash_screen.dart';
+import 'package:mamamind/screens/auth/user_registration_page.dart'; // <- import registration page
 import 'constants/colors.dart';
 import 'routes/app_routes.dart';
 import 'package:provider/provider.dart';
@@ -50,25 +52,39 @@ class MamaMindApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
+        Widget home;
+
+        if (authProvider.isInitializing) {
+          home = const SplashPage();
+        } else if (authProvider.isLoggedIn) {
+          final user = authProvider.user;
+
+          // Check if the user has completed registration
+          if (user != null && (user.toMap()['isUserRegistrationComplete'] ?? false) == false) {
+            home = UserRegistrationPage(user: user);
+          } else {
+            home = const MainScreen();
+          }
+        } else {
+          home = const LoginPage();
+        }
+
         return MaterialApp(
-          title: 'MamaMind',
+          title: AppConfig.appName,
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             primaryColor: AppColors.primary,
             scaffoldBackgroundColor: AppColors.background,
             textTheme: Theme.of(context).textTheme.apply(
-              bodyColor: AppColors.text,
-              displayColor: AppColors.text,
-            ),
+                  bodyColor: AppColors.text,
+                  displayColor: AppColors.text,
+                ),
           ),
-          home: authProvider.isInitializing
-              ? const SplashPage() // show splash while loading SharedPreferences
-              : authProvider.isLoggedIn
-              ? const MainScreen()
-              : const LoginPage(),
+          home: home,
           routes: AppRoutes.routes,
         );
       },
     );
   }
 }
+

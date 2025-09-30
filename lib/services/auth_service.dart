@@ -13,10 +13,8 @@ class AuthService {
     required String fullName,
   }) async {
     try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
 
       String uid = userCredential.user!.uid;
 
@@ -26,7 +24,11 @@ class AuthService {
         email: email,
       );
 
-      await _firestore.collection('users').doc(uid).set(user.toMap());
+      // Add isUserRegistrationComplete field directly here
+      await _firestore.collection('users').doc(uid).set({
+        ...user.toMap(),
+        'isUserRegistrationComplete': false,
+      });
 
       return null; // success
     } on FirebaseAuthException catch (e) {

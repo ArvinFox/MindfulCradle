@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/screens/auth/user_registration_page.dart';
 import 'package:provider/provider.dart';
+import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../constants/colors.dart';
 import '../../constants/app_config.dart';
 import '../../utils/validators.dart';
@@ -77,15 +80,21 @@ class _LoginPageState extends State<LoginPage> {
                         const SizedBox(height: 20),
 
                         if (errorMessage != null)
-                          Text(errorMessage!, style: const TextStyle(color: Colors.red)),
+                          Text(
+                            errorMessage!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
                         if (errorMessage != null) const SizedBox(height: 10),
 
+                        // Email Field
                         TextFormField(
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: AppColors.inputBackground,
                             labelText: "Email",
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             prefixIcon: const Icon(Icons.email),
                           ),
                           validator: Validators.validateEmail,
@@ -93,13 +102,16 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                         const SizedBox(height: 20),
 
+                        // Password Field
                         TextFormField(
                           obscureText: true,
                           decoration: InputDecoration(
                             filled: true,
                             fillColor: AppColors.inputBackground,
                             labelText: "Password",
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
                             prefixIcon: const Icon(Icons.lock),
                           ),
                           validator: Validators.validatePassword,
@@ -111,20 +123,25 @@ class _LoginPageState extends State<LoginPage> {
                           children: [
                             Checkbox(
                               value: rememberMe,
-                              onChanged: (val) => setState(() => rememberMe = val ?? false),
+                              onChanged: (val) =>
+                                  setState(() => rememberMe = val ?? false),
                             ),
                             const Text("Remember Me"),
                           ],
                         ),
                         const SizedBox(height: 20),
 
+                        // Login Button
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: AppColors.primary,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                             onPressed: authProvider.isLoading
                                 ? null
@@ -140,9 +157,44 @@ class _LoginPageState extends State<LoginPage> {
                                         rememberMe: rememberMe,
                                       );
 
+                                      if (!mounted) return;
+
                                       if (result == null) {
-                                        if (!mounted) return;
-                                        Navigator.pushReplacementNamed(context, '/main-screen');
+                                        try {
+                                          // ✅ Fetch the latest user doc from Firestore
+                                          final uid = FirebaseAuth
+                                              .instance.currentUser!.uid;
+                                          final userDoc =
+                                              await FirebaseFirestore.instance
+                                                  .collection('users')
+                                                  .doc(uid)
+                                                  .get();
+
+                                          final isComplete = userDoc
+                                                  .data()?[
+                                                      'isUserRegistrationComplete'] ??
+                                              false;
+
+                                          if (!isComplete) {
+                                            // Go to registration page
+                                            Navigator.pushReplacement(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (_) =>
+                                                    UserRegistrationPage(
+                                                  user: authProvider.user!,
+                                                ),
+                                              ),
+                                            );
+                                          } else {
+                                            // Go to main screen
+                                            Navigator.pushReplacementNamed(
+                                                context, '/main-screen');
+                                          }
+                                        } catch (e) {
+                                          setState(() => errorMessage =
+                                              "Error loading user: $e");
+                                        }
                                       } else {
                                         setState(() => errorMessage = result);
                                       }
@@ -152,10 +204,18 @@ class _LoginPageState extends State<LoginPage> {
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
-                                : Text("Login",
-                                    style: TextStyle(fontSize: isMobile ? 16 : 18, color: AppColors.buttonText)),
+                                : Text(
+                                    "Login",
+                                    style: TextStyle(
+                                      fontSize: isMobile ? 16 : 18,
+                                      color: AppColors.buttonText,
+                                    ),
+                                  ),
                           ),
                         ),
                         const SizedBox(height: 20),
@@ -163,10 +223,16 @@ class _LoginPageState extends State<LoginPage> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: GestureDetector(
-                            onTap: () => Navigator.pushNamed(context, '/forgot-password'),
+                            onTap: () => Navigator.pushNamed(
+                              context,
+                              '/forgot-password',
+                            ),
                             child: Text(
                               "Forgot Password?",
-                              style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -175,11 +241,20 @@ class _LoginPageState extends State<LoginPage> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text("Don't have an account? ", style: TextStyle(color: AppColors.text)),
+                            const Text(
+                              "Don't have an account? ",
+                              style: TextStyle(color: AppColors.text),
+                            ),
                             GestureDetector(
-                              onTap: () => Navigator.pushNamed(context, '/signup'),
-                              child: Text("Sign Up",
-                                  style: TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold)),
+                              onTap: () =>
+                                  Navigator.pushNamed(context, '/signup'),
+                              child: Text(
+                                "Sign Up",
+                                style: TextStyle(
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ],
                         ),

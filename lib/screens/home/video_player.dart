@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // <-- add this
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:flutter/cupertino.dart';
@@ -11,11 +11,13 @@ import '../../providers/video_provider.dart';
 class YouTubeVideoPlayerPage extends StatefulWidget {
   final VideoModel video;
   final String userId;
+  final String youtubeId; // NEW: pass language-specific ID
 
   const YouTubeVideoPlayerPage({
     super.key,
     required this.video,
     required this.userId,
+    required this.youtubeId,
   });
 
   @override
@@ -41,7 +43,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     _watchedSeconds = videoProvider.getLastWatchedSecond(widget.video.id);
 
     _controller = YoutubePlayerController(
-      initialVideoId: widget.video.youtubeId,
+      initialVideoId: widget.youtubeId, // USE the language-specific ID
       flags: const YoutubePlayerFlags(
         autoPlay: true,
         mute: false,
@@ -59,7 +61,6 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   }
 
   void _youtubeListener() {
-    // Always restore overlays when video state changes (in case fullscreen messed it up)
     if (mounted) {
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     }
@@ -87,12 +88,12 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      _progressTimer?.cancel(); 
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      _progressTimer?.cancel();
     } else if (state == AppLifecycleState.resumed) {
-      // also restore UI overlays when coming back
       SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      _startProgressTimer(); 
+      _startProgressTimer();
     }
   }
 
@@ -128,8 +129,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
     return WillPopScope(
       onWillPop: () async {
-        _stopAndSaveProgress(); 
-        // restore overlays before leaving
+        _stopAndSaveProgress();
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
         return true;
       },
@@ -138,7 +138,6 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
           controller: _controller,
           showVideoProgressIndicator: false,
           onReady: () {
-            // ensure overlays restored after full screen exit
             SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
           },
         ),
@@ -218,7 +217,8 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                                     Colors.green,
                                   ],
                                 ),
-                                borderRadius: BorderRadius.all(Radius.circular(20)),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20)),
                               ),
                             ),
                           ),

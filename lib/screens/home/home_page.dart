@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/video_provider.dart';
+import '../../providers/language_provider.dart';
 import '../../widgets/video_tile.dart';
 import '../../routes/home_routes.dart';
 
@@ -87,10 +88,12 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final videoProvider = Provider.of<VideoProvider>(context);
+    final langProvider = Provider.of<LanguageProvider>(context);
     final user = videoProvider.user;
     final videos = videoProvider.videos;
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
+    final currentLang = langProvider.currentLang;
 
     if (_loading || authProvider.isInitializing) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -107,15 +110,13 @@ class _HomePageState extends State<HomePage> {
         title: const Text(
           AppConfig.appName,
           style: TextStyle(
-            color: Colors.white, // White title
+            color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 22,
           ),
         ),
         elevation: 4,
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ), // Back button color
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -141,7 +142,9 @@ class _HomePageState extends State<HomePage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Welcome, ${user.fullName}!",
+                    currentLang == 'en'
+                        ? "Welcome, ${user.fullName}!"
+                        : "ආයුබෝවන්, ${user.fullName}!",
                     style: TextStyle(
                       fontSize: isMobile ? 26 : 34,
                       fontWeight: FontWeight.w700,
@@ -150,16 +153,20 @@ class _HomePageState extends State<HomePage> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Take a moment to relax and meditate daily.",
+                    currentLang == 'en'
+                        ? "Take a moment to relax and meditate daily."
+                        : "දිනපතා විරාම ගෙන නිතරම ධ්‍යානය කරන්න.",
                     style: TextStyle(
                       fontSize: isMobile ? 16 : 20,
                       fontWeight: FontWeight.w400,
-                      color: Colors.grey.shade700, // soft gray for body text
+                      color: Colors.grey.shade700,
                     ),
                   ),
                   const SizedBox(height: 24),
                   Text(
-                    "Meditation Sessions",
+                    currentLang == 'en'
+                        ? "Meditation Sessions"
+                        : "ධ්‍යානය සැසි",
                     style: TextStyle(
                       fontSize: isMobile ? 20 : 26,
                       fontWeight: FontWeight.w600,
@@ -186,11 +193,16 @@ class _HomePageState extends State<HomePage> {
                         isLocked: !isUnlocked,
                         isMobile: isMobile,
                         onTap: isUnlocked
-                            ? () => HomeRoutes.goToVideoPlayer(
-                                context,
-                                video,
-                                user.id,
-                              )
+                            ? () {
+                                // Pass the correct YouTube ID for the current language
+                                final youtubeId = video.getYoutubeId(currentLang);
+                                HomeRoutes.goToVideoPlayer(
+                                  context,
+                                  video,
+                                  user.id,
+                                  youtubeId,
+                                );
+                              }
                             : () {},
                       );
                     },

@@ -17,6 +17,7 @@ class DAAS21Page extends StatefulWidget {
 class _DAAS21PageState extends State<DAAS21Page> {
   int _currentPage = 0;
   bool _started = false;
+  bool _isSubmitting = false;
   List<Map<String, dynamic>> _questions = [];
   Map<String, String> _options = {};
   String _currentLang = '';
@@ -82,26 +83,68 @@ class _DAAS21PageState extends State<DAAS21Page> {
     );
   }
 
-  Widget _buildScoreRow(String title, int score) {
+  Widget _buildScoreRow(String title, int score, String severity) {
+    Color severityColor;
+
+    switch (severity.toLowerCase()) {
+      case 'normal':
+      case 'සාමාන්‍ය':
+        severityColor = Colors.green;
+        break;
+      case 'mild':
+      case 'සුළු':
+        severityColor = Colors.lightGreen;
+        break;
+      case 'moderate':
+      case 'මධ්‍යම':
+        severityColor = Colors.orange;
+        break;
+      case 'severe':
+      case 'රෝගාත්මක':
+        severityColor = Colors.redAccent;
+        break;
+      case 'extremely severe':
+      case 'අතිශයින් රෝගාත්මක':
+        severityColor = Colors.red;
+        break;
+      default:
+        severityColor = Colors.grey;
+    }
+
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(title, style: const TextStyle(fontSize: 16)),
+          Expanded(child: Text(title, style: const TextStyle(fontSize: 16))),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.3),
-              borderRadius: BorderRadius.circular(8),
+              color: severityColor.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: severityColor, width: 1.5),
             ),
-            child: Text(
-              "$score",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.primary,
-              ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  "$score",
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  severity,
+                  style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: severityColor,
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -133,10 +176,7 @@ class _DAAS21PageState extends State<DAAS21Page> {
                   ? "This feedback helps you understand your levels of depression, anxiety, and stress. Answer honestly to get accurate scores."
                   : "මෙම ප්‍රතිචාරය ඔබේ අවමෝහය, උදෘතය සහ දැඩි සිරිත මට්ටම් වටහා ගැනීමට උපකාරී වේ. නිවැරදි පිළිතුරු ලබාදීමට අවංකව පිළිතුරු දෙන්න.",
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: AppColors.text,
-              ),
+              style: TextStyle(fontSize: 16, color: AppColors.text),
             ),
             const SizedBox(height: 32),
             SizedBox(
@@ -195,308 +235,349 @@ class _DAAS21PageState extends State<DAAS21Page> {
         body: _questions.isEmpty
             ? const Center(child: CircularProgressIndicator())
             : !_started
-                ? _buildIntroScreen(langProvider)
-                : Padding(
-                    padding: const EdgeInsets.all(12),
-                    child: Column(
-                      children: [
-                        // Progress bar + Page counter
-                        Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          child: Column(
-                            children: [
-                              LinearProgressIndicator(
-                                value: (_currentPage + 1) / totalPages,
-                                backgroundColor:
-                                    AppColors.accent.withOpacity(0.3),
-                                color: AppColors.primary,
-                                minHeight: 8,
-                              ),
-                              const SizedBox(height: 6),
-                              Text(
-                                langProvider.currentLang == 'en'
-                                    ? "Page ${_currentPage + 1} of $totalPages"
-                                    : "පිටුව ${_currentPage + 1} / $totalPages",
-                                style: TextStyle(
-                                  color: AppColors.text,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+            ? _buildIntroScreen(langProvider)
+            : Padding(
+                padding: const EdgeInsets.all(12),
+                child: Column(
+                  children: [
+                    // Progress bar + Page counter
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      child: Column(
+                        children: [
+                          LinearProgressIndicator(
+                            value: (_currentPage + 1) / totalPages,
+                            backgroundColor: AppColors.accent.withOpacity(0.3),
+                            color: AppColors.primary,
+                            minHeight: 8,
                           ),
-                        ),
-                        Expanded(
-                          child: ListView.builder(
-                            controller: _scrollController,
-                            physics: const BouncingScrollPhysics(),
-                            itemCount: 7,
-                            itemBuilder: (context, index) {
-                              int qIndex = _currentPage * 7 + index;
-                              if (qIndex >= _questions.length)
-                                return const SizedBox();
+                          const SizedBox(height: 6),
+                          Text(
+                            langProvider.currentLang == 'en'
+                                ? "Page ${_currentPage + 1} of $totalPages"
+                                : "පිටුව ${_currentPage + 1} / $totalPages",
+                            style: TextStyle(
+                              color: AppColors.text,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: 7,
+                        itemBuilder: (context, index) {
+                          int qIndex = _currentPage * 7 + index;
+                          if (qIndex >= _questions.length)
+                            return const SizedBox();
 
-                              final q = _questions[qIndex];
-                              return Card(
-                                color: AppColors.cardBackground,
-                                margin:
-                                    const EdgeInsets.symmetric(vertical: 6),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                ),
-                                elevation: 3,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        '${qIndex + 1}. ${q['question']}',
+                          final q = _questions[qIndex];
+                          return Card(
+                            color: AppColors.cardBackground,
+                            margin: const EdgeInsets.symmetric(vertical: 6),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 3,
+                            child: Padding(
+                              padding: const EdgeInsets.all(12),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '${qIndex + 1}. ${q['question']}',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: isMobile ? 14 : 16,
+                                      color: AppColors.text,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  ..._options.entries.map(
+                                    (entry) => RadioListTile<int>(
+                                      value: int.parse(entry.key),
+                                      groupValue: provider.responses[qIndex],
+                                      title: Text(
+                                        entry.value,
                                         style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: isMobile ? 14 : 16,
+                                          fontSize: isMobile ? 13 : 15,
                                           color: AppColors.text,
                                         ),
                                       ),
-                                      const SizedBox(height: 8),
-                                      ..._options.entries.map(
-                                        (entry) => RadioListTile<int>(
-                                          value: int.parse(entry.key),
-                                          groupValue:
-                                              provider.responses[qIndex],
-                                          title: Text(
-                                            entry.value,
-                                            style: TextStyle(
-                                              fontSize: isMobile ? 13 : 15,
-                                              color: AppColors.text,
-                                            ),
-                                          ),
-                                          onChanged: (val) {
-                                            if (val != null) {
-                                              provider.setAnswer(
-                                                  qIndex + 1, val);
-                                            }
-                                          },
-                                        ),
-                                      ),
-                                    ],
+                                      onChanged: (val) {
+                                        if (val != null) {
+                                          provider.setAnswer(qIndex + 1, val);
+                                        }
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        if (_currentPage > 0)
+                          Expanded(
+                            child: Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 4,
+                              ),
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.buttonPrevBack,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 14,
+                                  ),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(12),
                                   ),
                                 ),
-                              );
-                            },
+                                onPressed: () {
+                                  setState(() => _currentPage--);
+                                  _scrollToTop();
+                                },
+                                child: Text(
+                                  langProvider.currentLang == 'en'
+                                      ? 'Previous'
+                                      : 'පෙර පිටුව',
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    color: AppColors.buttonText,
+                                  ),
+                                ),
+                              ),
+                            ),
                           ),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            if (_currentPage > 0)
-                              Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 4),
-                                  child: ElevatedButton(
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: AppColors.buttonPrevBack,
-                                      padding: const EdgeInsets.symmetric(
-                                          vertical: 14),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                    ),
-                                    onPressed: () {
-                                      setState(() => _currentPage--);
-                                      _scrollToTop();
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4),
+                            child: ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                              ),
+                              onPressed: _isSubmitting
+                                  ? null
+                                  : () async {
+                                      if (!pageComplete(
+                                        _currentPage,
+                                        provider,
+                                      )) {
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              langProvider.currentLang == 'en'
+                                                  ? 'Please answer all questions on this page'
+                                                  : 'කරුණාකර මෙම පිටුවේ සියලු ප්‍රශ්න වලට පිළිතුරු දක්වන්න',
+                                            ),
+                                          ),
+                                        );
+                                        return;
+                                      }
+
+                                      if (_currentPage < totalPages - 1) {
+                                        setState(() => _currentPage++);
+                                        _scrollToTop();
+                                      } else {
+                                        try {
+                                          setState(() => _isSubmitting = true);
+                                          await provider.saveToFirebase(
+                                            context,
+                                          );
+                                          final scores = provider
+                                              .calculateScores();
+
+                                          final depSeverity = provider
+                                              .classifyDepression(
+                                                scores['depression']!,
+                                              );
+                                          final anxSeverity = provider
+                                              .classifyAnxiety(
+                                                scores['anxiety']!,
+                                              );
+                                          final strSeverity = provider
+                                              .classifyStress(
+                                                scores['stress']!,
+                                              );
+
+                                          setState(() => _isSubmitting = false);
+
+                                          showDialog(
+                                            context: context,
+                                            barrierDismissible: false,
+                                            builder: (_) => Center(
+                                              child: SingleChildScrollView(
+                                                child: AlertDialog(
+                                                  backgroundColor:
+                                                      AppColors.background,
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          20,
+                                                        ),
+                                                  ),
+                                                  contentPadding:
+                                                      const EdgeInsets.all(24),
+                                                  content: Column(
+                                                    mainAxisSize:
+                                                        MainAxisSize.min,
+                                                    children: [
+                                                      Text(
+                                                        langProvider.currentLang ==
+                                                                'en'
+                                                            ? "DAAS-21 Results"
+                                                            : "DAAS-21 ප්‍රතිඵල",
+                                                        style: const TextStyle(
+                                                          fontSize: 22,
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          color:
+                                                              AppColors.primary,
+                                                        ),
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 20,
+                                                      ),
+                                                      _buildScoreRow(
+                                                        langProvider.currentLang ==
+                                                                'en'
+                                                            ? "Depression"
+                                                            : "අවමෝහය",
+                                                        scores['depression']!,
+                                                        depSeverity,
+                                                      ),
+                                                      _buildScoreRow(
+                                                        langProvider.currentLang ==
+                                                                'en'
+                                                            ? "Anxiety"
+                                                            : "උදෘතය",
+                                                        scores['anxiety']!,
+                                                        anxSeverity,
+                                                      ),
+                                                      _buildScoreRow(
+                                                        langProvider.currentLang ==
+                                                                'en'
+                                                            ? "Stress"
+                                                            : "දැඩි සිරිත",
+                                                        scores['stress']!,
+                                                        strSeverity,
+                                                      ),
+                                                      const SizedBox(
+                                                        height: 24,
+                                                      ),
+                                                      SizedBox(
+                                                        width: double.infinity,
+                                                        child: ElevatedButton(
+                                                          style: ElevatedButton.styleFrom(
+                                                            backgroundColor:
+                                                                AppColors
+                                                                    .primary,
+                                                            padding:
+                                                                const EdgeInsets.symmetric(
+                                                                  vertical: 14,
+                                                                ),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                          onPressed: () {
+                                                            provider.reset();
+                                                            setState(() {
+                                                              _currentPage = 0;
+                                                              _started = false;
+                                                            });
+                                                            Navigator.pop(
+                                                              context,
+                                                            );
+                                                            _scrollToTop();
+                                                          },
+                                                          child: Text(
+                                                            langProvider.currentLang ==
+                                                                    'en'
+                                                                ? "OK"
+                                                                : "හරි",
+                                                            style: const TextStyle(
+                                                              fontSize: 16,
+                                                              color: AppColors
+                                                                  .buttonText,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          setState(() => _isSubmitting = false);
+                                          if (kDebugMode)
+                                            print("Error saving DAAS21: $e");
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                langProvider.currentLang == 'en'
+                                                    ? "Error saving responses. Try again."
+                                                    : "පිළිතුරු සුරැකිමේදී දෝෂයක්. නැවත උත්සාහ කරන්න.",
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                      }
                                     },
-                                    child: Text(
-                                      langProvider.currentLang == 'en'
-                                          ? 'Previous'
-                                          : 'පෙර පිටුව',
+                              child: _isSubmitting
+                                  ? SizedBox(
+                                      height: 20,
+                                      width: 20,
+                                      child: CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 2,
+                                      ),
+                                    )
+                                  : Text(
+                                      _currentPage < totalPages - 1
+                                          ? (langProvider.currentLang == 'en'
+                                                ? 'Next'
+                                                : 'ඊළඟ')
+                                          : (langProvider.currentLang == 'en'
+                                                ? 'Submit'
+                                                : 'සබ්මිට්'),
                                       style: const TextStyle(
                                         fontSize: 15,
                                         color: AppColors.buttonText,
                                       ),
                                     ),
-                                  ),
-                                ),
-                              ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Padding(
-                                padding:
-                                    const EdgeInsets.symmetric(horizontal: 4),
-                                child: ElevatedButton(
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    padding: const EdgeInsets.symmetric(
-                                        vertical: 14),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    if (!pageComplete(_currentPage, provider)) {
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            langProvider.currentLang == 'en'
-                                                ? 'Please answer all questions on this page'
-                                                : 'කරුණාකර මෙම පිටුවේ සියලු ප්‍රශ්න වලට පිළිතුරු දක්වන්න',
-                                          ),
-                                        ),
-                                      );
-                                      return;
-                                    }
-
-                                    if (_currentPage < totalPages - 1) {
-                                      setState(() => _currentPage++);
-                                      _scrollToTop();
-                                    } else {
-                                      try {
-                                        await provider.saveToFirebase(context);
-                                        final scores =
-                                            provider.calculateScores();
-
-                                        showDialog(
-                                          context: context,
-                                          barrierDismissible: false,
-                                          builder: (_) => Center(
-                                            child: SingleChildScrollView(
-                                              child: AlertDialog(
-                                                backgroundColor:
-                                                    AppColors.background,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(20),
-                                                ),
-                                                contentPadding:
-                                                    const EdgeInsets.all(24),
-                                                content: Column(
-                                                  mainAxisSize:
-                                                      MainAxisSize.min,
-                                                  children: [
-                                                    Text(
-                                                      langProvider.currentLang ==
-                                                              'en'
-                                                          ? "DAAS-21 Results"
-                                                          : "DAAS-21 ප්‍රතිඵල",
-                                                      style: const TextStyle(
-                                                        fontSize: 22,
-                                                        fontWeight:
-                                                            FontWeight.bold,
-                                                        color: AppColors.primary,
-                                                      ),
-                                                    ),
-                                                    const SizedBox(height: 20),
-                                                    _buildScoreRow(
-                                                      langProvider.currentLang ==
-                                                              'en'
-                                                          ? "Depression"
-                                                          : "අවමෝහය",
-                                                      scores['depression'] ?? 0,
-                                                    ),
-                                                    _buildScoreRow(
-                                                      langProvider.currentLang ==
-                                                              'en'
-                                                          ? "Anxiety"
-                                                          : "උදෘතය",
-                                                      scores['anxiety'] ?? 0,
-                                                    ),
-                                                    _buildScoreRow(
-                                                      langProvider.currentLang ==
-                                                              'en'
-                                                          ? "Stress"
-                                                          : "දැඩි සිරිත",
-                                                      scores['stress'] ?? 0,
-                                                    ),
-                                                    const SizedBox(height: 24),
-                                                    SizedBox(
-                                                      width: double.infinity,
-                                                      child: ElevatedButton(
-                                                        style: ElevatedButton
-                                                            .styleFrom(
-                                                          backgroundColor:
-                                                              AppColors.primary,
-                                                          padding:
-                                                              const EdgeInsets
-                                                                      .symmetric(
-                                                                  vertical: 14),
-                                                          shape:
-                                                              RoundedRectangleBorder(
-                                                            borderRadius:
-                                                                BorderRadius
-                                                                    .circular(
-                                                                      12,
-                                                                    ),
-                                                          ),
-                                                        ),
-                                                        onPressed: () {
-                                                          provider.reset();
-                                                          setState(() {
-                                                            _currentPage = 0;
-                                                            _started = false;
-                                                          });
-                                                          Navigator.pop(context);
-                                                          _scrollToTop();
-                                                        },
-                                                        child: Text(
-                                                          langProvider.currentLang ==
-                                                                  'en'
-                                                              ? "OK"
-                                                              : "හරි",
-                                                          style:
-                                                              const TextStyle(
-                                                            fontSize: 16,
-                                                            color: AppColors
-                                                                .buttonText,
-                                                          ),
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ),
-                                            ),
-                                          ),
-                                        );
-                                      } catch (e) {
-                                        if (kDebugMode)
-                                          print("Error saving DAAS21: $e");
-                                        ScaffoldMessenger.of(context)
-                                            .showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              langProvider.currentLang == 'en'
-                                                  ? "Error saving responses. Try again."
-                                                  : "පිළිතුරු සුරැකිමේදී දෝෂයක්. නැවත උත්සාහ කරන්න.",
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                                  child: Text(
-                                    _currentPage < totalPages - 1
-                                        ? (langProvider.currentLang == 'en'
-                                                ? 'Next'
-                                                : 'ඊළඟ')
-                                        : (langProvider.currentLang == 'en'
-                                                ? 'Submit'
-                                                : 'සබ්මිට්'),
-                                    style: const TextStyle(
-                                      fontSize: 15,
-                                      color: AppColors.buttonText,
-                                    ),
-                                  ),
-                                ),
-                              ),
                             ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: 12),
                       ],
                     ),
-                  ),
+                    const SizedBox(height: 12),
+                  ],
+                ),
+              ),
       ),
     );
   }

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../constants/colors.dart';
 import '../questionnaires/daas21_questionnaire.dart';
 import '../questionnaires/maas_questionnaire.dart';
-import '../questionnaires/pwb18_questionnaire.dart';
+import '../questionnaires/pws18_questionnaire/autonomy.dart';
 
 class QuestionnaireMainPage extends StatelessWidget {
   const QuestionnaireMainPage({super.key});
@@ -32,7 +32,8 @@ class QuestionnaireMainPage extends StatelessWidget {
         ),
         body: const TabBarView(
           children: [
-            DAAS21Page(), // DAAS flow 
+            DAAS21Page(),
+            MAASPage(), // DAAS flow 
           ],
         ),
       ),

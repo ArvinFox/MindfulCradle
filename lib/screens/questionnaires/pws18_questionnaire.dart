@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/utils/custom_alert.dart';
 import 'package:provider/provider.dart';
 import '/constants/colors.dart';
 import '/providers/pws18_provider.dart';
@@ -48,9 +49,7 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
           centerTitle: true,
           backgroundColor: AppColors.primary,
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -146,32 +145,19 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
                     ),
                     onPressed: () async {
                       if (answered) {
-                        final edit = await showDialog<bool>(
-                          context: context,
-                          builder: (context) => AlertDialog(
-                            title: Text(
-                              isSinhala
-                                  ? 'පිළිතුරු සංස්කරණය කරන්න'
-                                  : 'Edit Response?',
-                            ),
-                            content: Text(
-                              isSinhala
-                                  ? 'මෙම කොටසට ඔබ දී ඇති පිළිතුරු වෙනස් කිරීමට අවශ්‍යද?'
-                                  : 'Do you want to edit your answers for this category?',
-                            ),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, false),
-                                child: Text(isSinhala ? 'නැහැ' : 'No'),
-                              ),
-                              TextButton(
-                                onPressed: () => Navigator.pop(context, true),
-                                child: Text(isSinhala ? 'ඔව්' : 'Yes'),
-                              ),
-                            ],
-                          ),
+                        final edit = await CustomConfirmationDialog.show(
+                          context: context, // <-- named parameter
+                          title: isSinhala
+                              ? 'පිළිතුරු සංස්කරණය කරන්න'
+                              : 'Edit Response?',
+                          message: isSinhala
+                              ? 'මෙම කොටසට ඔබ දී ඇති පිළිතුරු වෙනස් කිරීමට අවශ්‍යද?'
+                              : 'Do you want to edit your answers for this category?',
+                          confirmText: isSinhala ? 'ඔව්' : 'Yes',
+                          cancelText: isSinhala ? 'නැහැ' : 'No',
                         );
-                        if (edit != true) return;
+
+                        if (!edit) return;
                       }
 
                       Navigator.push(
@@ -252,7 +238,7 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
                             ),
-                            maxLines: 2, 
+                            maxLines: 2,
                             overflow: TextOverflow.visible,
                           ),
                           Text(

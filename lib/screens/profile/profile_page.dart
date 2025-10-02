@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/utils/logout_util.dart';
 import 'package:provider/provider.dart';
 import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
@@ -23,15 +24,11 @@ class _ProfilePageState extends State<ProfilePage> {
     final user = authProvider.user;
 
     if (authProvider.isInitializing) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (user == null) {
-      return const Scaffold(
-        body: Center(child: Text("User not found")),
-      );
+      return const Scaffold(body: Center(child: Text("User not found")));
     }
 
     return Scaffold(
@@ -53,45 +50,15 @@ class _ProfilePageState extends State<ProfilePage> {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
-            onPressed: () async {
-              final confirmed = await showDialog<bool>(
+            onPressed: () {
+              LogoutUtils.showLogoutDialog(
                 context: context,
-                builder: (_) => AlertDialog(
-                  title: Text(
-                    langProvider.currentLang == 'en'
-                        ? "Logout Confirmation"
-                        : "පිටවීම තහවුරු කිරීම",
-                  ),
-                  content: Text(
-                    langProvider.currentLang == 'en'
-                        ? "Are you sure you want to logout?"
-                        : "ඔබට පිටවීමට කැමතිද?",
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, false),
-                      child: Text(
-                        langProvider.currentLang == 'en' ? "Cancel" : "අවලංගු කරන්න",
-                      ),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pop(context, true),
-                      child: Text(
-                        langProvider.currentLang == 'en' ? "Logout" : "පිටවන්න",
-                      ),
-                    ),
-                  ],
-                ),
+                authProvider: authProvider,
+                language: langProvider.currentLang,
+                redirectRoute: '/login',
               );
-
-              if (confirmed ?? false) {
-                await authProvider.logout();
-                if (mounted) {
-                  Navigator.pushReplacementNamed(context, '/login');
-                }
-              }
             },
-          )
+          ),
         ],
       ),
       body: SingleChildScrollView(
@@ -140,15 +107,14 @@ class _ProfilePageState extends State<ProfilePage> {
                       style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 4),
-                    Text(
-                      user.email,
-                      style: TextStyle(color: AppColors.text),
-                    ),
+                    Text(user.email, style: TextStyle(color: AppColors.text)),
                     const SizedBox(height: 16),
                     Text(
                       langProvider.currentLang == 'en' ? "Settings" : "සැකසුම්",
                       style: const TextStyle(
-                          fontSize: 18, fontWeight: FontWeight.bold),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     ListTile(
@@ -158,11 +124,12 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                       trailing: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: langProvider.currentLang == 'en'
-                              ? "en"
-                              : "si",
+                          value: langProvider.currentLang == 'en' ? "en" : "si",
                           items: const [
-                            DropdownMenuItem(value: "en", child: Text("English")),
+                            DropdownMenuItem(
+                              value: "en",
+                              child: Text("English"),
+                            ),
                             DropdownMenuItem(value: "si", child: Text("සිංහල")),
                           ],
                           onChanged: (val) {

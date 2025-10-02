@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/screens/home/questionnaires.dart';
 import '../../constants/colors.dart';
 import 'home/home_page.dart';
 import 'achievements/achievements_page.dart';
@@ -18,6 +19,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = const [
     HomePage(),
     AchievementsPage(),
+    QuestionnaireMainPage(),
     ProfilePage(),
   ];
 
@@ -53,6 +55,7 @@ class _MainScreenState extends State<MainScreen> {
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
             BottomNavigationBarItem(icon: Icon(Icons.star), label: "Achievements"),
+            BottomNavigationBarItem(icon: Icon(Icons.question_mark), label: "Feedback"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
         ),

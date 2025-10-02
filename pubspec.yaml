@@ -28,6 +28,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/login/
+    - languages/
 
   uses-material-design: true
 

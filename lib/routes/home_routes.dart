@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/screens/home/questionnaires.dart';
 import '../screens/home/video_player.dart';
 import '../screens/home/home_page.dart';
 import '../screens/main_screen.dart';
@@ -8,6 +9,7 @@ class HomeRoutes {
   static Map<String, WidgetBuilder> routes = {
     '/main-screen': (context) => const MainScreen(),
     '/home': (context) => const HomePage(),
+    '/questionnaire' : (context) => const QuestionnaireMainPage(),
   };
 
   /// Navigate to video player page with user-specific tracking

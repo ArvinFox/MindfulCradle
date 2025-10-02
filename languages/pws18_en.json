@@ -1,0 +1,31 @@
+{
+  "options": {
+    "1": "Strongly agree",
+    "2": "Somewhat agree",
+    "3": "A little agree",
+    "4": "Neither agree nor disagree",
+    "5": "A little disagree",
+    "6": "Somewhat disagree",
+    "7": "Strongly disagree"
+  },
+  "questions": [
+    { "id": 1, "question": "I like most parts of my personality" },
+    { "id": 2, "question": "When I look at the story of my life, I am pleased with how things have turned out so far", "reverse": true },
+    { "id": 3, "question": "Some people wander aimlessly through life, but I am not one of them" },
+    { "id": 4, "question": "The demands of everyday life often get me down" },
+    { "id": 5, "question": "In many ways I feel disappointed about my achievements in life", "reverse": true },
+    { "id": 6, "question": "Maintaining close relationships has been difficult and frustrating for me" },
+    { "id": 7, "question": "I live life one day at a time and don't really think about the future" },
+    { "id": 8, "question": "In general, I feel I am in charge of the situation in which I live", "reverse": true },
+    { "id": 9, "question": "I am good at managing the responsibilities of daily life" },
+    { "id": 10, "question": "I sometimes feel as if I've done all there is to do in life", "reverse": true },
+    { "id": 11, "question": "For me, life has been a continuous process of learning, changing, and growth" },
+    { "id": 12, "question": "I think it is important to have new experiences that challenge how I think about myself and the world", "reverse": true },
+    { "id": 13, "question": "People would describe me as a giving person, willing to share my time with others" },
+    { "id": 14, "question": "I gave up trying to make big improvements or changes in my life a long time ago", "reverse": true },
+    { "id": 15, "question": "I tend to be influenced by people with strong opinions" },
+    { "id": 16, "question": "I have not experienced many warm and trusting relationships with others" },
+    { "id": 17, "question": "I have confidence in my own opinions, even if they are different from the way most other people think" },
+    { "id": 18, "question": "I judge myself by what I think is important, not by the values of what others think is important" }
+  ]
+}

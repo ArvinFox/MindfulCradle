@@ -1,0 +1,27 @@
+{
+  "options": {
+    "1": "Almost always",
+    "2": "Very frequently",
+    "3": "Somewhat frequently",
+    "4": "Somewhat infrequently",
+    "5": "Very infrequently",
+    "6": "Almost never"
+  },
+  "questions": [
+    { "id": 1, "question": "I could be experiencing some emotion and not be conscious of it until sometime later" },
+    { "id": 2, "question": "I break or spill things because of carelessness, not paying attention, or thinking of something else" },
+    { "id": 3, "question": "I find it difficult to stay focused on what’s happening in the present." },
+    { "id": 4, "question": "I tend to walk quickly to get where I’m going without paying attention to what I experience along the way" },
+    { "id": 5, "question": "I tend not to notice feelings of physical tension or discomfort until they really grab my attention" },
+    { "id": 6, "question": "I forget a person’s name almost as soon as I’ve been told it for the first time" },
+    { "id": 7, "question": "It seems I am “running on automatic,” without much awareness of what I’m doing." },
+    { "id": 8, "question": "I rush through activities without being really attentive to them." },
+    { "id": 9, "question": "I get so focused on the goal I want to achieve that I lose touch with what I’m doing right now to get there" },
+    { "id": 10, "question": "I do jobs or tasks automatically, without being aware of what I'm doing." },
+    { "id": 11, "question": "I find myself listening to someone with one ear, doing something else at the same time" },
+    { "id": 12, "question": "I drive places on ‘automatic pilot’ and then wonder why I went there" },
+    { "id": 13, "question": "I find myself preoccupied with the future or the past." },
+    { "id": 14, "question": "I find myself doing things without paying attention" },
+    { "id": 15, "question": "I snack without being aware that I’m eating." }
+  ]
+}

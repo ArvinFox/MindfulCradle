@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // <-- add this
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:flutter/cupertino.dart';
@@ -33,6 +34,9 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    // restore nav + status bars when this page loads
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
     final videoProvider = Provider.of<VideoProvider>(context, listen: false);
     _watchedSeconds = videoProvider.getLastWatchedSecond(widget.video.id);
 
@@ -55,6 +59,10 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   }
 
   void _youtubeListener() {
+    // Always restore overlays when video state changes (in case fullscreen messed it up)
+    if (mounted) {
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    }
     setState(() {});
   }
 
@@ -80,9 +88,11 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused || state == AppLifecycleState.inactive) {
-      _progressTimer?.cancel(); // stop timer in background
+      _progressTimer?.cancel(); 
     } else if (state == AppLifecycleState.resumed) {
-      _startProgressTimer(); // resume timer in foreground
+      // also restore UI overlays when coming back
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      _startProgressTimer(); 
     }
   }
 
@@ -118,14 +128,19 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
     return WillPopScope(
       onWillPop: () async {
-        _stopAndSaveProgress(); // stop timer & save progress
+        _stopAndSaveProgress(); 
+        // restore overlays before leaving
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
         return true;
       },
       child: YoutubePlayerBuilder(
         player: YoutubePlayer(
           controller: _controller,
           showVideoProgressIndicator: false,
-          onReady: () {},
+          onReady: () {
+            // ensure overlays restored after full screen exit
+            SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+          },
         ),
         builder: (context, player) {
           return Scaffold(
@@ -137,6 +152,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                 color: Colors.white,
                 onPressed: () {
                   _stopAndSaveProgress();
+                  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
                   Navigator.of(context).pop();
                 },
               ),

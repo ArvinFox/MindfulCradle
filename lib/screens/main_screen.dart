@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart'; // << added
 import 'package:mamamind/screens/home/questionnaires.dart';
 import '../../constants/colors.dart';
 import 'home/home_page.dart';
@@ -18,10 +19,29 @@ class _MainScreenState extends State<MainScreen> {
 
   final List<Widget> _pages = const [
     HomePage(),
-    AchievementsPage(),
     QuestionnaireMainPage(),
+    AchievementsPage(),
     ProfilePage(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Lock the screen to portrait while MainScreen is active
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.portraitUp,
+      DeviceOrientation.portraitDown,
+    ]);
+  }
+
+  @override
+  void dispose() {
+    // Restore to allow all orientations when leaving MainScreen.
+    // (If other parts of your app require a specific orientation,
+    // adjust this accordingly.)
+    SystemChrome.setPreferredOrientations(DeviceOrientation.values);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -54,8 +74,8 @@ class _MainScreenState extends State<MainScreen> {
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.star), label: "Achievements"),
             BottomNavigationBarItem(icon: Icon(Icons.question_mark), label: "Feedback"),
+            BottomNavigationBarItem(icon: Icon(Icons.star), label: "Achievements"),
             BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
           ],
         ),

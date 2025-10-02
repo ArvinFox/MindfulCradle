@@ -9,4 +9,5 @@ class AppColors {
   static const Color buttonText = Colors.white;
   static const Color buttonPrevBack = Color.fromARGB(255, 185, 185, 185);
   static const Color cardBackground = Color(0xFFFFFFFF);
+  static const Color completed = Color.fromARGB(255, 73, 175, 63);
 }

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 class DAAS21Provider with ChangeNotifier {
   UserModel? _user;
 
+  // Responses for 21 questions
   List<int?> responses = List<int?>.filled(21, null);
 
   DAAS21Provider();
@@ -25,6 +26,7 @@ class DAAS21Provider with ChangeNotifier {
 
   bool get allAnswered => !responses.contains(null);
 
+  // --- Calculate DASS-21 Scores ---
   Map<String, int> calculateScores() {
     final depressionQ = [3, 5, 10, 13, 16, 17, 21];
     final anxietyQ = [2, 4, 7, 9, 15, 19, 20];
@@ -41,6 +43,32 @@ class DAAS21Provider with ChangeNotifier {
     };
   }
 
+  // --- Severity Level Classification ---
+  String classifyDepression(int score) {
+    if (score <= 9) return 'Normal';
+    if (score <= 13) return 'Mild';
+    if (score <= 20) return 'Moderate';
+    if (score <= 27) return 'Severe';
+    return 'Extremely Severe';
+  }
+
+  String classifyAnxiety(int score) {
+    if (score <= 7) return 'Normal';
+    if (score <= 9) return 'Mild';
+    if (score <= 14) return 'Moderate';
+    if (score <= 19) return 'Severe';
+    return 'Extremely Severe';
+  }
+
+  String classifyStress(int score) {
+    if (score <= 14) return 'Normal';
+    if (score <= 18) return 'Mild';
+    if (score <= 25) return 'Moderate';
+    if (score <= 33) return 'Severe';
+    return 'Extremely Severe';
+  }
+
+  // --- Save to Firebase ---
   Future<void> saveToFirebase(BuildContext context) async {
     if (!allAnswered) return;
 

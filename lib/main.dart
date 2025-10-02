@@ -28,6 +28,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:mamamind/providers/daas21_provider.dart';
 import 'package:mamamind/providers/language_provider.dart';
 import 'package:mamamind/providers/maas_provider.dart';
+import 'package:mamamind/providers/pws18_provider.dart';
 import 'package:provider/provider.dart';
 import 'app.dart';
 import 'providers/auth_provider.dart';
@@ -52,6 +53,7 @@ void main() async {
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => DAAS21Provider()),
         ChangeNotifierProvider(create: (_) => MAASProvider()),
+        ChangeNotifierProvider(create: (_) => PWS18Provider()),
       ],
       child: const MyApp(),
     ),

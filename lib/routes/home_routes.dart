@@ -9,17 +9,19 @@ class HomeRoutes {
   static Map<String, WidgetBuilder> routes = {
     '/main-screen': (context) => const MainScreen(),
     '/home': (context) => const HomePage(),
-    '/questionnaire' : (context) => const QuestionnaireMainPage(),
+    '/questionnaire': (context) => const QuestionnaireMainPage(),
   };
 
-  /// Navigate to video player page with user-specific tracking
-  static void goToVideoPlayer(BuildContext context, VideoModel video, String userId) {
+  /// Navigate to video player page with user-specific tracking & language
+  static void goToVideoPlayer(
+      BuildContext context, VideoModel video, String userId, String youtubeId) {
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => YouTubeVideoPlayerPage(
           video: video,
           userId: userId,
+          youtubeId: youtubeId,
         ),
       ),
     );

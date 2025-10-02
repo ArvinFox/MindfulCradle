@@ -94,56 +94,86 @@ class _ProfilePageState extends State<ProfilePage> {
           )
         ],
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 100,
-              height: 100,
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(50),
+            // Profile picture
+            Center(
+              child: Container(
+                width: 120,
+                height: 120,
+                decoration: BoxDecoration(
+                  color: AppColors.cardBackground,
+                  borderRadius: BorderRadius.circular(60),
+                ),
+                child: Icon(Icons.person, size: 72, color: AppColors.primary),
               ),
-              child: Icon(Icons.person, size: 64, color: AppColors.primary),
             ),
             const SizedBox(height: 16),
-            Text(
-              "${langProvider.currentLang == 'en' ? "Name" : "නම"}: ${user.fullName}",
-              style: TextStyle(
-                fontSize: isMobile ? 18 : 20,
-                color: AppColors.text,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              "${langProvider.currentLang == 'en' ? "Email" : "ඊමේල්"}: ${user.email}",
-              style: TextStyle(
-                fontSize: isMobile ? 16 : 18,
-                color: AppColors.text,
+            Center(
+              child: Text(
+                user.fullName,
+                style: TextStyle(
+                  fontSize: isMobile ? 22 : 26,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.text,
+                ),
               ),
             ),
             const SizedBox(height: 24),
-            Text(
-              langProvider.currentLang == 'en' ? "Settings" : "සැකසුම්",
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            ListTile(
-              leading: const Icon(Icons.language),
-              title: Text(langProvider.currentLang == 'en' ? "Language" : "භාෂාව"),
-              trailing: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: langProvider.currentLang == 'en' ? "English" : "සිංහල",
-                  items: const [
-                    DropdownMenuItem(value: "English", child: Text("English")),
-                    DropdownMenuItem(value: "සිංහල", child: Text("සිංහල")),
+            // User info card
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              color: AppColors.cardBackground,
+              elevation: 2,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      langProvider.currentLang == 'en' ? "Email" : "ඊමේල්",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user.email,
+                      style: TextStyle(color: AppColors.text),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      langProvider.currentLang == 'en' ? "Settings" : "සැකසුම්",
+                      style: const TextStyle(
+                          fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 8),
+                    ListTile(
+                      leading: const Icon(Icons.language),
+                      title: Text(
+                        langProvider.currentLang == 'en' ? "Language" : "භාෂාව",
+                      ),
+                      trailing: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: langProvider.currentLang == 'en'
+                              ? "en"
+                              : "si",
+                          items: const [
+                            DropdownMenuItem(value: "en", child: Text("English")),
+                            DropdownMenuItem(value: "si", child: Text("සිංහල")),
+                          ],
+                          onChanged: (val) {
+                            if (val != null) {
+                              langProvider.setLanguage(val);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
                   ],
-                  onChanged: (val) {
-                    if (val == null) return;
-                    langProvider.setLanguage(val == "English" ? "en" : "si");
-                  },
                 ),
               ),
             ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamamind/constants/app_config.dart';
+import 'package:mamamind/utils/logout_util.dart';
 import 'package:provider/provider.dart';
 import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
@@ -64,26 +65,6 @@ class _HomePageState extends State<HomePage> {
     super.dispose();
   }
 
-  Future<bool?> confirmLogout(BuildContext context) {
-    return showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Logout Confirmation'),
-        content: const Text('Are you sure you want to logout?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -121,15 +102,13 @@ class _HomePageState extends State<HomePage> {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
-            onPressed: () async {
-              final confirmed = await confirmLogout(context);
-              if (confirmed ?? false) {
-                await authProvider.logout();
-                videoProvider.reset();
-                if (mounted) {
-                  Navigator.pushReplacementNamed(context, '/login');
-                }
-              }
+            onPressed: () {
+              LogoutUtils.showLogoutDialog(
+                context: context,
+                authProvider: authProvider,
+                language: langProvider.currentLang,
+                redirectRoute: '/login',
+              );
             },
           ),
         ],

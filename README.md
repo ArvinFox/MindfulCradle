@@ -1,16 +1,15 @@
-# mamamind
+# Mindful Cradle
 
 A new Flutter project.
 
 ## Getting Started
 
-This project is a starting point for a Flutter application.
+This project is related to a psychological research to gather information about pregnant mothers.
 
-A few resources to get you started if this is your first Flutter project:
+## Setup
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+- Use "git clone" to clone this repository to your local drive.
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+- Open the project in cmd and type "flutter pub get" and run the command.
+
+- After completing the dependancy download you can choose a device through "USB Debugging" or simply you can run the project on a virtual android device.

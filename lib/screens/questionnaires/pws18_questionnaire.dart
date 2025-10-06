@@ -11,6 +11,9 @@ import 'pws18_questionnaire/positive_relations_with_others.dart';
 import 'pws18_questionnaire/purpose_in_life.dart';
 import 'pws18_questionnaire/self_acceptance.dart';
 
+// Assuming AppColors is defined with a primary color
+// If AppColors is not available, you might need to adjust or add a temporary color definition.
+
 class PWS18QuestionnairePage extends StatefulWidget {
   const PWS18QuestionnairePage({super.key});
 
@@ -37,19 +40,31 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
     final provider = Provider.of<PWS18Provider>(context);
     final isSinhala = langProvider.currentLang == 'si';
 
-    // 🔹 Show loading screen if data is fetching
+    const titleTextStyle = TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.w500,
+    );
+
     if (provider.isLoading) {
       return Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: AppColors.background, 
         appBar: AppBar(
           title: Text(
             isSinhala ? 'PWS-18 ප්‍රශ්නාවලිය' : 'PWS-18 Questionnaire',
-            style: const TextStyle(color: Colors.white),
+            style: titleTextStyle,
           ),
           centerTitle: true,
           backgroundColor: AppColors.primary,
         ),
-        body: const Center(child: CircularProgressIndicator()),
+        body: Center(
+          child: Container(
+            child: const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+              ),
+            ),
+          ),
+        ),
       );
     }
 
@@ -101,7 +116,7 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
       appBar: AppBar(
         title: Text(
           isSinhala ? 'PWS-18 ප්‍රශ්නාවලිය' : 'PWS-18 Questionnaire',
-          style: const TextStyle(color: Colors.white),
+          style: titleTextStyle,
         ),
         centerTitle: true,
         backgroundColor: AppColors.primary,
@@ -114,7 +129,11 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
               isSinhala
                   ? 'ප්‍රශ්නාවලියේ කොටසක් තෝරන්න:'
                   : 'Select a category to answer the questions:',
-              style: TextStyle(fontSize: 18, color: AppColors.text),
+              style: TextStyle(
+                fontSize: 18, 
+                color: AppColors.text,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 24),
 
@@ -138,15 +157,21 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
                       backgroundColor: answered
                           ? AppColors.completed
                           : AppColors.primary,
+                      foregroundColor: AppColors.buttonText,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
+                        side: BorderSide(
+                          color: answered ? AppColors.completed : AppColors.primary,
+                          width: 2,
+                        ),
                       ),
+                      elevation: answered ? 2 : 5,
                       padding: const EdgeInsets.all(16),
                     ),
                     onPressed: () async {
                       if (answered) {
                         final edit = await CustomConfirmationDialog.show(
-                          context: context, // <-- named parameter
+                          context: context,
                           title: isSinhala
                               ? 'පිළිතුරු සංස්කරණය කරන්න'
                               : 'Edit Response?',
@@ -173,20 +198,29 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
                         Text(
                           category['title'] as String,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             color: AppColors.buttonText,
+                            fontWeight: answered ? FontWeight.bold : FontWeight.w600,
                           ),
                         ),
                         if (answered)
                           Padding(
                             padding: const EdgeInsets.only(top: 8.0),
-                            child: Text(
-                              isSinhala ? 'පිළිතුරු දී ඇත' : 'Answered',
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Colors.white70,
-                              ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.check_circle, color: Colors.white, size: 16),
+                                const SizedBox(width: 4),
+                                Text(
+                                  isSinhala ? 'පිළිතුරු දී ඇත' : 'Answered',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                       ],
@@ -195,37 +229,44 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
                 },
               ),
             ),
-
+            
             // Final results as tiles
             if (allCompleted) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
                   isSinhala ? 'අවසන් ප්‍රතිඵල' : 'Final Results',
                   style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w600,
                     color: AppColors.text,
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               SizedBox(
-                height: 110, // compact height
+                height: 120,
                 child: ListView(
                   scrollDirection: Axis.horizontal,
                   children: subscaleScores.entries.map((e) {
                     return Container(
-                      width: 120,
-                      margin: const EdgeInsets.only(right: 12),
+                      width: 130,
+                      margin: const EdgeInsets.only(right: 16),
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 12,
+                        horizontal: 10,
+                        vertical: 16,
                       ),
                       decoration: BoxDecoration(
                         color: Colors.white,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.08),
+                            blurRadius: 6,
+                            offset: const Offset(0, 3),
+                          ),
+                        ],
                       ),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -233,9 +274,9 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
                           Text(
                             e.key,
                             textAlign: TextAlign.center,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 14,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w500,
                               color: AppColors.primary,
                             ),
                             maxLines: 2,
@@ -244,9 +285,9 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
                           Text(
                             e.value.toStringAsFixed(2),
                             style: const TextStyle(
-                              fontSize: 18,
+                              fontSize: 22,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: Colors.black,
                             ),
                           ),
                         ],

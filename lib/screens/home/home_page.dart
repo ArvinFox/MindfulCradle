@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mamamind/constants/app_config.dart';
 import 'package:mamamind/utils/logout_util.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/video_provider.dart';
@@ -77,32 +79,47 @@ class _HomePageState extends State<HomePage> {
     final currentLang = langProvider.currentLang;
 
     if (_loading || authProvider.isInitializing) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+          backgroundColor: AppColors.background,
+          body: Center(
+              child: CircularProgressIndicator(
+            color: AppColors.primary,
+          )));
     }
 
     if (user == null) {
-      return const Scaffold(body: Center(child: Text("User not found")));
+      return Scaffold(
+          backgroundColor: AppColors.background,
+          body: Center(
+              child: Text(
+            currentLang == 'en' ? "User data loading failed" : "පරිශීලක දත්ත පූරණය අසාර්ථක විය",
+            style: GoogleFonts.roboto(),
+          )));
     }
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: const Text(
+        title: Text(
           AppConfig.appName,
-          style: TextStyle(
+          style: GoogleFonts.poppins(
             color: Colors.white,
-            fontWeight: FontWeight.bold,
+            fontWeight: FontWeight.w600,
             fontSize: 22,
           ),
         ),
         elevation: 4,
+        systemOverlayStyle: SystemUiOverlayStyle.light.copyWith(
+          statusBarColor: AppColors.primary,
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            tooltip: currentLang == 'en' ? 'Logout' : 'පිටවීම',
             onPressed: () {
+              HapticFeedback.lightImpact();
               LogoutUtils.showLogoutDialog(
                 context: context,
                 authProvider: authProvider,
@@ -114,45 +131,58 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: videos.isEmpty
-          ? const Center(child: CircularProgressIndicator())
+          ? Center(
+              child: Text(
+                currentLang == 'en' ? "No sessions available." : "සැසි නොමැත.",
+                style: GoogleFonts.roboto(color: Colors.grey.shade600),
+              ),
+            )
           : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Welcome Title
                   Text(
                     currentLang == 'en'
-                        ? "Welcome, ${user.fullName}!"
-                        : "ආයුබෝවන්, ${user.fullName}!",
-                    style: TextStyle(
-                      fontSize: isMobile ? 26 : 34,
-                      fontWeight: FontWeight.w700,
+                        ? "Welcome, ${user.fullName.split(' ').first}!"
+                        : "ආයුබෝවන්, ${user.fullName.split(' ').first}!",
+                    style: GoogleFonts.poppins(
+                      fontSize: isMobile ? 30 : 36,
+                      fontWeight: FontWeight.w600,
                       color: AppColors.text,
+                      height: 1.1,
                     ),
                   ),
                   const SizedBox(height: 8),
+
+                  // Subtitle/Motto
                   Text(
                     currentLang == 'en'
                         ? "Take a moment to relax and meditate daily."
                         : "දිනපතා විරාම ගෙන නිතරම ධ්‍යානය කරන්න.",
-                    style: TextStyle(
+                    style: GoogleFonts.roboto(
                       fontSize: isMobile ? 16 : 20,
                       fontWeight: FontWeight.w400,
-                      color: Colors.grey.shade700,
+                      color: Colors.grey.shade600,
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 30),
+                  
+                  // Section Header
                   Text(
                     currentLang == 'en'
                         ? "Meditation Sessions"
                         : "ධ්‍යානය සැසි",
-                    style: TextStyle(
-                      fontSize: isMobile ? 20 : 26,
-                      fontWeight: FontWeight.w600,
+                    style: GoogleFonts.poppins(
+                      fontSize: isMobile ? 24 : 28,
+                      fontWeight: FontWeight.w700,
                       color: AppColors.primary,
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
+
+                  // Video Grid
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -160,7 +190,7 @@ class _HomePageState extends State<HomePage> {
                       crossAxisCount: isMobile ? 2 : 3,
                       mainAxisSpacing: 16,
                       crossAxisSpacing: 16,
-                      childAspectRatio: 1,
+                      childAspectRatio: 0.9,
                     ),
                     itemCount: videos.length,
                     itemBuilder: (context, index) {
@@ -173,7 +203,7 @@ class _HomePageState extends State<HomePage> {
                         isMobile: isMobile,
                         onTap: isUnlocked
                             ? () {
-                                // Pass the correct YouTube ID for the current language
+                                HapticFeedback.lightImpact();
                                 final youtubeId = video.getYoutubeId(currentLang);
                                 HomeRoutes.goToVideoPlayer(
                                   context,
@@ -182,7 +212,18 @@ class _HomePageState extends State<HomePage> {
                                   youtubeId,
                                 );
                               }
-                            : () {},
+                            : () {
+                                HapticFeedback.vibrate();
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      currentLang == 'en' ? "Complete the previous session to unlock this one." : "මෙය විවෘත කිරීමට පෙර සැසිය සම්පූර්ණ කරන්න.",
+                                      style: GoogleFonts.roboto(),
+                                    ),
+                                    backgroundColor: Colors.orange.shade800,
+                                  ),
+                                );
+                              },
                       );
                     },
                   ),

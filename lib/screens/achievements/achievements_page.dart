@@ -1,55 +1,82 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../constants/colors.dart';
+import '../../widgets/achievement_tile.dart'; 
+import '../../providers/language_provider.dart';
 
 class AchievementsPage extends StatelessWidget {
   const AchievementsPage({super.key});
 
+  static const List<Map<String, dynamic>> achievements = [
+    {
+      'title_en': "Self-Discovery", 'title_si': "ආත්ම අවබෝධය",
+      'subtitle_en': "Completed the Self-Acceptance PWS sub-scale.", 'subtitle_si': "ස්වයං-ග්‍රහණය (Self-Acceptance) PWS උප-මානය සම්පූර්ණ කරන ලදී.",
+      'icon': Icons.favorite_border, 'completed': true
+    },
+    {
+      'title_en': "Goal Setter", 'title_si': "ඉලක්ක සකසන්නා",
+      'subtitle_en': "Completed the Purpose in Life PWS sub-scale.", 'subtitle_si': "ජීවිතයට අරමුණ (Purpose in Life) PWS උප-මානය සම්පූර්ණ කරන ලදී.",
+      'icon': Icons.lightbulb_outline, 'completed': false
+    },
+    {
+      'title_en': "Social Butterfly", 'title_si': "සමාජ පියාපත්",
+      'subtitle_en': "Completed the Positive Relations PWS sub-scale.", 'subtitle_si': "අන් අය සමඟ සම්බන්ධතා (Positive Relations) PWS උප-මානය සම්පූර්ණ කරන ලදී.",
+      'icon': Icons.group, 'completed': false
+    },
+    {
+      'title_en': "Bilingual Bonus", 'title_si': "භාෂා දීමනාව",
+      'subtitle_en': "You changed the app language successfully!", 'subtitle_si': "ඔබ යෙදුමේ භාෂාව සාර්ථකව වෙනස් කරන ලදී!",
+      'icon': Icons.translate, 'completed': false
+    },
+    {
+      'title_en': "The Full Picture", 'title_si': "සම්පූර්ණ පින්තූරය",
+      'subtitle_en': "Completed all 6 PWS-18 categories. Well done!", 'subtitle_si': "PWS-18 හි සියලුම කාණ්ඩ 6 සම්පූර්ණ කරන ලදී. විශිෂ්ටයි!",
+      'icon': Icons.diamond, 'completed': false
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 600;
+    final langProvider = Provider.of<LanguageProvider>(context);
+    final isSinhala = langProvider.currentLang == 'si';
+    
+    const appBarTextStyle = TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.w500, 
+      fontSize: 22,
+    );
+
+    final String pageTitle = isSinhala ? "ජයග්‍රහණ" : "Achievements";
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: const Text("Achievements"),
+        title: Text(
+          pageTitle,
+          style: appBarTextStyle,
+        ),
         centerTitle: true,
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: ListView.separated(
-          itemCount: 8, // 8 dummy achievements
+          itemCount: achievements.length,
           separatorBuilder: (_, __) => const SizedBox(height: 16),
           itemBuilder: (context, index) {
-            return Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.cardBackground,
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Colors.black26,
-                    blurRadius: 8,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.star, size: 32, color: AppColors.primary),
-                  const SizedBox(width: 16),
-                  Text(
-                    "Achievement ${index + 1}",
-                    style: TextStyle(
-                      fontSize: isMobile ? 16 : 18,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.text,
-                    ),
-                  ),
-                ],
-              ),
+            final ach = achievements[index];
+
+            final String title = isSinhala ? ach['title_si'] as String : ach['title_en'] as String;
+            final String subtitle = isSinhala ? ach['subtitle_si'] as String : ach['subtitle_en'] as String;
+            
+            return AchievementTile(
+              title: title,
+              subtitle: subtitle,
+              icon: ach['icon'] as IconData,
+              iconColor: AppColors.primary,
+              isCompleted: ach['completed'] as bool,
             );
           },
         ),

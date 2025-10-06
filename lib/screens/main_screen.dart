@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // << added
+import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import 'package:mamamind/screens/home/questionnaires.dart';
 import '../../constants/colors.dart';
+import '../../providers/language_provider.dart';
 import 'home/home_page.dart';
 import 'achievements/achievements_page.dart';
 import 'profile/profile_page.dart';
@@ -15,7 +17,7 @@ class MainScreen extends StatefulWidget {
 
 class _MainScreenState extends State<MainScreen> {
   int _currentIndex = 0;
-  DateTime? lastBackPressTime; // Track last back press
+  DateTime? lastBackPressTime;
 
   final List<Widget> _pages = const [
     HomePage(),
@@ -27,7 +29,7 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void initState() {
     super.initState();
-    // Lock the screen to portrait while MainScreen is active
+    // Lock the screen to portrait
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
@@ -36,49 +38,108 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   void dispose() {
-    // Restore to allow all orientations when leaving MainScreen.
-    // (If other parts of your app require a specific orientation,
-    // adjust this accordingly.)
     SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     super.dispose();
   }
 
+  //  Bottom navigation bar
+  Widget _buildBottomNavigationBar(BuildContext context) {
+    final langProvider = Provider.of<LanguageProvider>(context, listen: false);
+    final isSinhala = langProvider.currentLang == 'si';
+
+    final List<String> labels = isSinhala
+        ? ["මුල් පිටුව", "ප්‍රතිපෝෂණ", "ජයග්‍රහණ", "ප්‍රොෆයිල්"]
+        : ["Home", "Feedback", "Achievements", "Profile"];
+
+    return BottomNavigationBar(
+      currentIndex: _currentIndex,
+      selectedItemColor: AppColors.primary,
+      unselectedItemColor: AppColors.text.withOpacity(0.6),
+      backgroundColor: AppColors.background,
+      elevation: 10,
+      type: BottomNavigationBarType.fixed,
+      selectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.w600,
+        fontSize: 13,
+      ),
+      unselectedLabelStyle: const TextStyle(
+        fontWeight: FontWeight.w500,
+        fontSize: 12,
+      ),
+      
+      onTap: (index) {
+        HapticFeedback.lightImpact();
+        setState(() {
+          _currentIndex = index;
+        });
+      },
+      items: [
+        BottomNavigationBarItem(
+            icon: const Icon(Icons.home_rounded), label: labels[0]),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.assignment),
+          label: labels[1],
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.star_rounded),
+          label: labels[2],
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.person_rounded),
+          label: labels[3],
+        ),
+      ],
+    );
+  }
+
+  // --- Main Build Method ---
+
   @override
   Widget build(BuildContext context) {
+    final langProvider = Provider.of<LanguageProvider>(context);
+    final isSinhala = langProvider.currentLang == 'si';
+
+    final String exitMessage = isSinhala
+        ? "යෙදුමෙන් පිටවීමට නැවත පිටුපස ඔබන්න"
+        : "Press back again to exit app";
+
     return WillPopScope(
       onWillPop: () async {
+        if (_currentIndex != 0) {
+          HapticFeedback.lightImpact();
+          setState(() {
+            _currentIndex = 0;
+          });
+          return false;
+        }
+
         DateTime now = DateTime.now();
-        if (lastBackPressTime == null || now.difference(lastBackPressTime!) > const Duration(seconds: 2)) {
+        if (lastBackPressTime == null ||
+            now.difference(lastBackPressTime!) > const Duration(seconds: 2)) {
+          
+          HapticFeedback.mediumImpact();
           lastBackPressTime = now;
+          
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Press back again to exit app"),
-              duration: Duration(seconds: 2),
+            SnackBar(
+              content: Text(
+                exitMessage,
+                style: TextStyle(color: AppColors.buttonText),
+              ),
+              backgroundColor: AppColors.primary,
+              duration: const Duration(seconds: 2),
             ),
           );
-          return false; // prevent exit
+          return false;
         }
-        return true; // exit app on second press
+        return true;
       },
       child: Scaffold(
-        body: _pages[_currentIndex],
-        bottomNavigationBar: BottomNavigationBar(
-          currentIndex: _currentIndex,
-          selectedItemColor: AppColors.primary,
-          unselectedItemColor: Colors.grey,
-          backgroundColor: AppColors.background,
-          onTap: (index) {
-            setState(() {
-              _currentIndex = index;
-            });
-          },
-          items: const [
-            BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-            BottomNavigationBarItem(icon: Icon(Icons.question_mark), label: "Feedback"),
-            BottomNavigationBarItem(icon: Icon(Icons.star), label: "Achievements"),
-            BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-          ],
+        body: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 300),
+          child: _pages[_currentIndex],
         ),
+        bottomNavigationBar: _buildBottomNavigationBar(context),
       ),
     );
   }

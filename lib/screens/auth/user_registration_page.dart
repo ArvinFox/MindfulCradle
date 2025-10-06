@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
 import '../../models/user_model.dart';
+import '../../utils/helpers.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class UserRegistrationPage extends StatefulWidget {
   final UserModel user;
@@ -35,6 +38,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
   String mindfulnessDuration = '';
 
   bool _isSaving = false;
+  DateTime? lastBackPressTime;
 
   @override
   void initState() {
@@ -52,8 +56,72 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     super.dispose();
   }
 
+  // checkbox
+  Widget _buildCheckbox(
+      String title,
+      bool value,
+      void Function(bool) onChanged,
+      ) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Row(
+        children: [
+          Checkbox(
+            value: value,
+            onChanged: (val) => onChanged(val ?? false),
+            activeColor: AppColors.primary,
+            side: const BorderSide(color: AppColors.text, width: 1.5),
+          ),
+          Expanded(
+            child: Text(
+              title,
+              style: GoogleFonts.roboto(
+                fontSize: 15,
+                color: AppColors.text,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // confirmation dialog
+  Widget _buildConfRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.roboto(
+              fontWeight: FontWeight.w600,
+              color: AppColors.text.withOpacity(0.9),
+            ),
+          ),
+          const SizedBox(width: 10),
+          Flexible(
+            child: Text(
+              value,
+              textAlign: TextAlign.right,
+              style: GoogleFonts.roboto(color: AppColors.text),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- Logic Functions ---
+
   Future<void> _saveToFirebase() async {
+    if (_isSaving) return;
+
     setState(() => _isSaving = true);
+    HapticFeedback.mediumImpact();
+
     final userDoc = FirebaseFirestore.instance
         .collection('users')
         .doc(widget.user.id);
@@ -75,9 +143,9 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
 
     try {
       await userDoc.update({
-        'age': ageController.text,
-        'residence': residenceController.text,
-        'identificationNumber': idController.text,
+        'age': int.tryParse(ageController.text) ?? 0,
+        'residence': residenceController.text.trim(),
+        'identificationNumber': idController.text.trim(),
         'pregnancyMonth': pregnancyMonth,
         'firstTimeMother': firstTimeMother,
         'employed': employed,
@@ -91,47 +159,32 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
       });
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      authProvider.loadUserFromPrefs();
+      // Ensure local user model is updated to reflect completion
+      await authProvider.loadUserFromPrefs();
 
       if (!mounted) return;
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            texts['saveSuccess'] ?? 'Registration complete!',
+          ),
+        ),
+      );
+
+      // Navigate to main screen
       Navigator.of(
         context,
       ).pushNamedAndRemoveUntil('/main-screen', (route) => false);
     } catch (e) {
       if (!mounted) return;
+      HapticFeedback.vibrate();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text("Error saving data: $e")));
+      ).showSnackBar(SnackBar(content: Text(texts['saveError']! + e.toString())));
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) setState(() => _isSaving = false);
     }
-  }
-
-  Widget _buildCheckbox(
-    String title,
-    bool value,
-    void Function(bool) onChanged,
-  ) {
-    return Row(
-      children: [
-        Checkbox(value: value, onChanged: (val) => onChanged(val ?? false)),
-        Expanded(child: Text(title)),
-      ],
-    );
-  }
-
-  Widget _buildConfRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
-          Flexible(child: Text(value, textAlign: TextAlign.right)),
-        ],
-      ),
-    );
   }
 
   void _showConfirmationDialog(Map<String, String> texts) {
@@ -141,7 +194,16 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
       context: context,
       builder: (ctx) {
         return AlertDialog(
-          title: Text(texts['confirmDetails']!),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20), // Consistent rounding
+          ),
+          title: Text(
+            texts['confirmDetails']!,
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
+          ),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -149,6 +211,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                 _buildConfRow(texts['age']!, ageController.text),
                 _buildConfRow(texts['residence']!, residenceController.text),
                 _buildConfRow(texts['idNumber']!, idController.text),
+                const Divider(height: 20),
                 _buildConfRow(texts['pregnancyMonth']!, pregnancyMonth),
                 _buildConfRow(
                   texts['firstTimeMother']!,
@@ -167,6 +230,10 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                   texts['distressingEvents']!,
                   yesNo(distressingEvents),
                 ),
+                _buildConfRow(
+                  texts['practicedMindfulness']!,
+                  yesNo(practicedMindfulness),
+                ),
                 if (practicedMindfulness)
                   _buildConfRow(
                     texts['mindfulnessDuration']!,
@@ -175,25 +242,23 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
               ],
             ),
           ),
-          actionsPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
+          actionsPadding:
+          const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           actions: [
             Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.grey[400],
-                  foregroundColor: Colors.black,
+              child: OutlinedButton(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.text,
                   padding: const EdgeInsets.symmetric(vertical: 14),
+                  side: const BorderSide(color: AppColors.primary, width: 1.5),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                 ),
                 onPressed: () => Navigator.pop(ctx),
                 child: Text(
                   texts['cancel']!,
-                  style: const TextStyle(fontSize: 16),
+                  style: GoogleFonts.roboto(fontSize: 16),
                 ),
               ),
             ),
@@ -205,8 +270,9 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
                   ),
+                  elevation: 5,
                 ),
                 onPressed: () {
                   Navigator.pop(ctx);
@@ -214,17 +280,17 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                 },
                 child: _isSaving
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
                     : Text(
-                        texts['confirm']!,
-                        style: const TextStyle(fontSize: 16),
-                      ),
+                  texts['confirm']!,
+                  style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w600),
+                ),
               ),
             ),
           ],
@@ -233,33 +299,37 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     );
   }
 
+  // --- Page Builder Functions ---
+
   Widget _buildPage1(
-    BuildContext context,
-    bool isMobile,
-    Map<String, String> texts,
-  ) {
+      BuildContext context,
+      bool isMobile,
+      Map<String, String> texts,
+      ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // Page Title
         Text(
           texts['basicInfo']!,
-          style: TextStyle(
-            fontSize: isMobile ? 24 : 28,
-            fontWeight: FontWeight.bold,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.poppins(
+            fontSize: isMobile ? 32 : 36,
+            fontWeight: FontWeight.w700,
             color: AppColors.primary,
           ),
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 30),
 
         TextFormField(
           controller: ageController,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.inputBackground,
-            labelText: texts['age'],
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+          decoration: customInputDecoration(texts['age']!),
           keyboardType: TextInputType.number,
+          inputFormatters: [
+            FilteringTextInputFormatter.digitsOnly,
+            LengthLimitingTextInputFormatter(2),
+          ],
           validator: (val) {
             if (val == null || val.isEmpty) return texts['required'];
             final numValue = int.tryParse(val);
@@ -272,74 +342,61 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
 
         TextFormField(
           controller: residenceController,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.inputBackground,
-            labelText: texts['residence'],
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+          decoration: customInputDecoration(texts['residence']!),
           validator: (val) =>
-              val == null || val.isEmpty ? texts['required'] : null,
+          val == null || val.isEmpty ? texts['required'] : null,
         ),
         const SizedBox(height: 16),
 
         TextFormField(
           controller: idController,
-          decoration: InputDecoration(
-            filled: true,
-            fillColor: AppColors.inputBackground,
-            labelText: texts['idNumber'],
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          ),
+          decoration: customInputDecoration(texts['idNumber']!),
+          keyboardType: TextInputType.text,
+          textCapitalization: TextCapitalization.characters,
           validator: (val) {
             if (val == null || val.isEmpty) return texts['required'];
 
-            final oldIdReg = RegExp(r'^(\d{2})(\d{7})([VX])$');
-            final newIdReg = RegExp(r'^(\d{4})(\d{8})$');
-            final currentYear = DateTime.now().year;
+            final oldIdReg = RegExp(r'^(\d{9})([VXvx])$'); // 9 digits + V/X
+            final newIdReg = RegExp(r'^(\d{12})$'); // 12 digits
 
-            if (oldIdReg.hasMatch(val)) {
-              final match = oldIdReg.firstMatch(val)!;
-              final year = int.parse(match.group(1)!);
-              if (year < 0 || year > 99) return texts['invalidId'];
-            } else if (newIdReg.hasMatch(val)) {
-              final match = newIdReg.firstMatch(val)!;
-              final year = int.parse(match.group(1)!);
-              if (year < 1900 || year > currentYear) return texts['invalidId'];
+            if (oldIdReg.hasMatch(val) || newIdReg.hasMatch(val)) {
+              return null;
             } else {
               return texts['invalidId'];
             }
-            return null;
           },
         ),
-        const SizedBox(height: 24),
+        const SizedBox(height: 30),
 
         Row(
+          mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            const Spacer(),
             ElevatedButton(
               onPressed: _isSaving
                   ? null
                   : () {
-                      if (_formKey.currentState!.validate()) {
-                        setState(() => _currentStep = 1);
-                      }
-                    },
+                HapticFeedback.lightImpact();
+                if (_formKey.currentState!.validate()) {
+                  setState(() => _currentStep = 1);
+                }
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.buttonText,
                 padding: const EdgeInsets.symmetric(
                   vertical: 16,
                   horizontal: 32,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(15),
                 ),
+                elevation: 5,
               ),
               child: Text(
                 texts['next']!,
-                style: TextStyle(
-                  fontSize: isMobile ? 16 : 18,
-                  color: AppColors.buttonText,
+                style: GoogleFonts.roboto(
+                  fontSize: isMobile ? 18 : 20,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -350,10 +407,10 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
   }
 
   Widget _buildPage2(
-    BuildContext context,
-    bool isMobile,
-    Map<String, String> texts,
-  ) {
+      BuildContext context,
+      bool isMobile,
+      Map<String, String> texts,
+      ) {
     final durationOptions = [
       texts['lessThan1Month']!,
       texts['1month']!,
@@ -367,40 +424,41 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     return SingleChildScrollView(
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Page Title
           Text(
             texts['pregnancyInfo']!,
-            style: TextStyle(
-              fontSize: isMobile ? 24 : 28,
-              fontWeight: FontWeight.bold,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: isMobile ? 32 : 36,
+              fontWeight: FontWeight.w700,
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 30),
 
+          // Pregnancy Month Dropdown
           DropdownButtonFormField<String>(
             value: pregnancyMonth.isEmpty ? null : pregnancyMonth,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: AppColors.inputBackground,
-              labelText: texts['pregnancyMonth'],
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
+            decoration: customInputDecoration(texts['pregnancyMonth']!),
             items: List.generate(
               9,
-              (index) => DropdownMenuItem(
+                  (index) => DropdownMenuItem(
                 value: '${index + 1}',
-                child: Text('${index + 1} ${texts['month']}'),
+                child: Text(
+                  '${index + 1} ${texts['month']}',
+                  style: GoogleFonts.roboto(color: AppColors.text),
+                ),
               ),
             ),
             onChanged: (val) => setState(() => pregnancyMonth = val ?? ''),
             validator: (val) =>
-                val == null || val.isEmpty ? texts['required'] : null,
+            val == null || val.isEmpty ? texts['required'] : null,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
 
+          // Checkboxes
           _buildCheckbox(texts['firstTimeMother']!, firstTimeMother, (val) {
             setState(() => firstTimeMother = val);
           }),
@@ -410,71 +468,79 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
           _buildCheckbox(
             texts['obstetricComplication']!,
             obstetricComplication,
-            (val) {
+                (val) {
               setState(() => obstetricComplication = val);
             },
           ),
-          _buildCheckbox(texts['psychologicalSupport']!, psychologicalSupport, (
-            val,
-          ) {
-            setState(() => psychologicalSupport = val);
-          }),
+          _buildCheckbox(
+            texts['psychologicalSupport']!,
+            psychologicalSupport,
+                (val) {
+              setState(() => psychologicalSupport = val);
+            },
+          ),
           _buildCheckbox(texts['distressingEvents']!, distressingEvents, (val) {
             setState(() => distressingEvents = val);
           }),
-          _buildCheckbox(texts['practicedMindfulness']!, practicedMindfulness, (
-            val,
-          ) {
-            setState(() => practicedMindfulness = val);
-          }),
+          _buildCheckbox(
+            texts['practicedMindfulness']!,
+            practicedMindfulness,
+                (val) {
+              setState(() => practicedMindfulness = val);
+              if (!val) mindfulnessDuration = ''; // Reset duration if unchecked
+            },
+          ),
+          const SizedBox(height: 10),
 
+          // Mindfulness Duration Dropdown
           if (practicedMindfulness)
-            DropdownButtonFormField<String>(
-              value: mindfulnessDuration.isEmpty ? null : mindfulnessDuration,
-              decoration: InputDecoration(
-                filled: true,
-                fillColor: AppColors.inputBackground,
-                labelText: texts['mindfulnessDuration'],
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
+            Padding(
+              padding: const EdgeInsets.only(top: 10.0),
+              child: DropdownButtonFormField<String>(
+                value: mindfulnessDuration.isEmpty ? null : mindfulnessDuration,
+                decoration: customInputDecoration(texts['mindfulnessDuration']!),
+                items: durationOptions
+                    .map((e) => DropdownMenuItem(
+                  value: e,
+                  child: Text(e, style: GoogleFonts.roboto(color: AppColors.text)),
+                ))
+                    .toList(),
+                onChanged: (val) =>
+                    setState(() => mindfulnessDuration = val ?? ''),
+                validator: (val) =>
+                    practicedMindfulness && (val == null || val.isEmpty)
+                        ? texts['required']
+                        : null,
               ),
-              items: durationOptions
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (val) =>
-                  setState(() => mindfulnessDuration = val ?? ''),
-              validator: (val) =>
-                  practicedMindfulness && (val == null || val.isEmpty)
-                  ? texts['required']
-                  : null,
             ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 30),
 
+          // Navigation Buttons
           Row(
             children: [
-              ElevatedButton(
+              OutlinedButton(
                 onPressed: _isSaving
                     ? null
                     : () {
-                        setState(() => _currentStep = 0);
-                      },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.background,
+                  HapticFeedback.lightImpact();
+                  setState(() => _currentStep = 0);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.text,
                   padding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 24,
                   ),
+                  side: const BorderSide(color: AppColors.text, width: 1.5),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    side: const BorderSide(color: Colors.black26),
+                    borderRadius: BorderRadius.circular(15),
                   ),
                 ),
                 child: Text(
                   texts['back']!,
-                  style: TextStyle(
-                    fontSize: isMobile ? 16 : 18,
-                    color: AppColors.text,
+                  style: GoogleFonts.roboto(
+                    fontSize: isMobile ? 18 : 20,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ),
@@ -483,36 +549,40 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                 onPressed: _isSaving
                     ? null
                     : () {
-                        if (_formKey.currentState!.validate()) {
-                          _showConfirmationDialog(texts);
-                        }
-                      },
+                  HapticFeedback.mediumImpact();
+                  if (_formKey.currentState!.validate()) {
+                    setState(() {});
+                    _showConfirmationDialog(texts);
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
+                  foregroundColor: AppColors.buttonText,
                   padding: const EdgeInsets.symmetric(
                     vertical: 16,
                     horizontal: 32,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(15),
                   ),
+                  elevation: 5,
                 ),
                 child: _isSaving
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
+                  height: 20,
+                  width: 20,
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
+                )
                     : Text(
-                        texts['finish']!,
-                        style: TextStyle(
-                          fontSize: isMobile ? 16 : 18,
-                          color: AppColors.buttonText,
-                        ),
-                      ),
+                  texts['finish']!,
+                  style: GoogleFonts.roboto(
+                    fontSize: isMobile ? 18 : 20,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
               ),
             ],
           ),
@@ -520,6 +590,8 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
       ),
     );
   }
+
+  // --- Main Build Method ---
 
   late Map<String, String> texts;
 
@@ -531,82 +603,88 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
 
     texts = langProvider.currentLang == 'en'
         ? {
-            'basicInfo': 'Basic Information',
-            'age': 'Age',
-            'residence': 'Residence (City)',
-            'idNumber': 'Identification Number (ID)',
-            'required': 'Required',
-            'mustNumber': 'Must be a number',
-            'ageLimit': 'Age must be 18–70',
-            'invalidId': 'Invalid ID format',
-            'next': 'Next',
-            'pregnancyInfo': 'Pregnancy & Background Info',
-            'pregnancyMonth': 'Current month of pregnancy',
-            'month': 'month',
-            'firstTimeMother': 'First-time mother?',
-            'employed': 'Employed?',
-            'obstetricComplication': 'Obstetric complication?',
-            'psychologicalSupport': 'Receiving psychological support?',
-            'distressingEvents': 'Experiencing distressing life events?',
-            'practicedMindfulness': 'Practiced mindfulness before?',
-            'mindfulnessDuration': 'Mindfulness duration',
-            'lessThan1Month': 'Less than 1 month',
-            '1month': '1 Months',
-            '2month': '2 Months',
-            '3month': '3 Months',
-            '4month': '4 Months',
-            '5month': '5 Months',
-            'moreThan6Months': 'More than 6 months',
-            'back': 'Back',
-            'confirmDetails': 'Confirm your details',
-            'edit': 'Edit',
-            'confirm': 'Confirm',
-            'finish': 'Finish',
-            'cancel': 'Cancel',
-            'yes': 'Yes',
-            'no': 'No',
-          }
+      'basicInfo': 'Basic Information',
+      'age': 'Age',
+      'residence': 'Residence (City)',
+      'idNumber': 'Identification Number (ID)',
+      'required': 'Required',
+      'mustNumber': 'Must be a number',
+      'ageLimit': 'Age must be 18–70',
+      'invalidId': 'Invalid ID format (9 digits + V/X or 12 digits)',
+      'next': 'Next',
+      'pregnancyInfo': 'Pregnancy & Background Info',
+      'pregnancyMonth': 'Current month of pregnancy',
+      'month': 'month',
+      'firstTimeMother': 'First-time mother?',
+      'employed': 'Employed?',
+      'obstetricComplication': 'Obstetric complication?',
+      'psychologicalSupport': 'Receiving psychological support?',
+      'distressingEvents': 'Experiencing distressing life events?',
+      'practicedMindfulness': 'Practiced mindfulness before?',
+      'mindfulnessDuration': 'Mindfulness duration',
+      'lessThan1Month': 'Less than 1 month',
+      '1month': '1 Months',
+      '2month': '2 Months',
+      '3month': '3 Months',
+      '4month': '4 Months',
+      '5month': '5 Months',
+      'moreThan6Months': 'More than 6 months',
+      'back': 'Back',
+      'confirmDetails': 'Confirm Your Details',
+      'confirm': 'Confirm',
+      'finish': 'Finish',
+      'cancel': 'Cancel',
+      'yes': 'Yes',
+      'no': 'No',
+      'saveSuccess': 'Registration complete!',
+      'saveError': 'Error saving data: ',
+    }
         : {
-            'basicInfo': 'මූලික තොරතුරු',
-            'age': 'වයස',
-            'residence': 'නගරය / නේවාසික ස්ථානය',
-            'idNumber': 'හැඳුනුම්පත් අංකය',
-            'required': 'අවශ්‍යයි',
-            'mustNumber': 'අංකයක් විය යුතුය',
-            'ageLimit': 'වයස 18–70 අතර විය යුතුය',
-            'invalidId': 'අවලංගු හැඳුනුම්පත් ආකෘතිය',
-            'next': 'ඊළඟ',
-            'pregnancyInfo': 'ගර්භණී සහ පසුබැසීමේ තොරතුරු',
-            'pregnancyMonth': 'වත්මන් ගර්භ මාසය',
-            'month': 'මාසය',
-            'firstTimeMother': 'මුල් වරට මවක්ද?',
-            'employed': 'රැකියාවක නිරත වේද?',
-            'obstetricComplication': 'ගර්භාණු සම්බන්ධ අපහසුතා?',
-            'psychologicalSupport': 'මානසික සහාය ලබනවාද?',
-            'distressingEvents': 'පීඩාකාරී සිදුවීම් සිදුවේද/ සිදුවී තිබේද?',
-            'practicedMindfulness': 'පෙර මනෝආවරණය පුරුදු වියදේද?',
-            'mindfulnessDuration': 'මනෝආවරණ කාලය',
-            'lessThan1Month': 'මාස 1ට අඩු',
-            '1month': 'මාස 1 යි',
-            '2month': 'මාස 2 යි',
-            '3month': 'මාස 3 යි',
-            '4month': 'මාස 4 යි',
-            '5month': 'මාස 5 යි',
-            'moreThan6Months': 'මාස 6ට වැඩි',
-            'back': 'පසු',
-            'confirmDetails': 'ඔබේ විස්තර තහවුරු කරන්න',
-            'edit': 'සංස්කරණය කරන්න',
-            'confirm': 'තහවුරු කරන්න',
-            'finish': 'නිම කරන්න',
-            'cancel': 'අවලංගු කරන්න',
-            'yes': 'ඔව්',
-            'no': 'නැත',
-          };
-
-    DateTime? lastBackPressTime;
+      'basicInfo': 'මූලික තොරතුරු',
+      'age': 'වයස',
+      'residence': 'නගරය / නේවාසික ස්ථානය',
+      'idNumber': 'හැඳුනුම්පත් අංකය',
+      'required': 'අවශ්‍යයි',
+      'mustNumber': 'අංකයක් විය යුතුය',
+      'ageLimit': 'වයස 18–70 අතර විය යුතුය',
+      'invalidId': 'අවලංගු හැඳුනුම්පත් ආකෘතිය (ඉලක්කම් 9 + V/X හෝ ඉලක්කම් 12)',
+      'next': 'ඊළඟ',
+      'pregnancyInfo': 'ගර්භණී සහ පසුබිම් තොරතුරු',
+      'pregnancyMonth': 'වත්මන් ගර්භ මාසය',
+      'month': 'මාසය',
+      'firstTimeMother': 'මුල් වරට මවක්ද?',
+      'employed': 'රැකියාවක නිරත වේද?',
+      'obstetricComplication': 'ගර්භාණු සම්බන්ධ අපහසුතා?',
+      'psychologicalSupport': 'මානසික සහාය ලබනවාද?',
+      'distressingEvents': 'පීඩාකාරී සිදුවීම් සිදුවේද/ සිදුවී තිබේද?',
+      'practicedMindfulness': 'පෙර මනෝආවරණය පුරුදු වියදේද?',
+      'mindfulnessDuration': 'මනෝආවරණ කාලය',
+      'lessThan1Month': 'මාස 1ට අඩු',
+      '1month': 'මාස 1 යි',
+      '2month': 'මාස 2 යි',
+      '3month': 'මාස 3 යි',
+      '4month': 'මාස 4 යි',
+      '5month': 'මාස 5 යි',
+      'moreThan6Months': 'මාස 6ට වැඩි',
+      'back': 'පසු',
+      'confirmDetails': 'ඔබේ විස්තර තහවුරු කරන්න',
+      'confirm': 'තහවුරු කරන්න',
+      'finish': 'නිම කරන්න',
+      'cancel': 'අවලංගු කරන්න',
+      'yes': 'ඔව්',
+      'no': 'නැත',
+      'saveSuccess': 'ලියාපදිංචිය සම්පූර්ණයි!',
+      'saveError': 'දත්ත ගබඩා කිරීමේ දෝෂය: ',
+    };
 
     return WillPopScope(
       onWillPop: () async {
+        if (_currentStep == 1) {
+          HapticFeedback.lightImpact();
+          setState(() => _currentStep = 0);
+          return false;
+        }
+
         DateTime now = DateTime.now();
         if (lastBackPressTime == null ||
             now.difference(lastBackPressTime!) > const Duration(seconds: 2)) {
@@ -628,6 +706,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
       child: Scaffold(
         body: Stack(
           children: [
+            // Background image
             Container(
               width: double.infinity,
               height: double.infinity,
@@ -638,26 +717,46 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                 ),
               ),
             ),
+            Container(
+              width: double.infinity,
+              height: double.infinity,
+              color: AppColors.background.withOpacity(0.10), 
+            ),
+
+            // Form Card
             Center(
-              child: Container(
-                width: isMobile ? size.width * 0.9 : 500,
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.background.withOpacity(0.85),
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Colors.black26,
-                      blurRadius: 15,
-                      offset: Offset(0, 5),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                child: Container(
+                  width: isMobile ? size.width * 0.9 : 500,
+                  padding: const EdgeInsets.all(30),
+                  decoration: BoxDecoration(
+                    color: AppColors.background,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        spreadRadius: 3,
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.05),
+                        spreadRadius: -2,
+                        blurRadius: 10,
+                        offset: const Offset(-5, -5),
+                      ),
+                    ],
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _currentStep == 0
+                          ? _buildPage1(context, isMobile, texts)
+                          : _buildPage2(context, isMobile, texts),
                     ),
-                  ],
-                ),
-                child: Form(
-                  key: _formKey,
-                  child: _currentStep == 0
-                      ? _buildPage1(context, isMobile, texts)
-                      : _buildPage2(context, isMobile, texts),
+                  ),
                 ),
               ),
             ),

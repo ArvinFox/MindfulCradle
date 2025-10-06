@@ -13,31 +13,46 @@ class QuestionnaireMainPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageProvider>(context);
 
+    // Dynamic Tab Labels
+    final List<String> tabTitles = lang.currentLang == 'en'
+        ? ["DAAS-21", "MAAS", "PWS-18"]
+        : ["DAAS-21", "MAAS", "PWS-18"];
+
     return DefaultTabController(
       length: 3,
       child: Scaffold(
         backgroundColor: AppColors.background,
         appBar: AppBar(
           backgroundColor: AppColors.primary,
+          elevation: 4, 
           title: Text(
             lang.currentLang == 'en'
                 ? "Questionnaire Feedback"
                 : "ප්‍රශ්න පිළිබඳ ප්‍රතිචාර",
-            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600, 
+            ),
           ),
+          centerTitle: true,
           bottom: TabBar(
             indicatorColor: Colors.white,
+            indicatorWeight: 3.0, 
             labelColor: Colors.white,
-            unselectedLabelColor: Colors.white70,
-            tabs: const [
-              Tab(text: "DAAS-21"),
-              Tab(text: "MAAS"),
-              Tab(text: "PWS-18"),
-            ],
+            unselectedLabelColor: Colors.white.withOpacity(0.75), 
+            labelStyle: const TextStyle(
+              fontWeight: FontWeight.w600, 
+              fontSize: 15,
+            ),
+            unselectedLabelStyle: const TextStyle(
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+            ),
+            tabs: tabTitles.map((title) => Tab(text: title)).toList(),
           ),
         ),
-        body: TabBarView(
-          children: const [
+        body: const TabBarView(
+          children: [
             DAAS21Page(),
             MAASPage(),
             PWS18QuestionnairePage(),

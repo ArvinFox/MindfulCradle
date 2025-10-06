@@ -11,7 +11,7 @@ import '../../providers/video_provider.dart';
 class YouTubeVideoPlayerPage extends StatefulWidget {
   final VideoModel video;
   final String userId;
-  final String youtubeId; // NEW: pass language-specific ID
+  final String youtubeId; //language-specific ID
 
   const YouTubeVideoPlayerPage({
     super.key,
@@ -36,14 +36,13 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // restore nav + status bars when this page loads
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     final videoProvider = Provider.of<VideoProvider>(context, listen: false);
     _watchedSeconds = videoProvider.getLastWatchedSecond(widget.video.id);
 
     _controller = YoutubePlayerController(
-      initialVideoId: widget.youtubeId, // USE the language-specific ID
+      initialVideoId: widget.youtubeId,
       flags: const YoutubePlayerFlags(
         autoPlay: true,
         mute: false,
@@ -53,7 +52,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     );
 
     if (_watchedSeconds > 0) {
-      _controller.seekTo(Duration(seconds: _watchedSeconds));
+      _controller.seekTo(Duration(seconds: _watchedSeconds)); 
     }
 
     _controller.addListener(_youtubeListener);
@@ -110,6 +109,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     _progressTimer?.cancel();
     _controller.removeListener(_youtubeListener);
     _controller.pause();
+    
     videoProvider.updateProgress(
       userId: widget.userId,
       videoId: widget.video.id,
@@ -136,7 +136,8 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
       child: YoutubePlayerBuilder(
         player: YoutubePlayer(
           controller: _controller,
-          showVideoProgressIndicator: false,
+          showVideoProgressIndicator: true, 
+          progressIndicatorColor: AppColors.primary, 
           onReady: () {
             SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
           },
@@ -146,7 +147,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
             backgroundColor: AppColors.background,
             appBar: AppBar(
               backgroundColor: AppColors.primary,
-              elevation: 0,
+              elevation: 4, 
               leading: CupertinoNavigationBarBackButton(
                 color: Colors.white,
                 onPressed: () {
@@ -159,39 +160,24 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                 widget.video.title,
                 style: const TextStyle(
                   color: Colors.white,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w600, 
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
               centerTitle: true,
             ),
             body: Column(
               children: [
-                const SizedBox(height: 16),
-                GestureDetector(
-                  onTap: _toggleControls,
-                  child: Stack(
-                    alignment: Alignment.center,
-                    children: [
-                      player,
-                      if (_showControls)
-                        IconButton(
-                          iconSize: 64,
-                          icon: Icon(
-                            _controller.value.isPlaying
-                                ? Icons.pause_circle_filled
-                                : Icons.play_circle_filled,
-                            color: Colors.white,
-                          ),
-                          onPressed: () {
-                            _controller.value.isPlaying
-                                ? _controller.pause()
-                                : _controller.play();
-                            _toggleControls();
-                          },
-                        ),
-                    ],
-                  ),
+                const SizedBox(height: 0),
+                
+                // Video Player
+                Container(
+                  color: Colors.black,
+                  child: player,
                 ),
+                
+                // Progress Bar Section
                 const SizedBox(height: 24),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -200,7 +186,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                     child: Container(
                       height: 24,
                       decoration: BoxDecoration(
-                        color: Colors.grey.shade300,
+                        color: AppColors.primary.withOpacity(0.30), 
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Stack(
@@ -209,16 +195,10 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                             alignment: Alignment.centerLeft,
                             widthFactor: progress,
                             child: Container(
-                              decoration: const BoxDecoration(
-                                gradient: LinearGradient(
-                                  colors: [
-                                    Colors.purple,
-                                    Color.fromARGB(255, 53, 20, 240),
-                                    Colors.green,
-                                  ],
-                                ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
                                 borderRadius:
-                                    BorderRadius.all(Radius.circular(20)),
+                                    const BorderRadius.all(Radius.circular(20)),
                               ),
                             ),
                           ),

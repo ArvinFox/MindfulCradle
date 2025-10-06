@@ -23,12 +23,29 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final user = authProvider.user;
 
+    const appBarTextStyle = TextStyle(
+      color: Colors.white,
+      fontWeight: FontWeight.w500,
+      fontSize: 22,
+    );
+
     if (authProvider.isInitializing) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+      );
     }
 
     if (user == null) {
-      return const Scaffold(body: Center(child: Text("User not found")));
+      return Scaffold(
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: Text(
+            langProvider.currentLang == 'en' ? "User data not available" : "පරිශීලක දත්ත නොමැත",
+            style: TextStyle(color: AppColors.text),
+          ),
+        ),
+      );
     }
 
     return Scaffold(
@@ -37,14 +54,10 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: AppColors.primary,
         title: Text(
           langProvider.currentLang == 'en' ? "Profile" : "ප්‍රොෆයිල්",
-          style: const TextStyle(
-            color: Colors.white,
-            fontWeight: FontWeight.bold,
-            fontSize: 22,
-          ),
+          style: appBarTextStyle,
         ),
         centerTitle: true,
-        elevation: 4,
+        elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -62,69 +75,89 @@ class _ProfilePageState extends State<ProfilePage> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile picture
             Center(
               child: Container(
-                width: 120,
-                height: 120,
+                width: 130,
+                height: 130,
                 decoration: BoxDecoration(
                   color: AppColors.cardBackground,
-                  borderRadius: BorderRadius.circular(60),
+                  borderRadius: BorderRadius.circular(65),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withOpacity(0.2),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                child: Icon(Icons.person, size: 72, color: AppColors.primary),
+                child: Icon(Icons.person, size: 80, color: AppColors.primary),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Center(
               child: Text(
                 user.fullName,
                 style: TextStyle(
-                  fontSize: isMobile ? 22 : 26,
-                  fontWeight: FontWeight.bold,
+                  fontSize: isMobile ? 24 : 28,
+                  fontWeight: FontWeight.w700,
                   color: AppColors.text,
                 ),
               ),
             ),
-            const SizedBox(height: 24),
-            // User info card
+            Center(
+              child: Text(
+                user.email,
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.text.withOpacity(0.6),
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            
             Card(
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(16),
               ),
               color: AppColors.cardBackground,
-              elevation: 2,
+              elevation: 4,
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      langProvider.currentLang == 'en' ? "Email" : "ඊමේල්",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(user.email, style: TextStyle(color: AppColors.text)),
-                    const SizedBox(height: 16),
-                    Text(
-                      langProvider.currentLang == 'en' ? "Settings" : "සැකසුම්",
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+                      child: Text(
+                        langProvider.currentLang == 'en' ? "Settings" : "සැකසුම්",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.primary,
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const Divider(height: 1, thickness: 1, indent: 16, endIndent: 16),
+                    
                     ListTile(
-                      leading: const Icon(Icons.language),
+                      leading: Icon(Icons.language, color: AppColors.primary),
                       title: Text(
                         langProvider.currentLang == 'en' ? "Language" : "භාෂාව",
+                        style: TextStyle(
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w500,
+                        ),
                       ),
                       trailing: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
                           value: langProvider.currentLang == 'en' ? "en" : "si",
+                          style: TextStyle(color: AppColors.text, fontSize: 16),
+                          dropdownColor: AppColors.cardBackground,
                           items: const [
                             DropdownMenuItem(
                               value: "en",
@@ -141,6 +174,28 @@ class _ProfilePageState extends State<ProfilePage> {
                       ),
                     ),
                   ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Center(
+              child: TextButton.icon(
+                onPressed: () {
+                  LogoutUtils.showLogoutDialog(
+                    context: context,
+                    authProvider: authProvider,
+                    language: langProvider.currentLang,
+                    redirectRoute: '/login',
+                  );
+                },
+                icon: Icon(Icons.exit_to_app, color: Colors.redAccent),
+                label: Text(
+                  langProvider.currentLang == 'en' ? "Log Out" : "ලොග් අවුට්",
+                  style: const TextStyle(
+                    color: Colors.redAccent,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),

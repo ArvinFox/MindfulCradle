@@ -4,7 +4,6 @@ class VideoModel {
   final String youtubeId;
   final String youtubeIdSi; // For Sinhala Videos
   final int duration;
-  final String language;
   final int sessionNumber;
 
   VideoModel({
@@ -13,7 +12,6 @@ class VideoModel {
     required this.youtubeId,
     required this.youtubeIdSi,
     required this.duration,
-    required this.language,
     required this.sessionNumber,
   });
 
@@ -24,7 +22,6 @@ class VideoModel {
       youtubeId: map['youtubeId'] ?? '',
       youtubeIdSi: map['youtubeIdSi'] ?? '',
       duration: map['duration'] ?? 0,
-      language: map['language'] ?? 'en',
       sessionNumber: map['sessionNumber'] ?? 1,
     );
   }
@@ -35,7 +32,6 @@ class VideoModel {
       'youtubeId': youtubeId,
       'youtubeIdSi': youtubeIdSi,
       'duration': duration,
-      'language': language,
       'sessionNumber': sessionNumber,
     };
   }

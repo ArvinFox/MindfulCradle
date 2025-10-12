@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:mamamind/utils/helpers.dart';
 import 'package:mamamind/utils/logout_util.dart';
 import 'package:provider/provider.dart';
 import '../../constants/colors.dart';
@@ -23,16 +25,12 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final user = authProvider.user;
 
-    const appBarTextStyle = TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.w500,
-      fontSize: 22,
-    );
-
     if (authProvider.isInitializing) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: Center(child: CircularProgressIndicator(color: AppColors.primary)),
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
       );
     }
 
@@ -41,8 +39,14 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: AppColors.background,
         body: Center(
           child: Text(
-            langProvider.currentLang == 'en' ? "User data not available" : "පරිශීලක දත්ත නොමැත",
-            style: TextStyle(color: AppColors.text),
+            langProvider.currentLang == 'en'
+                ? "User data not available"
+                : "පරිශීලක දත්ත නොමැත",
+            style: GoogleFonts.poppins(
+              color: AppColors.text,
+              fontWeight: FontWeight.w500,
+              fontSize: 16,
+            ),
           ),
         ),
       );
@@ -52,10 +56,10 @@ class _ProfilePageState extends State<ProfilePage> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         backgroundColor: AppColors.primary,
-        title: Text(
-          langProvider.currentLang == 'en' ? "Profile" : "ප්‍රොෆයිල්",
-          style: appBarTextStyle,
-        ),
+       title: Text(
+  langProvider.currentLang == 'en' ? "Profile" : "ප්‍රොෆයිල්",
+  style: appBarTextStyle,
+),
         centerTitle: true,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -101,9 +105,9 @@ class _ProfilePageState extends State<ProfilePage> {
             Center(
               child: Text(
                 user.fullName,
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   fontSize: isMobile ? 24 : 28,
-                  fontWeight: FontWeight.w700,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.text,
                 ),
               ),
@@ -111,15 +115,15 @@ class _ProfilePageState extends State<ProfilePage> {
             Center(
               child: Text(
                 user.email,
-                style: TextStyle(
+                style: GoogleFonts.poppins(
                   fontSize: 16,
-                  fontWeight: FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                   color: AppColors.text.withOpacity(0.6),
                 ),
               ),
             ),
             const SizedBox(height: 32),
-            
+
             Card(
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -127,43 +131,64 @@ class _ProfilePageState extends State<ProfilePage> {
               color: AppColors.cardBackground,
               elevation: 4,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
                       padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
                       child: Text(
-                        langProvider.currentLang == 'en' ? "Settings" : "සැකසුම්",
-                        style: TextStyle(
+                        langProvider.currentLang == 'en'
+                            ? "Settings"
+                            : "සැකසුම්",
+                        style: GoogleFonts.poppins(
                           fontSize: 20,
                           fontWeight: FontWeight.w600,
                           color: AppColors.primary,
                         ),
                       ),
                     ),
-                    const Divider(height: 1, thickness: 1, indent: 16, endIndent: 16),
-                    
+                    const Divider(
+                        height: 1, thickness: 1, indent: 16, endIndent: 16),
+
                     ListTile(
                       leading: Icon(Icons.language, color: AppColors.primary),
                       title: Text(
-                        langProvider.currentLang == 'en' ? "Language" : "භාෂාව",
-                        style: TextStyle(
+                        langProvider.currentLang == 'en'
+                            ? "Language"
+                            : "භාෂාව",
+                        style: GoogleFonts.poppins(
                           color: AppColors.text,
                           fontWeight: FontWeight.w500,
+                          fontSize: 16,
                         ),
                       ),
                       trailing: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
-                          value: langProvider.currentLang == 'en' ? "en" : "si",
-                          style: TextStyle(color: AppColors.text, fontSize: 16),
+                          value: langProvider.currentLang == 'en'
+                              ? "en"
+                              : "si",
+                          style: GoogleFonts.poppins(
+                              color: AppColors.text,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w500),
                           dropdownColor: AppColors.cardBackground,
                           items: const [
                             DropdownMenuItem(
                               value: "en",
-                              child: Text("English"),
+                              child: Text("English",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16)),
                             ),
-                            DropdownMenuItem(value: "si", child: Text("සිංහල")),
+                            DropdownMenuItem(
+                              value: "si",
+                              child: Text("සිංහල",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 16)),
+                            ),
                           ],
                           onChanged: (val) {
                             if (val != null) {
@@ -190,8 +215,10 @@ class _ProfilePageState extends State<ProfilePage> {
                 },
                 icon: Icon(Icons.exit_to_app, color: Colors.redAccent),
                 label: Text(
-                  langProvider.currentLang == 'en' ? "Log Out" : "ලොග් අවුට්",
-                  style: const TextStyle(
+                  langProvider.currentLang == 'en'
+                      ? "Log Out"
+                      : "ලොග් අවුට්",
+                  style: GoogleFonts.poppins(
                     color: Colors.redAccent,
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

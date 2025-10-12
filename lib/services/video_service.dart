@@ -63,6 +63,13 @@ class VideoService {
           return progress;
         });
   }
+
+  /// Update unlocked videos in Firestore
+  Future<void> updateUnlockedVideos(String userId, List<int> unlockedSessions) async {
+    await _firestore.collection('users').doc(userId).update({
+      'unlockedVideos': unlockedSessions,
+    });
+  }
 }
 
 /// Video language pass

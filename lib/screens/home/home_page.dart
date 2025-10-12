@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mamamind/constants/app_config.dart';
+import 'package:mamamind/utils/helpers.dart';
 import 'package:mamamind/utils/logout_util.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -148,7 +149,7 @@ class _HomePageState extends State<HomePage> {
                         ? "Welcome, ${user.fullName.split(' ').first}!"
                         : "ආයුබෝවන්, ${user.fullName.split(' ').first}!",
                     style: GoogleFonts.poppins(
-                      fontSize: isMobile ? 30 : 36,
+                      fontSize: isMobile ? 27 : 32,
                       fontWeight: FontWeight.w600,
                       color: AppColors.text,
                       height: 1.1,
@@ -174,11 +175,7 @@ class _HomePageState extends State<HomePage> {
                     currentLang == 'en'
                         ? "Meditation Sessions"
                         : "ධ්‍යානය සැසි",
-                    style: GoogleFonts.poppins(
-                      fontSize: isMobile ? 24 : 28,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.primary,
-                    ),
+                    style: primaryColorTitleStyle,
                   ),
                   const SizedBox(height: 16),
 

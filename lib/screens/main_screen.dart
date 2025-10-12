@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mamamind/utils/helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:mamamind/screens/home/questionnaires.dart';
 import '../../constants/colors.dart';
@@ -58,14 +59,8 @@ class _MainScreenState extends State<MainScreen> {
       backgroundColor: AppColors.background,
       elevation: 10,
       type: BottomNavigationBarType.fixed,
-      selectedLabelStyle: const TextStyle(
-        fontWeight: FontWeight.w600,
-        fontSize: 13,
-      ),
-      unselectedLabelStyle: const TextStyle(
-        fontWeight: FontWeight.w500,
-        fontSize: 12,
-      ),
+      selectedLabelStyle: selectedLabelStyle,
+      unselectedLabelStyle: unselectedLabelStyle,
       
       onTap: (index) {
         HapticFeedback.lightImpact();

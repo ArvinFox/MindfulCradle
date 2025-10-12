@@ -25,11 +25,16 @@ class VideoTile extends StatelessWidget {
     final String message = isSinhala
         ? "මෙය අගුළු හැරීමට පෙර සැසිය සම්පූර්ණ කරන්න."
         : "Complete the previous session to unlock this one.";
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
           message,
-          style: GoogleFonts.roboto(color: Colors.white),
+          style: GoogleFonts.roboto(
+            fontSize: isMobile ? 14 : 16,
+            fontWeight: FontWeight.w400,
+            color: Colors.white,
+          ),
         ),
         backgroundColor: Colors.orange.shade700,
         duration: const Duration(seconds: 2),

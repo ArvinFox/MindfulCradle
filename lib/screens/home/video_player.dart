@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mamamind/utils/helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:flutter/cupertino.dart';
@@ -50,10 +51,6 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
         controlsVisibleAtStart: true,
       ),
     );
-
-    if (_watchedSeconds > 0) {
-      _controller.seekTo(Duration(seconds: _watchedSeconds)); 
-    }
 
     _controller.addListener(_youtubeListener);
     _startProgressTimer();
@@ -158,10 +155,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
               ),
               title: Text(
                 widget.video.title,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600, 
-                ),
+                style: appBarTextStyle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
@@ -205,10 +199,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                           Center(
                             child: Text(
                               '${(progress * 100).toStringAsFixed(0)}%',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: selectedLabelStyle,
                             ),
                           )
                         ],

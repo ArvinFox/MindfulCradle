@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/utils/helpers.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
 import '../../widgets/achievement_tile.dart'; 
 import '../../providers/language_provider.dart';
@@ -40,13 +42,7 @@ class AchievementsPage extends StatelessWidget {
     final langProvider = Provider.of<LanguageProvider>(context);
     final isSinhala = langProvider.currentLang == 'si';
     
-    const appBarTextStyle = TextStyle(
-      color: Colors.white,
-      fontWeight: FontWeight.w500, 
-      fontSize: 22,
-    );
-
-    final String pageTitle = isSinhala ? "ජයග්‍රහණ" : "Achievements";
+    final pageTitle = isSinhala ? "ජයග්‍රහණ" : "Achievements";
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -68,8 +64,8 @@ class AchievementsPage extends StatelessWidget {
           itemBuilder: (context, index) {
             final ach = achievements[index];
 
-            final String title = isSinhala ? ach['title_si'] as String : ach['title_en'] as String;
-            final String subtitle = isSinhala ? ach['subtitle_si'] as String : ach['subtitle_en'] as String;
+            final title = isSinhala ? ach['title_si'] as String : ach['title_en'] as String;
+            final subtitle = isSinhala ? ach['subtitle_si'] as String : ach['subtitle_en'] as String;
             
             return AchievementTile(
               title: title,

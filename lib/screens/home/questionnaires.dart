@@ -1,63 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/utils/helpers.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:marquee/marquee.dart';
 import '../../constants/colors.dart';
 import '/providers/language_provider.dart';
-import '/screens/questionnaires/daas21_questionnaire.dart';
-import '/screens/questionnaires/maas_questionnaire.dart';
-import '/screens/questionnaires/pws18_questionnaire.dart';
+import '../questionnaires/daas21_questionnaire/daas21_questionnaire.dart';
+import '../questionnaires/maas_questionnaire/maas_questionnaire.dart';
+import '../questionnaires/pws18_questionnaire/pws18_questionnaire.dart';
 
-class QuestionnaireMainPage extends StatelessWidget {
+class QuestionnaireMainPage extends StatefulWidget {
   const QuestionnaireMainPage({super.key});
+
+  @override
+  State<QuestionnaireMainPage> createState() => _QuestionnaireMainPageState();
+}
+
+class _QuestionnaireMainPageState extends State<QuestionnaireMainPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(() {
+      setState(() {}); // Refresh to animate the active tab
+    });
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageProvider>(context);
 
-    // Dynamic Tab Labels
-    final List<String> tabTitles = lang.currentLang == 'en'
-        ? ["DAAS-21", "MAAS", "PWS-18"]
-        : ["DAAS-21", "MAAS", "PWS-18"];
+    final tabTitles = lang.currentLang == 'en'
+        ? ["Feelings Checker", "Attention Checker", "Happiness Score"]
+        : ["හැඟීම් පරික්ෂාව", "අවදානය පරීක්ෂාව", "මානසික සතුට පරීක්ෂාව"];
 
-    return DefaultTabController(
-      length: 3,
-      child: Scaffold(
-        backgroundColor: AppColors.background,
-        appBar: AppBar(
-          backgroundColor: AppColors.primary,
-          elevation: 4, 
-          title: Text(
-            lang.currentLang == 'en'
-                ? "Questionnaire Feedback"
-                : "ප්‍රශ්න පිළිබඳ ප්‍රතිචාර",
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w600, 
-            ),
-          ),
-          centerTitle: true,
-          bottom: TabBar(
-            indicatorColor: Colors.white,
-            indicatorWeight: 3.0, 
-            labelColor: Colors.white,
-            unselectedLabelColor: Colors.white.withOpacity(0.75), 
-            labelStyle: const TextStyle(
-              fontWeight: FontWeight.w600, 
-              fontSize: 15,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-            ),
-            tabs: tabTitles.map((title) => Tab(text: title)).toList(),
-          ),
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.primary,
+        title: Text(
+          lang.currentLang == 'en'
+              ? "Questionnaire Feedback"
+              : "ප්‍රශ්න පිළිබඳ ප්‍රතිචාර",
+          style:appBarTextStyle,
         ),
-        body: const TabBarView(
-          children: [
-            DAAS21Page(),
-            MAASPage(),
-            PWS18QuestionnairePage(),
-          ],
+        centerTitle: true,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          tabs: List.generate(tabTitles.length, (index) {
+            final isActive = _tabController.index == index;
+            return Tab(
+              child: SizedBox(
+                height: 20,
+                child: isActive
+                    ? Marquee(
+                        text: tabTitles[index],
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: Colors.white,
+                        ),
+                        scrollAxis: Axis.horizontal,
+                        blankSpace: 20,
+                        velocity: 30,
+                        startAfter: const Duration(seconds: 1),
+                        pauseAfterRound: const Duration(seconds: 1),
+                      )
+                    : Text(
+                        tabTitles[index],
+                        style: GoogleFonts.poppins(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+              ),
+            );
+          }),
         ),
+      ),
+      body: TabBarView(
+        controller: _tabController,
+        children: const [DAAS21Page(), MAASPage(), PWS18QuestionnairePage()],
       ),
     );
   }

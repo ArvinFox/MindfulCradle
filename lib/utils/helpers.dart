@@ -12,34 +12,28 @@ InputDecoration customInputDecoration(String labelText) {
     filled: true,
     fillColor: AppColors.inputBackground,
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
-    
+
     // Default border
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(15), 
-      borderSide: BorderSide.none, 
+      borderRadius: BorderRadius.circular(15),
+      borderSide: BorderSide.none,
     ),
-    
+
     // Focused state
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(15),
-      borderSide: const BorderSide(
-        color: AppColors.primary,
-        width: 2,
-      ), 
+      borderSide: const BorderSide(color: AppColors.primary, width: 2),
     ),
-    
+
     // Error state
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(15),
-      borderSide: const BorderSide(
-        color: Colors.red,
-        width: 2,
-      ), 
+      borderSide: const BorderSide(color: Colors.red, width: 2),
     ),
-    
+
     enabledBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(15), 
-      borderSide: BorderSide.none, 
+      borderRadius: BorderRadius.circular(15),
+      borderSide: BorderSide.none,
     ),
   );
 }
@@ -50,3 +44,32 @@ String formatDuration(int totalSeconds) {
   final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
   return '$minutes:$seconds';
 }
+
+Color scoreToColor(double score) {
+  double t = ((score - 1) / 5).clamp(0.0, 1.0);
+  return Color.lerp(AppColors.colorScaleMin, AppColors.colorScaleMax, t)!;
+}
+
+final appBarTextStyle = GoogleFonts.poppins(
+  color: AppColors.titleBarText,
+  fontWeight: FontWeight.w600,
+  fontSize: 20,
+);
+
+final selectedLabelStyle = GoogleFonts.poppins(
+  color: AppColors.titleBarText,
+  fontWeight: FontWeight.w500,
+  fontSize: 12,
+);
+
+final unselectedLabelStyle = GoogleFonts.poppins(
+  color: AppColors.titleBarText,
+  fontWeight: FontWeight.w400,
+  fontSize: 12,
+);
+
+final primaryColorTitleStyle = GoogleFonts.poppins(
+  color: AppColors.primary,
+  fontWeight: FontWeight.w600,
+  fontSize: 20,
+);

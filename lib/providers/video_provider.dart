@@ -71,14 +71,15 @@ class VideoProvider extends ChangeNotifier {
         videoId: videoId,
         watchedSeconds: watchedSeconds,
       );
-      _checkUnlocks();
+      await _checkUnlocks(); // now also updates Firestore
       notifyListeners();
     }
   }
 
-  /// Unlock logic (90% watched)
-  void _checkUnlocks() {
+  /// Unlock logic (90% watched) and save unlocked videos to Firestore
+  Future<void> _checkUnlocks() async {
     if (_user == null) return;
+    bool updated = false;
 
     for (int i = 1; i < _videos.length; i++) {
       final prevVideo = _videos[i - 1];
@@ -89,7 +90,16 @@ class VideoProvider extends ChangeNotifier {
       if (watched >= ((prevVideo.duration * 0.9).ceil()) &&
           !_user!.unlockedVideos.contains(nextVideo.sessionNumber)) {
         _user!.unlockedVideos.add(nextVideo.sessionNumber);
+        updated = true;
       }
+    }
+
+    // If unlocked videos updated, save to Firestore
+    if (updated && _user != null) {
+      await _videoService.updateUnlockedVideos(
+        _user!.id,
+        _user!.unlockedVideos,
+      );
     }
   }
 

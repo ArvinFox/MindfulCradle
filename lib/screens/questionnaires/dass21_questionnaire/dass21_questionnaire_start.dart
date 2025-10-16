@@ -326,8 +326,6 @@ class _DASS21QuestionnaireStartPageState
     Map<String, int> scores,
     bool isMobile,
   ) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(

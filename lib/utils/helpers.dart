@@ -45,9 +45,42 @@ String formatDuration(int totalSeconds) {
   return '$minutes:$seconds';
 }
 
-Color scoreToColor(double score) {
+Color scoreToColorPWS18(double score) {
   double t = ((score - 1) / 5).clamp(0.0, 1.0);
   return Color.lerp(AppColors.colorScaleMin, AppColors.colorScaleMax, t)!;
+}
+
+Color scoreToColorDASS21(String subscale, int score) {
+  final lower = subscale.toLowerCase();
+
+  switch (lower) {
+    case 'depression':
+    case 'මානසික අවපීඩනය':
+      if (score <= 9) return Colors.green;
+      if (score <= 13) return Colors.lightGreen;
+      if (score <= 20) return Colors.orange;
+      if (score <= 27) return Colors.deepOrange;
+      return Colors.red;
+
+    case 'anxiety':
+    case 'කාංසාව':
+      if (score <= 7) return Colors.green;
+      if (score <= 9) return Colors.lightGreen;
+      if (score <= 14) return Colors.orange;
+      if (score <= 19) return Colors.deepOrange;
+      return Colors.red;
+
+    case 'stress':
+    case 'පීඩනය':
+      if (score <= 14) return Colors.green;
+      if (score <= 18) return Colors.lightGreen;
+      if (score <= 25) return Colors.orange;
+      if (score <= 33) return Colors.deepOrange;
+      return Colors.red;
+
+    default:
+      return AppColors.tileInactive;
+  }
 }
 
 final appBarTextStyle = GoogleFonts.poppins(

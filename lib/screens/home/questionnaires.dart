@@ -5,9 +5,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:marquee/marquee.dart';
 import '../../constants/colors.dart';
 import '/providers/language_provider.dart';
-import '../questionnaires/daas21_questionnaire/daas21_questionnaire.dart';
+import '../questionnaires/dass21_questionnaire/dass21_questionnaire_start.dart';
 import '../questionnaires/maas_questionnaire/maas_questionnaire.dart';
-import '../questionnaires/pws18_questionnaire/pws18_questionnaire.dart';
+import '../questionnaires/pws18_questionnaire/pws18_questionnaire_start.dart';
 
 class QuestionnaireMainPage extends StatefulWidget {
   const QuestionnaireMainPage({super.key});
@@ -92,7 +92,7 @@ class _QuestionnaireMainPageState extends State<QuestionnaireMainPage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [DAAS21Page(), MAASPage(), PWS18QuestionnairePage()],
+        children: const [DASS21QuestionnaireStartPage(), MAASPage(), PWS18QuestionnaireStartPage()],
       ),
     );
   }

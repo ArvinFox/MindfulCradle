@@ -51,11 +51,11 @@ class _PWS18HintOverlayState extends State<PWS18HintOverlay>
 
   String _getHintText(String lang) {
     if (lang == 'si') {
-      return "මෙම පරීක්ෂණය සඳහා පිළිතුරු 1 - 7 සංඛ්‍යාවන් භාවිතා වේ.\n\n"
-          "1 = දැඩි ලෙස එකඟ\n2 = ටිකක් එකඟ\n3 = සාමාන්‍යයෙන් එකඟ\n4 = එකඟ නැත/නැත\n5 = සාමාන්‍යයෙන් අසම්මත\n6 = ටිකක් අසම්මත\n7 = දැඩි ලෙස අසම්මත";
+      return "මෙම පරීක්ෂණය සඳහා පිළිතුරු 1 - 6 සංඛ්‍යාවන් භාවිතා වේ.\n\n"
+          "1 = සෑමවිටම\n2 = බොහෝවිට\n3 = නිතරම\n4 = සමහරවිට\n5 = ඉතා කලාතුරකින්\n6 = කිසිවිටක නැත";
     }
-    return "For this questionnaire, please answer using numbers 1 - 7.\n\n"
-        "1 = Strongly Agree\n2 = Somewhat Agree\n3 = A Little Agree\n4 = Neither Agree nor Disagree\n5 = A Little Disagree\n6 = Somewhat Disagree\n7 = Strongly Disagree";
+    return "For this questionnaire, please answer using numbers 1 - 6.\n\n"
+        "1 = Almost always\n2 = Very frequently\n3 = Somewhat frequently\n4 = Somewhat infrequently\n5 = Very infrequently\n6 = Almost never";
   }
 
   @override
@@ -94,7 +94,6 @@ class _PWS18HintOverlayState extends State<PWS18HintOverlay>
               ),
 
               // Pulsing question mark
-              SizedBox(height: 40,),
               Positioned(
                 bottom: 40,
                 left: 40,

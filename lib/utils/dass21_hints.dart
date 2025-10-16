@@ -5,14 +5,14 @@ import 'package:provider/provider.dart';
 import '/constants/colors.dart';
 import '/providers/language_provider.dart';
 
-class PWS18HintOverlay extends StatefulWidget {
+class DASS21HintOverlay extends StatefulWidget {
   final bool visible;
   final VoidCallback onClose;
   final bool isMobile;
   final Duration duration;
   final Curve curve;
 
-  const PWS18HintOverlay({
+  const DASS21HintOverlay({
     super.key,
     required this.visible,
     required this.onClose,
@@ -22,10 +22,10 @@ class PWS18HintOverlay extends StatefulWidget {
   });
 
   @override
-  State<PWS18HintOverlay> createState() => _PWS18HintOverlayState();
+  State<DASS21HintOverlay> createState() => _DASS21HintOverlayState();
 }
 
-class _PWS18HintOverlayState extends State<PWS18HintOverlay>
+class _DASS21HintOverlayState extends State<DASS21HintOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _scaleAnimation;
@@ -51,11 +51,11 @@ class _PWS18HintOverlayState extends State<PWS18HintOverlay>
 
   String _getHintText(String lang) {
     if (lang == 'si') {
-      return "මෙම පරීක්ෂණය සඳහා පිළිතුරු 1 - 7 සංඛ්‍යාවන් භාවිතා වේ.\n\n"
-          "1 = දැඩි ලෙස එකඟ\n2 = ටිකක් එකඟ\n3 = සාමාන්‍යයෙන් එකඟ\n4 = එකඟ නැත/නැත\n5 = සාමාන්‍යයෙන් අසම්මත\n6 = ටිකක් අසම්මත\n7 = දැඩි ලෙස අසම්මත";
+      return "මෙම පරීක්ෂණය සඳහා පිළිතුරු 1 - 4 සංඛ්‍යාවන් භාවිතා වේ.\n\n"
+          "1 = මට කිසිසේත් අදාළ නැත.\n2 = මට තරමක් දුරට හෝ සමහර වෙලාවට අදාළයි\n3 = මට සැලකිය යුතු ප්‍රමාණයකට හෝ සැලකිය යුතු කාලයකට අදාළයි\n4 =මට බොහෝ දුරට හෝ බොහෝ වෙලාවට අදාළයි.";
     }
-    return "For this questionnaire, please answer using numbers 1 - 7.\n\n"
-        "1 = Strongly Agree\n2 = Somewhat Agree\n3 = A Little Agree\n4 = Neither Agree nor Disagree\n5 = A Little Disagree\n6 = Somewhat Disagree\n7 = Strongly Disagree";
+    return "For this questionnaire, please answer using numbers 1 - 4.\n\n"
+        "1 = Did not apply to me at all\n2 = Applied to me to some degree, or some of the time\n3 = Applied to me to a considerable degree, or a good part of time\n4 = Applied to me very much, or most of the time";
   }
 
   @override
@@ -94,7 +94,6 @@ class _PWS18HintOverlayState extends State<PWS18HintOverlay>
               ),
 
               // Pulsing question mark
-              SizedBox(height: 40,),
               Positioned(
                 bottom: 40,
                 left: 40,

@@ -25,7 +25,7 @@ class PWS18Provider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// ✅ Official reverse scoring items
+  /// Official reverse scoring items
   int _processedScore(int questionId, int value) {
     const reverseItems = [1, 2, 3, 8, 9, 11, 12, 13, 17, 18];
     if (reverseItems.contains(questionId)) {
@@ -35,7 +35,7 @@ class PWS18Provider with ChangeNotifier {
     return value;
   }
 
-  /// ✅ Official subscale mapping
+  /// Official subscale mapping
   Map<String, List<int>> get subscales => {
         'Autonomy': [15, 17, 18],
         'Environmental Mastery': [4, 8, 9],
@@ -207,33 +207,5 @@ class PWS18Provider with ChangeNotifier {
     reset();
     setUser(user);
     await loadLatest(context, user: user);
-  }
-
-  /// Load available question IDs from Firestore
-  Future<void> loadAvailableQuestions(BuildContext context) async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final currentUser = _user ?? authProvider.user;
-    if (currentUser == null) return;
-
-    availableQuestionIds.clear();
-
-    final snapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.id)
-        .collection('pws18_responses')
-        .doc('latest')
-        .get();
-
-    if (snapshot.exists && snapshot.data()?['responses'] != null) {
-      Map<String, dynamic> saved = Map<String, dynamic>.from(
-        snapshot.data()!['responses'],
-      );
-      for (var entry in saved.entries) {
-        int qId = int.tryParse(entry.key) ?? 0;
-        if (qId > 0 && qId <= 18) availableQuestionIds.add(qId);
-      }
-    }
-
-    notifyListeners();
   }
 }

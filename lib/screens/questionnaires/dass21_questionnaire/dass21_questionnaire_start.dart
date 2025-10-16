@@ -1,23 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:mamamind/utils/custom_alert.dart';
+import 'package:mamamind/utils/dass21_hints.dart';
 import 'package:provider/provider.dart';
 import 'package:marquee/marquee.dart';
-import '/constants/colors.dart';
-import '/providers/pws18_provider.dart';
-import '/providers/language_provider.dart';
-import 'pws18_full_questionnaire.dart';
-import '/utils/helpers.dart';
-import '/utils/pws18_hints.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '/constants/colors.dart';
+import '../../../providers/dass21_provider.dart';
+import '/providers/language_provider.dart';
+import '/utils/custom_alert.dart';
+import 'dass21_full_questionnaire.dart';
+import '/utils/helpers.dart';
 
-class PWS18QuestionnairePage extends StatefulWidget {
-  const PWS18QuestionnairePage({super.key});
+class DASS21QuestionnaireStartPage extends StatefulWidget {
+  const DASS21QuestionnaireStartPage({super.key});
 
   @override
-  State<PWS18QuestionnairePage> createState() => _PWS18QuestionnairePageState();
+  State<DASS21QuestionnaireStartPage> createState() =>
+      _DASS21QuestionnaireStartPageState();
 }
 
-class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
+class _DASS21QuestionnaireStartPageState
+    extends State<DASS21QuestionnaireStartPage> {
   bool _initialized = false;
   bool _showHint = false;
   bool _navigateAfterHint = false;
@@ -27,7 +29,7 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      final provider = Provider.of<PWS18Provider>(context, listen: false);
+      final provider = Provider.of<DASS21Provider>(context, listen: false);
       provider.reset();
       provider.loadLatest(context).then((_) {
         if (mounted) setState(() {});
@@ -49,10 +51,16 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
     return edit;
   }
 
-  Widget _buildCategoryTile(String title, bool answered, double? score) {
+  Widget _buildSubscaleTile(
+    String title,
+    bool answered,
+    int? score,
+    String classification,
+  ) {
     final tileColor = answered && score != null
-        ? scoreToColor(score)
+        ? scoreToColorDASS21(title, score)
         : AppColors.tileInactive;
+
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -82,11 +90,21 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
           if (score != null) ...[
             const SizedBox(height: 8),
             Text(
-              score.toStringAsFixed(2),
+              "$score",
               style: GoogleFonts.poppins(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,
                 color: Colors.white,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              classification,
+              textAlign: TextAlign.center,
+              style: GoogleFonts.poppins(
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+                color: Colors.white.withOpacity(0.9),
               ),
             ),
           ],
@@ -97,18 +115,16 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
 
   void _openQuestionnaireAfterHint() {
     if (!mounted) return;
-    final provider = Provider.of<PWS18Provider>(context, listen: false);
-    final page = const PWS18FullQuestionnairePage();
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => page),
-    ).then((_) => provider.loadLatest(context));
+    final page = const DASS21FullQuestionnairePage();
+    Navigator.push(context, MaterialPageRoute(builder: (_) => page)).then((_) {
+      Provider.of<DASS21Provider>(context, listen: false).loadLatest(context);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
     final langProvider = Provider.of<LanguageProvider>(context);
-    final provider = Provider.of<PWS18Provider>(context);
+    final provider = Provider.of<DASS21Provider>(context);
     final isSinhala = langProvider.currentLang == 'si';
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -134,19 +150,23 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
       );
     }
 
-    Map<String, bool> answeredMap = {};
-    for (var category in provider.subscales.keys) {
-      answeredMap[category] = provider.subscales[category]!.every(
-        (qId) => provider.responses[qId - 1] != null,
-      );
-    }
+    // --- Subscale completion checks ---
+    bool depressionDone = provider.depressionQ.every(
+      (q) => provider.responses[q - 1] != null,
+    );
+    bool anxietyDone = provider.anxietyQ.every(
+      (q) => provider.responses[q - 1] != null,
+    );
+    bool stressDone = provider.stressQ.every(
+      (q) => provider.responses[q - 1] != null,
+    );
 
-    final allCompleted = answeredMap.values.isNotEmpty
-        ? answeredMap.values.every((v) => v)
-        : false;
+    final allCompleted = depressionDone && anxietyDone && stressDone;
 
-    Map<String, double> subscaleScores = {};
-    if (allCompleted) subscaleScores = provider.calculateScores();
+    // --- Safe conversion ---
+    final scores = allCompleted
+        ? Map<String, int>.from(provider.calculateScores())
+        : <String, int>{};
 
     return Stack(
       children: [
@@ -171,12 +191,14 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
               : _buildResultsScreen(
                   isSinhala,
                   provider,
-                  answeredMap,
-                  subscaleScores,
+                  depressionDone,
+                  anxietyDone,
+                  stressDone,
+                  scores,
                   isMobile,
                 ),
         ),
-        PWS18HintOverlay(
+        DASS21HintOverlay(
           visible: _showHint,
           isMobile: isMobile,
           onClose: () async {
@@ -194,8 +216,8 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
 
   Widget _buildMarqueeTitle(bool isSinhala, TextStyle style) {
     final text = isSinhala
-        ? 'මානසික සතුට සහ සෞඛ්‍ය පරීක්ෂාව'
-        : 'Mental Health & Happiness Check';
+        ? 'හැඟීම් පරික්ෂාව'
+        : 'Feelings Checker';
 
     return GestureDetector(
       onTap: () => setState(() => _pauseMarquee = !_pauseMarquee),
@@ -203,7 +225,7 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
         height: 30,
         child: Marquee(
           text: text,
-          style: appBarTextStyle,
+          style: style,
           scrollAxis: Axis.horizontal,
           blankSpace: 60,
           velocity: _pauseMarquee ? 0.0 : 30.0,
@@ -227,8 +249,8 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
           children: [
             Text(
               isSinhala
-                  ? 'මානසික සෞඛ්‍ය මට්ටම් පරීක්ෂාව (PWS-18) වෙත සාදරයෙන් පිළිගනිමු!'
-                  : 'Welcome to Psychological Well-Being Scale (PWS-18) Questionnaire',
+                  ? 'හැඟීම් පරීක්ෂාව (DASS-21) වෙත සාදරයෙන් පිළිගනිමු!'
+                  : 'Welcome to Feelings Checker (DASS-21) Questionnaire',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: isMobile ? 20 : 22,
@@ -239,8 +261,8 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
             const SizedBox(height: 12),
             Text(
               isSinhala
-                  ? 'මෙම ප්‍රශ්නාවලිය ඔබේ සතුට, සෞඛ්‍යය සහ මනෝවිද්‍යාත්මක ස්වභාවය පිළිබඳ විශ්ලේෂණයක් ලබා දේ.'
-                  : 'This questionnaire provides insights into your psychological well-being and personal growth.',
+                  ? 'මෙම ප්‍රශ්නාවලිය ඔබේ මානසික අවපීඩන, කාංසාව, පීඩනය මට්ටම් පිළිබඳ විශ්ලේෂණයක් ලබා දේ.'
+                  : 'This questionnaire provides insights into your Depression, Anxiety, Stress levels.',
               textAlign: TextAlign.center,
               style: GoogleFonts.roboto(
                 fontSize: isMobile ? 14 : 16,
@@ -283,9 +305,11 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
 
   Widget _buildResultsScreen(
     bool isSinhala,
-    PWS18Provider provider,
-    Map<String, bool> answeredMap,
-    Map<String, double> subscaleScores,
+    DASS21Provider provider,
+    bool depressionDone,
+    bool anxietyDone,
+    bool stressDone,
+    Map<String, int> scores,
     bool isMobile,
   ) {
     return Padding(
@@ -352,21 +376,30 @@ class _PWS18QuestionnairePageState extends State<PWS18QuestionnairePage> {
               crossAxisSpacing: 12,
               mainAxisSpacing: 12,
               childAspectRatio: 3 / 2,
-              children: provider.subscales.keys.map((key) {
-                final answered = answeredMap[key] ?? false;
-                final score = subscaleScores[key];
-                return _buildCategoryTile(
-                  key + subscaleSuffix(key, isSinhala),
-                  answered,
-                  score,
-                );
-              }).toList(),
+              children: [
+                _buildSubscaleTile(
+                  isSinhala ? 'මානසික අවපීඩනය' : 'Depression',
+                  depressionDone,
+                  scores['depression'],
+                  provider.classifyDepression(scores['depression'] ?? 0, isSinhala: isSinhala),
+                ),
+                _buildSubscaleTile(
+                  isSinhala ? 'කාංසාව' : 'Anxiety',
+                  anxietyDone,
+                  scores['anxiety'],
+                  provider.classifyAnxiety(scores['anxiety'] ?? 0, isSinhala: isSinhala),
+                ),
+                _buildSubscaleTile(
+                  isSinhala ? 'පීඩනය' : 'Stress',
+                  stressDone,
+                  scores['stress'],
+                  provider.classifyStress(scores['stress'] ?? 0, isSinhala: isSinhala),
+                ),
+              ],
             ),
           ),
         ],
       ),
     );
   }
-
-  String subscaleSuffix(String key, bool isSinhala) => '';
 }

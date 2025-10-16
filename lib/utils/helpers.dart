@@ -50,6 +50,11 @@ Color scoreToColorPWS18(double score) {
   return Color.lerp(AppColors.colorScaleMin, AppColors.colorScaleMax, t)!;
 }
 
+Color scoreToColorMAAS(double score) {
+  double t = ((score - 1) / 5).clamp(0.0, 1.0);
+  return Color.lerp(AppColors.colorScaleMin, AppColors.colorScaleMax, t)!;
+}
+
 Color scoreToColorDASS21(String subscale, int score) {
   final lower = subscale.toLowerCase();
 

@@ -5,14 +5,14 @@ import 'package:provider/provider.dart';
 import '/constants/colors.dart';
 import '/providers/language_provider.dart';
 
-class PWS18HintOverlay extends StatefulWidget {
+class MAASHintOverlay extends StatefulWidget {
   final bool visible;
   final VoidCallback onClose;
   final bool isMobile;
   final Duration duration;
   final Curve curve;
 
-  const PWS18HintOverlay({
+  const MAASHintOverlay({
     super.key,
     required this.visible,
     required this.onClose,
@@ -22,10 +22,10 @@ class PWS18HintOverlay extends StatefulWidget {
   });
 
   @override
-  State<PWS18HintOverlay> createState() => _PWS18HintOverlayState();
+  State<MAASHintOverlay> createState() => _MAASHintOverlayState();
 }
 
-class _PWS18HintOverlayState extends State<PWS18HintOverlay>
+class _MAASHintOverlayState extends State<MAASHintOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _scaleAnimation;

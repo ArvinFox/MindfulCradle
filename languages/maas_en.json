@@ -1,11 +1,11 @@
 {
   "options": {
-    "1": "Almost always",
-    "2": "Very frequently",
-    "3": "Somewhat frequently",
-    "4": "Somewhat infrequently",
-    "5": "Very infrequently",
-    "6": "Almost never"
+    "1": "1",
+    "2": "2",
+    "3": "3",
+    "4": "4",
+    "5": "5",
+    "6": "6"
   },
   "questions": [
     { "id": 1, "question": "I could be experiencing some emotion and not be conscious of it until sometime later" },

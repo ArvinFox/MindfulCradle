@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:mamamind/utils/dass21_hints.dart';
+import 'package:mamamind/utils/helpers.dart';
+import 'package:mamamind/utils/maas_hints.dart';
 import 'package:provider/provider.dart';
 import 'package:marquee/marquee.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '/constants/colors.dart';
-import '../../../providers/dass21_provider.dart';
+import '../../../providers/maas_provider.dart';
 import '/providers/language_provider.dart';
 import '/utils/custom_alert.dart';
-import 'dass21_full_questionnaire.dart';
-import '/utils/helpers.dart';
+import 'maas_full_questionnaire.dart';
 
-class DASS21QuestionnaireStartPage extends StatefulWidget {
-  const DASS21QuestionnaireStartPage({super.key});
+class MAASQuestionnaireStartPage extends StatefulWidget {
+  const MAASQuestionnaireStartPage({super.key});
 
   @override
-  State<DASS21QuestionnaireStartPage> createState() =>
-      _DASS21QuestionnaireStartPageState();
+  State<MAASQuestionnaireStartPage> createState() =>
+      _MAASQuestionnaireStartPageState();
 }
 
-class _DASS21QuestionnaireStartPageState
-    extends State<DASS21QuestionnaireStartPage> {
+class _MAASQuestionnaireStartPageState
+    extends State<MAASQuestionnaireStartPage> {
   bool _initialized = false;
   bool _showHint = false;
   bool _navigateAfterHint = false;
@@ -29,7 +29,7 @@ class _DASS21QuestionnaireStartPageState
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_initialized) {
-      final provider = Provider.of<DASS21Provider>(context, listen: false);
+      final provider = Provider.of<MAASProvider>(context, listen: false);
       provider.reset();
       provider.loadLatest(context).then((_) {
         if (mounted) setState(() {});
@@ -51,25 +51,19 @@ class _DASS21QuestionnaireStartPageState
     return edit;
   }
 
-  Widget _buildSubscaleTile(
-    String title,
-    bool answered,
-    int? score,
-    String classification,
-  ) {
-    final tileColor = answered && score != null
-        ? scoreToColorDASS21(title, score)
+  Widget _buildScoreTile(double? score, String classification) {
+    final tileColor = score != null
+        ? scoreToColorMAAS(score)
         : AppColors.tileInactive;
-
     final screenWidth = MediaQuery.of(context).size.width;
 
-    // Responsive fonts
+    // scale fonts based on screen width
     double titleFont = screenWidth < 600 ? 18 : 18;
     double scoreFont = screenWidth < 600 ? 18 : 28;
     double classFont = screenWidth < 600 ? 15 : 16;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: tileColor,
         borderRadius: BorderRadius.circular(12),
@@ -85,45 +79,34 @@ class _DASS21QuestionnaireStartPageState
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: titleFont,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
+          Text(
+            "Mindfulness Score",
+            textAlign: TextAlign.center,
+            style: GoogleFonts.poppins(
+              fontSize: titleFont,
+              fontWeight: FontWeight.w600,
+              color: Colors.white,
             ),
           ),
-          if (score != null) ...[
-            const SizedBox(height: 8),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                "$score",
-                style: GoogleFonts.poppins(
-                  fontSize: scoreFont,
-                  fontWeight: FontWeight.w700,
-                  color: Colors.white,
-                ),
-              ),
+          const SizedBox(height: 6),
+          Text(
+            score != null ? score.toStringAsFixed(2) : "-",
+            style: GoogleFonts.poppins(
+              fontSize: scoreFont,
+              fontWeight: FontWeight.w700,
+              color: Colors.white,
             ),
-            const SizedBox(height: 6),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                classification,
-                textAlign: TextAlign.center,
-                style: GoogleFonts.poppins(
-                  fontSize: classFont,
-                  fontWeight: FontWeight.w500,
-                  color: Colors.white.withOpacity(0.9),
-                ),
-              ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            classification.isNotEmpty ? classification : "-",
+            style: GoogleFonts.poppins(
+              fontSize: classFont,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withOpacity(0.9),
             ),
-          ],
+            textAlign: TextAlign.center,
+          ),
         ],
       ),
     );
@@ -131,16 +114,16 @@ class _DASS21QuestionnaireStartPageState
 
   void _openQuestionnaireAfterHint() {
     if (!mounted) return;
-    final page = const DASS21FullQuestionnairePage();
+    final page = const MAASFullQuestionnairePage();
     Navigator.push(context, MaterialPageRoute(builder: (_) => page)).then((_) {
-      Provider.of<DASS21Provider>(context, listen: false).loadLatest(context);
+      Provider.of<MAASProvider>(context, listen: false).loadLatest(context);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final langProvider = Provider.of<LanguageProvider>(context);
-    final provider = Provider.of<DASS21Provider>(context);
+    final provider = Provider.of<MAASProvider>(context);
     final isSinhala = langProvider.currentLang == 'si';
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -166,23 +149,14 @@ class _DASS21QuestionnaireStartPageState
       );
     }
 
-    // --- Subscale completion checks ---
-    bool depressionDone = provider.depressionQ.every(
-      (q) => provider.responses[q - 1] != null,
-    );
-    bool anxietyDone = provider.anxietyQ.every(
-      (q) => provider.responses[q - 1] != null,
-    );
-    bool stressDone = provider.stressQ.every(
-      (q) => provider.responses[q - 1] != null,
+    final allCompleted = provider.responses.every(
+      (response) => response != null,
     );
 
-    final allCompleted = depressionDone && anxietyDone && stressDone;
-
-    // --- Safe conversion ---
-    final scores = allCompleted
-        ? Map<String, int>.from(provider.calculateScores())
-        : <String, int>{};
+    final score = allCompleted ? provider.calculateScores() : null;
+    final classification = score != null
+        ? provider.classifyScore(score, isSinhala: isSinhala)
+        : '';
 
     return Stack(
       children: [
@@ -207,14 +181,12 @@ class _DASS21QuestionnaireStartPageState
               : _buildResultsScreen(
                   isSinhala,
                   provider,
-                  depressionDone,
-                  anxietyDone,
-                  stressDone,
-                  scores,
+                  score!,
+                  classification,
                   isMobile,
                 ),
         ),
-        DASS21HintOverlay(
+        MAASHintOverlay(
           visible: _showHint,
           isMobile: isMobile,
           onClose: () async {
@@ -231,7 +203,7 @@ class _DASS21QuestionnaireStartPageState
   }
 
   Widget _buildMarqueeTitle(bool isSinhala, TextStyle style) {
-    final text = isSinhala ? 'හැඟීම් පරික්ෂාව' : 'Feelings Checker';
+    final text = isSinhala ? 'මානසික අවධානය පරීක්ෂාව' : 'Mindfulness Checker';
 
     return GestureDetector(
       onTap: () => setState(() => _pauseMarquee = !_pauseMarquee),
@@ -245,10 +217,6 @@ class _DASS21QuestionnaireStartPageState
           velocity: _pauseMarquee ? 0.0 : 30.0,
           pauseAfterRound: const Duration(seconds: 1),
           startPadding: 10.0,
-          accelerationDuration: const Duration(seconds: 1),
-          accelerationCurve: Curves.linear,
-          decelerationDuration: const Duration(milliseconds: 500),
-          decelerationCurve: Curves.easeOut,
         ),
       ),
     );
@@ -263,8 +231,8 @@ class _DASS21QuestionnaireStartPageState
           children: [
             Text(
               isSinhala
-                  ? 'හැඟීම් පරීක්ෂාව (DASS-21) වෙත සාදරයෙන් පිළිගනිමු!'
-                  : 'Welcome to Feelings Checker (DASS-21) Questionnaire',
+                  ? 'මානසික අවධානය පරීක්ෂාව (MAAS) වෙත සාදරයෙන් පිළිගනිමු!'
+                  : 'Welcome to the Mindfulness Awareness (MAAS) Questionnaire!',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: isMobile ? 20 : 22,
@@ -275,12 +243,11 @@ class _DASS21QuestionnaireStartPageState
             const SizedBox(height: 12),
             Text(
               isSinhala
-                  ? 'මෙම ප්‍රශ්නාවලිය ඔබේ මානසික අවපීඩන, කාංසාව, පීඩනය මට්ටම් පිළිබඳ විශ්ලේෂණයක් ලබා දේ.'
-                  : 'This questionnaire provides insights into your Depression, Anxiety, Stress levels.',
+                  ? 'මෙම ප්‍රශ්නාවලිය ඔබේ අවධානය සහ වත්මන් අවස්ථාවේ හැඟීම් පිළිබඳ අවබෝධය මැනේ.'
+                  : 'This questionnaire measures your awareness and mindfulness level in daily life.',
               textAlign: TextAlign.center,
               style: GoogleFonts.roboto(
                 fontSize: isMobile ? 14 : 16,
-                fontWeight: FontWeight.w400,
                 color: AppColors.text,
               ),
             ),
@@ -319,18 +286,15 @@ class _DASS21QuestionnaireStartPageState
 
   Widget _buildResultsScreen(
     bool isSinhala,
-    DASS21Provider provider,
-    bool depressionDone,
-    bool anxietyDone,
-    bool stressDone,
-    Map<String, int> scores,
+    MAASProvider provider,
+    double score,
+    String classification,
     bool isMobile,
   ) {
-    final screenWidth = MediaQuery.of(context).size.width;
-
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 18),
           Text(
@@ -340,7 +304,6 @@ class _DASS21QuestionnaireStartPageState
             textAlign: TextAlign.center,
             style: GoogleFonts.roboto(
               fontSize: isMobile ? 12 : 14,
-              fontWeight: FontWeight.w400,
               color: AppColors.text.withOpacity(0.8),
             ),
           ),
@@ -377,7 +340,7 @@ class _DASS21QuestionnaireStartPageState
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
-              isSinhala ? 'අවසන් ප්‍රතිඵල' : 'Final Results',
+              isSinhala ? 'අවසන් ප්‍රතිඵල' : 'Final Result',
               style: GoogleFonts.poppins(
                 fontSize: isMobile ? 20 : 22,
                 fontWeight: FontWeight.w600,
@@ -386,48 +349,9 @@ class _DASS21QuestionnaireStartPageState
             ),
           ),
           const SizedBox(height: 12),
-          Expanded(
-            child: ListView(
-              physics: const BouncingScrollPhysics(),
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildSubscaleTile(
-                    isSinhala ? 'මානසික අවපීඩනය' : 'Depression',
-                    depressionDone,
-                    scores['depression'],
-                    provider.classifyDepression(
-                      scores['depression'] ?? 0,
-                      isSinhala: isSinhala,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildSubscaleTile(
-                    isSinhala ? 'කාංසාව' : 'Anxiety',
-                    anxietyDone,
-                    scores['anxiety'],
-                    provider.classifyAnxiety(
-                      scores['anxiety'] ?? 0,
-                      isSinhala: isSinhala,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: _buildSubscaleTile(
-                    isSinhala ? 'පීඩනය' : 'Stress',
-                    stressDone,
-                    scores['stress'],
-                    provider.classifyStress(
-                      scores['stress'] ?? 0,
-                      isSinhala: isSinhala,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+          SizedBox(
+            width: double.infinity,
+            child: _buildScoreTile(score, classification),
           ),
         ],
       ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mamamind/utils/helpers.dart';
 import 'package:provider/provider.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
 import '../../widgets/achievement_tile.dart'; 
 import '../../providers/language_provider.dart';

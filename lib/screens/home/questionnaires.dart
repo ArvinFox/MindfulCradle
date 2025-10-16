@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/screens/questionnaires/maas_questionnaire/maas_questionnaire_start.dart';
 import 'package:mamamind/utils/helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -6,7 +7,7 @@ import 'package:marquee/marquee.dart';
 import '../../constants/colors.dart';
 import '/providers/language_provider.dart';
 import '../questionnaires/dass21_questionnaire/dass21_questionnaire_start.dart';
-import '../questionnaires/maas_questionnaire/maas_questionnaire.dart';
+import '../questionnaires/maas_questionnaire/maas_full_questionnaire.dart';
 import '../questionnaires/pws18_questionnaire/pws18_questionnaire_start.dart';
 
 class QuestionnaireMainPage extends StatefulWidget {
@@ -92,7 +93,7 @@ class _QuestionnaireMainPageState extends State<QuestionnaireMainPage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [DASS21QuestionnaireStartPage(), MAASPage(), PWS18QuestionnaireStartPage()],
+        children: const [DASS21QuestionnaireStartPage(), MAASQuestionnaireStartPage(), PWS18QuestionnaireStartPage()],
       ),
     );
   }

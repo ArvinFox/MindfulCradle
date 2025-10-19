@@ -81,21 +81,25 @@ class _HomePageState extends State<HomePage> {
 
     if (_loading || authProvider.isInitializing) {
       return Scaffold(
-          backgroundColor: AppColors.background,
-          body: Center(
-              child: CircularProgressIndicator(
-            color: AppColors.primary,
-          )));
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: CircularProgressIndicator(color: AppColors.primary),
+        ),
+      );
     }
 
     if (user == null) {
       return Scaffold(
-          backgroundColor: AppColors.background,
-          body: Center(
-              child: Text(
-            currentLang == 'en' ? "User data loading failed" : "පරිශීලක දත්ත පූරණය අසාර්ථක විය",
+        backgroundColor: AppColors.background,
+        body: Center(
+          child: Text(
+            currentLang == 'en'
+                ? "User data loading failed"
+                : "පරිශීලක දත්ත පූරණය අසාර්ථක විය",
             style: GoogleFonts.roboto(),
-          )));
+          ),
+        ),
+      );
     }
 
     return Scaffold(
@@ -169,7 +173,7 @@ class _HomePageState extends State<HomePage> {
                     ),
                   ),
                   const SizedBox(height: 30),
-                  
+
                   // Section Header
                   Text(
                     currentLang == 'en'
@@ -195,13 +199,17 @@ class _HomePageState extends State<HomePage> {
                       final isUnlocked = videoProvider.isVideoUnlocked(video);
 
                       return VideoTile(
-                        title: video.title,
+                        title: currentLang == 'en'
+                            ? video.title
+                            : video.titleSi,
                         isLocked: !isUnlocked,
                         isMobile: isMobile,
                         onTap: isUnlocked
                             ? () {
                                 HapticFeedback.lightImpact();
-                                final youtubeId = video.getYoutubeId(currentLang);
+                                final youtubeId = video.getYoutubeId(
+                                  currentLang,
+                                );
                                 HomeRoutes.goToVideoPlayer(
                                   context,
                                   video,
@@ -214,7 +222,9 @@ class _HomePageState extends State<HomePage> {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   SnackBar(
                                     content: Text(
-                                      currentLang == 'en' ? "Complete the previous session to unlock this one." : "මෙය විවෘත කිරීමට පෙර සැසිය සම්පූර්ණ කරන්න.",
+                                      currentLang == 'en'
+                                          ? "Complete the previous session to unlock this one."
+                                          : "මෙය විවෘත කිරීමට පෙර සැසිය සම්පූර්ණ කරන්න.",
                                       style: GoogleFonts.roboto(),
                                     ),
                                     backgroundColor: Colors.orange.shade800,

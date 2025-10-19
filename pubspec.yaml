@@ -30,6 +30,7 @@ dev_dependencies:
 flutter:
   assets:
     - assets/login/
+    - assets/video_player/
     - languages/
 
   uses-material-design: true

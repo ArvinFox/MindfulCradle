@@ -11,6 +11,7 @@ class DASS21Provider with ChangeNotifier {
   List<int?> responses = List<int?>.filled(21, null);
   List<int> availableQuestionIds = [];
   bool isLoading = false;
+  DateTime? completedAt;
 
   DASS21Provider();
 
@@ -158,6 +159,7 @@ class DASS21Provider with ChangeNotifier {
           Map<String, dynamic> saved = Map<String, dynamic>.from(
             data['responses'],
           );
+          completedAt = (data['completedAt'] as Timestamp).toDate();
           for (var entry in saved.entries) {
             int qId = int.tryParse(entry.key) ?? 0;
             if (qId > 0 && qId <= 21) responses[qId - 1] = entry.value;

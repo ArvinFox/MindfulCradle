@@ -13,6 +13,7 @@ class MAASProvider with ChangeNotifier {
 
   double? latestMAASScore;
   String? latestMAASClassification;
+  DateTime? completedAt;
 
   MAASProvider();
 
@@ -143,8 +144,10 @@ class MAASProvider with ChangeNotifier {
       if (snapshot.exists) {
         final data = snapshot.data();
         if (data != null && data['responses'] != null) {
-          Map<String, dynamic> saved =
-              Map<String, dynamic>.from(data['responses']);
+          Map<String, dynamic> saved = Map<String, dynamic>.from(
+            data['responses'],
+          );
+          completedAt = (data['completedAt'] as Timestamp).toDate();
           for (var entry in saved.entries) {
             int qId = int.tryParse(entry.key) ?? 0;
             if (qId > 0 && qId <= 15) responses[qId - 1] = entry.value;

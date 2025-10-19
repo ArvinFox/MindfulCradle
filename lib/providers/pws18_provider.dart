@@ -10,6 +10,7 @@ class PWS18Provider with ChangeNotifier {
   List<int?> responses = List<int?>.filled(18, null);
   List<int> availableQuestionIds = [];
   bool isLoading = false;
+  DateTime? completedAt;
 
   PWS18Provider();
 
@@ -37,13 +38,13 @@ class PWS18Provider with ChangeNotifier {
 
   /// Official subscale mapping
   Map<String, List<int>> get subscales => {
-        'Autonomy': [15, 17, 18],
-        'Environmental Mastery': [4, 8, 9],
-        'Personal Growth': [11, 12, 14],
-        'Positive Relations with Others': [6, 13, 16],
-        'Purpose in Life': [3, 7, 10],
-        'Self-Acceptance': [1, 2, 5],
-      };
+    'Autonomy': [15, 17, 18],
+    'Environmental Mastery': [4, 8, 9],
+    'Personal Growth': [11, 12, 14],
+    'Positive Relations with Others': [6, 13, 16],
+    'Purpose in Life': [3, 7, 10],
+    'Self-Acceptance': [1, 2, 5],
+  };
 
   /// Calculate subscale scores (average per category)
   Map<String, double> calculateScores() {
@@ -111,9 +112,12 @@ class PWS18Provider with ChangeNotifier {
   }
 
   /// Save answers of a single category
-  Future<void> saveCategoryAnswers(String category,
-      {BuildContext? context}) async {
-    final currentUser = _user ??
+  Future<void> saveCategoryAnswers(
+    String category, {
+    BuildContext? context,
+  }) async {
+    final currentUser =
+        _user ??
         (context != null
             ? Provider.of<AuthProvider>(context, listen: false).user
             : null);
@@ -180,6 +184,7 @@ class PWS18Provider with ChangeNotifier {
           Map<String, dynamic> saved = Map<String, dynamic>.from(
             data['responses'],
           );
+          completedAt = (data['completedAt'] as Timestamp).toDate();
           for (var entry in saved.entries) {
             int qId = int.tryParse(entry.key) ?? 0;
             if (qId > 0 && qId <= 18) responses[qId - 1] = entry.value;

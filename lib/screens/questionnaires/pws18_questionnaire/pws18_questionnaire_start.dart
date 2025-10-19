@@ -14,10 +14,12 @@ class PWS18QuestionnaireStartPage extends StatefulWidget {
   const PWS18QuestionnaireStartPage({super.key});
 
   @override
-  State<PWS18QuestionnaireStartPage> createState() => _PWS18QuestionnaireStartPageState();
+  State<PWS18QuestionnaireStartPage> createState() =>
+      _PWS18QuestionnaireStartPageState();
 }
 
-class _PWS18QuestionnaireStartPageState extends State<PWS18QuestionnaireStartPage> {
+class _PWS18QuestionnaireStartPageState
+    extends State<PWS18QuestionnaireStartPage> {
   bool _initialized = false;
   bool _showHint = false;
   bool _navigateAfterHint = false;
@@ -36,18 +38,18 @@ class _PWS18QuestionnaireStartPageState extends State<PWS18QuestionnaireStartPag
     }
   }
 
-  Future<bool> _confirmEdit(bool isSinhala) async {
-    final edit = await CustomConfirmationDialog.show(
-      context: context,
-      title: isSinhala ? 'පිළිතුරු සංස්කරණය කරන්න' : 'Edit Responses?',
-      message: isSinhala
-          ? 'ඔබට ඔබේ පිළිතුරු සංස්කරණය කිරීමට අවශ්‍යද?'
-          : 'Do you want to edit your responses?',
-      confirmText: isSinhala ? 'ඔව්' : 'Yes',
-      cancelText: isSinhala ? 'නැහැ' : 'No',
-    );
-    return edit;
-  }
+  // Future<bool> _confirmEdit(bool isSinhala) async {
+  //   final edit = await CustomConfirmationDialog.show(
+  //     context: context,
+  //     title: isSinhala ? 'පිළිතුරු සංස්කරණය කරන්න' : 'Edit Responses?',
+  //     message: isSinhala
+  //         ? 'ඔබට ඔබේ පිළිතුරු සංස්කරණය කිරීමට අවශ්‍යද?'
+  //         : 'Do you want to edit your responses?',
+  //     confirmText: isSinhala ? 'ඔව්' : 'Yes',
+  //     cancelText: isSinhala ? 'නැහැ' : 'No',
+  //   );
+  //   return edit;
+  // }
 
   Widget _buildCategoryTile(String title, bool answered, double? score) {
     final tileColor = answered && score != null
@@ -292,48 +294,59 @@ class _PWS18QuestionnaireStartPageState extends State<PWS18QuestionnaireStartPag
       padding: const EdgeInsets.all(24),
       child: Column(
         children: [
-          const SizedBox(height: 18),
+          // const SizedBox(height: 18),
+          // Text(
+          //   isSinhala
+          //       ? 'ඔබ කලින් පිළිතුරු වෙනස් කිරීමට අවශ්‍ය නම් පහත බොත්තම භාවිතා කරන්න'
+          //       : 'If you want to edit your previous responses, use the button below.',
+          //   textAlign: TextAlign.center,
+          //   style: GoogleFonts.roboto(
+          //     fontSize: isMobile ? 12 : 14,
+          //     fontWeight: FontWeight.w400,
+          //     color: AppColors.text.withOpacity(0.8),
+          //   ),
+          // ),
+          // const SizedBox(height: 12),
+          // SizedBox(
+          //   width: double.infinity,
+          //   child: ElevatedButton(
+          //     style: ElevatedButton.styleFrom(
+          //       backgroundColor: AppColors.primary,
+          //       padding: const EdgeInsets.symmetric(vertical: 14),
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(12),
+          //       ),
+          //     ),
+          //     onPressed: () async {
+          //       final edit = await _confirmEdit(isSinhala);
+          //       if (!edit) return;
+          //       setState(() {
+          //         _showHint = true;
+          //         _navigateAfterHint = true;
+          //       });
+          //     },
+          //     child: Text(
+          //       isSinhala ? 'පිළිතුරු සංස්කරණය කරන්න' : 'Edit Responses',
+          //       style: GoogleFonts.poppins(
+          //         fontSize: 16,
+          //         fontWeight: FontWeight.w600,
+          //         color: AppColors.buttonText,
+          //       ),
+          //     ),
+          //   ),
+          // ),
+          // const SizedBox(height: 20),
           Text(
             isSinhala
-                ? 'ඔබ කලින් පිළිතුරු වෙනස් කිරීමට අවශ්‍ය නම් පහත බොත්තම භාවිතා කරන්න'
-                : 'If you want to edit your previous responses, use the button below.',
+                ? 'අවධානය පරීක්ෂණයේ ඔබ‌ෙග‌ේ අවසාන ප්‍රතිඵල ලකුණු පහත දැක්වේ.'
+                : 'Your final results for the Mindfulness Checker are shown below',
             textAlign: TextAlign.center,
             style: GoogleFonts.roboto(
-              fontSize: isMobile ? 12 : 14,
+              fontSize: isMobile ? 16 : 20,
               fontWeight: FontWeight.w400,
               color: AppColors.text.withOpacity(0.8),
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              onPressed: () async {
-                final edit = await _confirmEdit(isSinhala);
-                if (!edit) return;
-                setState(() {
-                  _showHint = true;
-                  _navigateAfterHint = true;
-                });
-              },
-              child: Text(
-                isSinhala ? 'පිළිතුරු සංස්කරණය කරන්න' : 'Edit Responses',
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.buttonText,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
           Align(
             alignment: Alignment.centerLeft,
             child: Text(
@@ -345,6 +358,21 @@ class _PWS18QuestionnaireStartPageState extends State<PWS18QuestionnaireStartPag
               ),
             ),
           ),
+          // Completed Date
+          if (provider.completedAt != null)
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                isSinhala
+                    ? 'අවසන් පිළිතුරු දිනය: ${formatDate(provider.completedAt!)}'
+                    : 'Completed on: ${formatDate(provider.completedAt!)}',
+                style: GoogleFonts.roboto(
+                  fontSize: isMobile ? 14 : 16,
+                  fontWeight: FontWeight.w400,
+                  color: AppColors.text.withOpacity(0.7),
+                ),
+              ),
+            ),
           const SizedBox(height: 12),
           Expanded(
             child: GridView.count(

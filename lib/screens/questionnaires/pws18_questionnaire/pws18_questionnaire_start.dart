@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:mamamind/utils/custom_alert.dart';
+// import 'package:mamamind/utils/custom_alert.dart';
 import 'package:provider/provider.dart';
 import 'package:marquee/marquee.dart';
 import '/constants/colors.dart';
@@ -196,8 +196,8 @@ class _PWS18QuestionnaireStartPageState
 
   Widget _buildMarqueeTitle(bool isSinhala, TextStyle style) {
     final text = isSinhala
-        ? 'මානසික සතුට සහ සෞඛ්‍ය පරීක්ෂාව'
-        : 'Mental Health & Happiness Check';
+        ? 'මානසික සෞඛ්‍ය සහ සතුට සෞඛ්‍ය පරීක්ෂාව'
+        : 'Mental Health & Happiness Checker';
 
     return GestureDetector(
       onTap: () => setState(() => _pauseMarquee = !_pauseMarquee),
@@ -208,7 +208,7 @@ class _PWS18QuestionnaireStartPageState
           style: appBarTextStyle,
           scrollAxis: Axis.horizontal,
           blankSpace: 60,
-          velocity: _pauseMarquee ? 0.0 : 30.0,
+          velocity: _pauseMarquee ? 0.001: 30.0,
           pauseAfterRound: const Duration(seconds: 1),
           startPadding: 10.0,
           accelerationDuration: const Duration(seconds: 1),
@@ -229,8 +229,8 @@ class _PWS18QuestionnaireStartPageState
           children: [
             Text(
               isSinhala
-                  ? 'මානසික සෞඛ්‍ය මට්ටම් පරීක්ෂාව (PWS-18) වෙත සාදරයෙන් පිළිගනිමු!'
-                  : 'Welcome to Psychological Well-Being Scale (PWS-18) Questionnaire',
+                  ? 'මානසික සෞඛ්‍ය සහ සතුට සෞඛ්‍ය පරීක්ෂාව (PWS-18) වෙත සාදරයෙන් පිළිගනිමු!'
+                  : 'Welcome to Psychological Well-Being Scale (PWS-18)',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: isMobile ? 20 : 22,

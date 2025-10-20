@@ -40,11 +40,11 @@ class MAASProvider with ChangeNotifier {
   /// Classify the score according to your thresholds
   String classifyScore(double score, {bool isSinhala = false}) {
     if (score >= 4.0) {
-      return isSinhala ? 'ඉහළ මනෝ අවධානය' : 'High Mindful Attention';
+      return isSinhala ? 'සතිමත් බව ඉහළයි' : 'High Level of Mindfulness';
     } else if (score >= 3.0) {
-      return isSinhala ? 'සාමාන්‍ය මනෝ අවධානය' : 'Average Mindful Attention';
+      return isSinhala ? 'සතිමත් බව සාමාන්‍යයි' : 'Average Level of Mindfulness';
     } else {
-      return isSinhala ? 'අඩු මනෝ අවධානය' : 'Low Mindful Attention';
+      return isSinhala ? 'සතිමත් බව අඩුයි' : 'Low Level of Mindfulness';
     }
   }
 

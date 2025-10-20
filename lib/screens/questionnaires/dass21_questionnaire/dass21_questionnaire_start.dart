@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '/constants/colors.dart';
 import '../../../providers/dass21_provider.dart';
 import '/providers/language_provider.dart';
-import '/utils/custom_alert.dart';
+// import '/utils/custom_alert.dart';
 import 'dass21_full_questionnaire.dart';
 import '/utils/helpers.dart';
 
@@ -242,7 +242,7 @@ class _DASS21QuestionnaireStartPageState
           style: style,
           scrollAxis: Axis.horizontal,
           blankSpace: 60,
-          velocity: _pauseMarquee ? 0.0 : 30.0,
+          velocity: _pauseMarquee ? 0.001 : 30.0,
           pauseAfterRound: const Duration(seconds: 1),
           startPadding: 10.0,
           accelerationDuration: const Duration(seconds: 1),
@@ -264,7 +264,7 @@ class _DASS21QuestionnaireStartPageState
             Text(
               isSinhala
                   ? 'හැඟීම් පරීක්ෂාව (DASS-21) වෙත සාදරයෙන් පිළිගනිමු!'
-                  : 'Welcome to Feelings Checker (DASS-21) Questionnaire',
+                  : 'Welcome to Feelings Checker (DASS-21)',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: isMobile ? 20 : 22,

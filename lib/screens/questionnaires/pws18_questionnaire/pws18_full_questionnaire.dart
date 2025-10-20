@@ -132,113 +132,142 @@ class _PWS18FullQuestionnairePageState
   }
 
   void _showScoresDialog(Map<String, double> scores) {
-  final isSinhala = _currentLang == 'si';
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => Stack(
-      children: [
-        // Blurred background
-        BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-          child: Container(
-            color: Colors.black.withOpacity(0), // Transparent overlay
+    final isSinhala = _currentLang == 'si';
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
+
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => Stack(
+        children: [
+          // Blurred background
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+            child: Container(color: Colors.black.withOpacity(0.1)),
           ),
-        ),
-        // Dialog
-        Center(
-          child: AlertDialog(
-            backgroundColor: AppColors.cardBackground,
-            shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20)),
-            contentPadding: const EdgeInsets.all(24),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isSinhala ? "අවසාන PWS-18 ලකුණු" : "Final PWS-18 Scores",
-                  style: GoogleFonts.poppins(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
-                  ),
+
+          // Dialog
+          Center(
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isSmallScreen ? screenWidth * 0.9 : 380,
+                minWidth: screenWidth * 0.8,
+              ),
+              child: AlertDialog(
+                backgroundColor: AppColors.cardBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
                 ),
-                const SizedBox(height: 16),
-                ...scores.entries.map(
-                  (e) => Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 6),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            e.key,
-                            style: GoogleFonts.roboto(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.text,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColors.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Text(
-                            e.value.toStringAsFixed(2),
-                            style: GoogleFonts.roboto(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 20,
                 ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                    ),
-                    onPressed: () {
-                      Navigator.of(context).pop();
-                      Navigator.of(context).pop();
-                    },
-                    child: Text(
-                      isSinhala ? "හරි" : "OK",
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      isSinhala ? "අවසාන ලකුණු" : "Final Scores",
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
-                        color: AppColors.buttonText,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                        fontSize: isSmallScreen ? 20 : 22,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.primary,
                       ),
                     ),
-                  ),
+                    const SizedBox(height: 20),
+
+                    // Score List
+                    ...scores.entries.map((e) {
+                      return Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 14),
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.3),
+                            width: 1.2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                e.key,
+                                style: GoogleFonts.poppins(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.text.withOpacity(0.9),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 10),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withOpacity(0.2),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: AppColors.primary,
+                                  width: 1.3,
+                                ),
+                              ),
+                              child: Text(
+                                e.value.toStringAsFixed(2),
+                                style: GoogleFonts.poppins(
+                                  fontSize: isSmallScreen ? 16 : 17,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }).toList(),
+
+                    const SizedBox(height: 28),
+
+                    // OK Button
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                        ),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          Navigator.of(context).pop();
+                        },
+                        child: Text(
+                          isSinhala ? "හරි" : "OK",
+                          style: GoogleFonts.poppins(
+                            color: AppColors.buttonText,
+                            fontWeight: FontWeight.w600,
+                            fontSize: isSmallScreen ? 15 : 16,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
   @override
   void dispose() {
@@ -266,8 +295,8 @@ class _PWS18FullQuestionnairePageState
             ),
             title: Text(
               _currentLang == 'si'
-                  ? 'PWS-18 ප්‍රශ්නාවලිය'
-                  : 'PWS-18 Questionnaire',
+                  ? 'සතුට පරීක්ෂාව'
+                  : 'Happiness Checker',
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,

@@ -49,7 +49,7 @@ class _MainScreenState extends State<MainScreen> {
     final isSinhala = langProvider.currentLang == 'si';
 
     final List<String> labels = isSinhala
-        ? ["මුල් පිටුව", "ප්‍රතිපෝෂණ", "ජයග්‍රහණ", "ප්‍රොෆයිල්"]
+        ? ["මුල් පිටුව", "ප්‍රතිචාර", "ජයග්‍රහණ", "ප්‍රොෆයිල්"]
         : ["Home", "Feedback", "Achievements", "Profile"];
 
     return BottomNavigationBar(

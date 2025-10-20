@@ -29,6 +29,7 @@ class _PWS18HintOverlayState extends State<PWS18HintOverlay>
     with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<double> _scaleAnimation;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -46,26 +47,64 @@ class _PWS18HintOverlayState extends State<PWS18HintOverlay>
   @override
   void dispose() {
     _pulseController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
-  String _getHintText(String lang) {
-    if (lang == 'si') {
-      return "මෙම පරීක්ෂණය සඳහා පිළිතුරු 1 - 7 සංඛ්‍යාවන් භාවිතා වේ.\n\n"
-          "1 = දැඩි ලෙස එකඟ\n2 = ටිකක් එකඟ\n3 = සාමාන්‍යයෙන් එකඟ\n4 = එකඟ නැත/නැත\n5 = සාමාන්‍යයෙන් අසම්මත\n6 = ටිකක් අසම්මත\n7 = දැඩි ලෙස අසම්මත";
-    }
-    return "For this questionnaire, please answer using numbers 1 - 7.\n\n"
-        "1 = Strongly Agree\n2 = Somewhat Agree\n3 = A Little Agree\n4 = Neither Agree nor Disagree\n5 = A Little Disagree\n6 = Somewhat Disagree\n7 = Strongly Disagree";
+  TableRow _buildTableRow(String number, String text) {
+    return TableRow(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6),
+          child: Center(
+            child: Text(
+              number,
+              style: GoogleFonts.roboto(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: AppColors.primary,
+                decoration: TextDecoration.none,
+              ),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Text(
+            text,
+            style: GoogleFonts.roboto(
+              fontWeight: FontWeight.w500,
+              fontSize: 14,
+              color: AppColors.text,
+              decoration: TextDecoration.none,
+            ),
+          ),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final lang = Provider.of<LanguageProvider>(context).currentLang;
     final isSinhala = lang == 'si';
-    final hintText = _getHintText(lang);
     final noteText = isSinhala
         ? "උදවු නැවත බැලීමට ප්‍රශ්න පිටුවේ පහළ වම් කොනේ ඇති ? ලකුණ ක්ලික් කරන්න"
         : "To see the hints again click on the ? on the bottom left corner on the questionnaire page";
+
+    final screenWidth = MediaQuery.of(context).size.width;
+    final screenHeight = MediaQuery.of(context).size.height;
+
+    // Table data for 1-7
+    final tableData = [
+      isSinhala ? "දැඩි ලෙස එකඟ" : "Strongly Agree",
+      isSinhala ? "ටිකක් එකඟ" : "Somewhat Agree",
+      isSinhala ? "සාමාන්‍යයෙන් එකඟ" : "A Little Agree",
+      isSinhala ? "එකඟ නැත/නැත" : "Neither Agree nor Disagree",
+      isSinhala ? "සාමාන්‍යයෙන් අසම්මත" : "A Little Disagree",
+      isSinhala ? "ටිකක් අසම්මත" : "Somewhat Disagree",
+      isSinhala ? "දැඩි ලෙස අසම්මත" : "Strongly Disagree",
+    ];
 
     return IgnorePointer(
       ignoring: !widget.visible,
@@ -73,78 +112,68 @@ class _PWS18HintOverlayState extends State<PWS18HintOverlay>
         opacity: widget.visible ? 1.0 : 0.0,
         duration: widget.duration,
         curve: widget.curve,
-        child: DefaultTextStyle(
-          style: GoogleFonts.roboto(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
-            color: AppColors.text,
-            decoration: TextDecoration.none,
-            height: 1.5,
-          ),
-          child: Stack(
-            children: [
-              BackdropFilter(
-                filter: ImageFilter.blur(
-                  sigmaX: widget.visible ? 6.0 : 0.0,
-                  sigmaY: widget.visible ? 6.0 : 0.0,
-                ),
-                child: Container(
-                  color: Colors.black.withOpacity(widget.visible ? 0.25 : 0.0),
-                ),
+        child: Stack(
+          children: [
+            // Blur background
+            BackdropFilter(
+              filter: ImageFilter.blur(
+                sigmaX: widget.visible ? 6.0 : 0.0,
+                sigmaY: widget.visible ? 6.0 : 0.0,
               ),
+              child: Container(
+                color: Colors.black.withOpacity(widget.visible ? 0.25 : 0.0),
+              ),
+            ),
 
-              // Pulsing question mark
-              SizedBox(height: 40,),
-              Positioned(
-                bottom: 40,
-                left: 40,
-                child: AnimatedOpacity(
-                  opacity: widget.visible ? 1.0 : 0.0,
-                  duration: const Duration(milliseconds: 500),
-                  curve: Curves.easeInOut,
-                  child: ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 50,),
-                        Container(
-                          width: 52,
-                          height: 52,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.9),
-                            borderRadius: BorderRadius.circular(12),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black26,
-                                blurRadius: 8,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
-                          child: const Center(
-                            child: Icon(
-                              Icons.help_outline,
-                              color: Colors.white,
-                              size: 30,
-                            ),
-                          ),
+            // Pulsing question mark
+            Positioned(
+              bottom: 40,
+              left: 40,
+              child: AnimatedOpacity(
+                opacity: widget.visible ? 1.0 : 0.0,
+                duration: const Duration(milliseconds: 500),
+                curve: Curves.easeInOut,
+                child: ScaleTransition(
+                  scale: _scaleAnimation,
+                  child: Container(
+                    width: 52,
+                    height: 52,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.9),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Colors.black26,
+                          blurRadius: 8,
+                          offset: Offset(0, 4),
                         ),
                       ],
+                    ),
+                    child: const Center(
+                      child: Icon(
+                        Icons.help_outline,
+                        color: Colors.white,
+                        size: 30,
+                      ),
                     ),
                   ),
                 ),
               ),
+            ),
 
-              // Centered hint card
-              Center(
-                child: AnimatedScale(
-                  scale: widget.visible ? 1.0 : 0.95,
-                  duration: widget.duration,
-                  curve: widget.curve,
+            // Hint card
+            Center(
+              child: AnimatedScale(
+                scale: widget.visible ? 1.0 : 0.95,
+                duration: widget.duration,
+                curve: widget.curve,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                    maxWidth: screenWidth * 0.85,
+                    maxHeight: screenHeight * 0.7,
+                  ),
                   child: Container(
-                    width: widget.isMobile ? 340 : 480,
-                    margin: const EdgeInsets.symmetric(horizontal: 16),
-                    padding: const EdgeInsets.all(24),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       color: AppColors.cardBackground,
                       borderRadius: BorderRadius.circular(20),
@@ -156,79 +185,156 @@ class _PWS18HintOverlayState extends State<PWS18HintOverlay>
                         ),
                       ],
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Column(
-                            children: [
-                              const Icon(
-                                Icons.help_outline,
-                                color: Colors.orangeAccent,
-                                size: 32,
+                    child: Scrollbar(
+                      controller: _scrollController,
+                      thumbVisibility: true,
+                      thickness: 6,
+                      radius: const Radius.circular(3),
+                      interactive: true,
+                      child: SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: const BouncingScrollPhysics(),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Icon + title
+                            Center(
+                              child: Column(
+                                children: [
+                                  const Icon(
+                                    Icons.help_outline,
+                                    color: Colors.orangeAccent,
+                                    size: 32,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    isSinhala ? "උදවු" : "Hint",
+                                    textAlign: TextAlign.center,
+                                    style: GoogleFonts.poppins(
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 22,
+                                      color: AppColors.primary,
+                                      decoration: TextDecoration.none,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 8),
-                              Text(
-                                isSinhala ? "උදවු" : "Hint",
-                                textAlign: TextAlign.center,
-                                style: GoogleFonts.poppins(
-                                  fontWeight: FontWeight.w800,
-                                  fontSize: 28,
-                                  color: AppColors.primary,
+                            ),
+                            const SizedBox(height: 16),
+
+                            // Intro text above table
+                            Text(
+                              isSinhala
+                                  ? "මෙම පරීක්ෂණය සඳහා පිළිතුරු 1 - 7 සංඛ්‍යාවන් භාවිතා වේ."
+                                  : "For this questionnaire, please answer using numbers 1 - 7.",
+                              style: GoogleFonts.roboto(
+                                fontWeight: FontWeight.w500,
+                                fontSize: 14,
+                                color: AppColors.text,
+                                height: 1.5,
+                                decoration: TextDecoration.none,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+
+                            // Table header + rows
+                            Table(
+                              columnWidths: const {
+                                0: IntrinsicColumnWidth(),
+                                1: FlexColumnWidth(),
+                              },
+                              border: TableBorder(
+                                horizontalInside: BorderSide(
+                                    width: 1, color: Colors.grey.shade300),
+                              ),
+                              defaultVerticalAlignment:
+                                  TableCellVerticalAlignment.middle,
+                              children: [
+                                TableRow(
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primary.withOpacity(0.1),
+                                  ),
+                                  children: [
+                                    Center(
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(6),
+                                        child: Text(
+                                          isSinhala ? "සංඛ්‍යාව" : "Number",
+                                          style: GoogleFonts.roboto(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 14,
+                                            color: AppColors.primary,
+                                            decoration: TextDecoration.none,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(6),
+                                      child: Text(
+                                        isSinhala
+                                            ? "අර්ථය / පිළිතුර"
+                                            : "Meaning / Answer",
+                                        style: GoogleFonts.roboto(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 14,
+                                          color: AppColors.primary,
+                                          decoration: TextDecoration.none,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                // Table rows
+                                for (int i = 0; i < 7; i++)
+                                  _buildTableRow((i + 1).toString(), tableData[i]),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+
+                            Text(
+                              noteText,
+                              style: GoogleFonts.roboto(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w400,
+                                color: AppColors.text.withOpacity(0.8),
+                                decoration: TextDecoration.none,
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+
+                            SizedBox(
+                              width: double.infinity,
+                              child: ElevatedButton(
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                  ),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 14),
+                                ),
+                                onPressed: widget.onClose,
+                                child: Text(
+                                  isSinhala ? "හරි" : "OK",
+                                  style: GoogleFonts.poppins(
+                                    color: AppColors.buttonText,
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 15,
+                                    decoration: TextDecoration.none,
+                                  ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          hintText,
-                          textAlign: TextAlign.left,
-                          style: GoogleFonts.roboto(
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          noteText,
-                          textAlign: TextAlign.left,
-                          style: GoogleFonts.roboto(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w400,
-                            color: AppColors.text.withOpacity(0.8),
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton(
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 16),
                             ),
-                            onPressed: widget.onClose,
-                            child: Text(
-                              isSinhala ? "හරි" : "OK",
-                              style: GoogleFonts.poppins(
-                                color: AppColors.buttonText,
-                                fontWeight: FontWeight.w600,
-                                fontSize: 16,
-                              ),
-                            ),
-                          ),
+                          ],
                         ),
-                      ],
+                      ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

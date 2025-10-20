@@ -7,7 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '/constants/colors.dart';
 import '../../../providers/maas_provider.dart';
 import '/providers/language_provider.dart';
-import '/utils/custom_alert.dart';
+// import '/utils/custom_alert.dart';
 import 'maas_full_questionnaire.dart';
 
 class MAASQuestionnaireStartPage extends StatefulWidget {
@@ -57,6 +57,10 @@ class _MAASQuestionnaireStartPageState
         : AppColors.tileInactive;
     final screenWidth = MediaQuery.of(context).size.width;
 
+    // get current language
+    final langProvider = Provider.of<LanguageProvider>(context, listen: false);
+    final isSinhala = langProvider.currentLang == 'si';
+
     // scale fonts based on screen width
     double titleFont = screenWidth < 600 ? 18 : 18;
     double scoreFont = screenWidth < 600 ? 18 : 28;
@@ -80,7 +84,7 @@ class _MAASQuestionnaireStartPageState
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            "Mindfulness Score",
+            isSinhala ? "සතිමත් බ‌වේ වර්ගීකරණය" : "Mindfulness Level",
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
               fontSize: titleFont,
@@ -203,7 +207,7 @@ class _MAASQuestionnaireStartPageState
   }
 
   Widget _buildMarqueeTitle(bool isSinhala, TextStyle style) {
-    final text = isSinhala ? 'මානසික අවධානය පරීක්ෂාව' : 'Mindfulness Checker';
+    final text = isSinhala ? 'සතිමත් බව පරීක්ෂාව' : 'Mindfulness Checker';
 
     return GestureDetector(
       onTap: () => setState(() => _pauseMarquee = !_pauseMarquee),
@@ -214,7 +218,7 @@ class _MAASQuestionnaireStartPageState
           style: style,
           scrollAxis: Axis.horizontal,
           blankSpace: 60,
-          velocity: _pauseMarquee ? 0.0 : 30.0,
+          velocity: _pauseMarquee ? 0.001 : 30.0,
           pauseAfterRound: const Duration(seconds: 1),
           startPadding: 10.0,
         ),
@@ -231,8 +235,8 @@ class _MAASQuestionnaireStartPageState
           children: [
             Text(
               isSinhala
-                  ? 'මානසික අවධානය පරීක්ෂාව (MAAS) වෙත සාදරයෙන් පිළිගනිමු!'
-                  : 'Welcome to the Mindfulness Awareness (MAAS) Questionnaire!',
+                  ? 'සතිමත්බව පරීක්ෂාව (MAAS) වෙත සාදරයෙන් පිළිගනිමු!'
+                  : 'Welcome to the Mindfulness Checker (MAAS)',
               textAlign: TextAlign.center,
               style: GoogleFonts.poppins(
                 fontSize: isMobile ? 20 : 22,

@@ -134,6 +134,15 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
 
   void _showResultDialog(double score, String classification) {
     final isSinhala = _currentLang == 'si';
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isSmallScreen = screenWidth < 400;
+
+    // Get localized classification only for UI display
+    final maasProvider = Provider.of<MAASProvider>(context, listen: false);
+    final localizedClassification = maasProvider.classifyScore(
+      score,
+      isSinhala: isSinhala,
+    );
 
     showDialog(
       context: context,
@@ -142,107 +151,114 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
         children: [
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(color: Colors.black.withOpacity(0)),
+            child: Container(color: Colors.black.withOpacity(0.1)),
           ),
           Center(
-            child: AlertDialog(
-              backgroundColor: AppColors.cardBackground,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: isSmallScreen ? screenWidth * 0.9 : 380,
+                minWidth: screenWidth * 0.8,
               ),
-              contentPadding: const EdgeInsets.all(24),
-              content: SingleChildScrollView(
-                child: Column(
+              child: AlertDialog(
+                backgroundColor: AppColors.cardBackground,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  vertical: 24,
+                  horizontal: 20,
+                ),
+                content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isSinhala ? "අවසාන MAAS ලකුණ" : "Final MAAS Score",
+                      isSinhala ? "අවසාන සතිමත් බවේ ලකුණ" : "Final Mindulness Score",
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
-                        fontSize: 22,
+                        fontSize: isSmallScreen ? 20 : 22,
                         fontWeight: FontWeight.w700,
                         color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
+                    const SizedBox(height: 20),
+
+                    // Score Section
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
                             isSinhala ? 'ලකුණ' : 'Score',
                             style: GoogleFonts.poppins(
-                              fontSize: 17,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.text,
-                            ),
-                          ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
-                              color: AppColors.primary,
-                              width: 1.5,
-                            ),
-                          ),
-                          child: Text(
-                            score.toStringAsFixed(2),
-                            style: GoogleFonts.roboto(
                               fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.text.withOpacity(0.9),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            score.toStringAsFixed(2),
+                            style: GoogleFonts.poppins(
+                              fontSize: isSmallScreen ? 22 : 26,
                               fontWeight: FontWeight.bold,
                               color: AppColors.primary,
                             ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Flexible(
-                          child: Text(
-                            isSinhala ? 'වර්ගීකරණය' : 'Classification',
+                    const SizedBox(height: 18),
+
+                    // Classification Section
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: AppColors.primary.withOpacity(0.3),
+                          width: 1.2,
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isSinhala
+                                ? 'සතිමත් බවේ වර්ගීකරණය'
+                                : 'Level of Mindfulness',
                             style: GoogleFonts.poppins(
-                              fontSize: 17,
+                              fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.text,
+                              color: AppColors.text.withOpacity(0.9),
                             ),
                           ),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(
+                          const SizedBox(height: 6),
+                          Text(
+                            localizedClassification,
+                            textAlign: TextAlign.start,
+                            style: GoogleFonts.poppins(
+                              fontSize: isSmallScreen ? 17 : 18,
+                              fontWeight: FontWeight.bold,
                               color: AppColors.primary,
-                              width: 1.5,
                             ),
                           ),
-                          child: Flexible(
-                            child: Text(
-                              classification,
-                              softWrap: true,
-                              style: GoogleFonts.poppins(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 28),
+
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -262,7 +278,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           style: GoogleFonts.poppins(
                             color: AppColors.buttonText,
                             fontWeight: FontWeight.w600,
-                            fontSize: 16,
+                            fontSize: isSmallScreen ? 15 : 16,
                           ),
                         ),
                       ),
@@ -302,7 +318,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _currentLang == 'si' ? 'MAAS ප්‍රශ්නාවලිය' : 'MAAS Questionnaire',
+              _currentLang == 'si' ? 'සතිමත් බව පරීක්ෂාව' : 'Mindfulness Checker',
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,

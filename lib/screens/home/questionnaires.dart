@@ -41,7 +41,7 @@ class _QuestionnaireMainPageState extends State<QuestionnaireMainPage>
 
     final tabTitles = lang.currentLang == 'en'
         ? ["Feelings Checker", "Attention Checker", "Happiness Score"]
-        : ["හැඟීම් පරික්ෂාව", "අවධානය පරීක්ෂාව", "මානසික සතුට පරීක්ෂාව"];
+        : ["හැඟීම් පරික්ෂාව", "සතිමත් බව පරීක්ෂාව", "මානසික සතුට පරීක්ෂාව"];
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -49,8 +49,8 @@ class _QuestionnaireMainPageState extends State<QuestionnaireMainPage>
         backgroundColor: AppColors.primary,
         title: Text(
           lang.currentLang == 'en'
-              ? "Questionnaire Feedback"
-              : "ප්‍රශ්න පිළිබඳ ප්‍රතිචාර",
+              ? "Feedbacks"
+              : "ප්‍රතිචාර",
           style:appBarTextStyle,
         ),
         centerTitle: true,

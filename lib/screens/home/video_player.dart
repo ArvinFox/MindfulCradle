@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:mamamind/utils/helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 import 'package:flutter/cupertino.dart';
@@ -10,6 +9,7 @@ import '../../constants/colors.dart';
 import '../../models/video_model.dart';
 import '../../providers/video_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/achievement_provider.dart';
 
 class YouTubeVideoPlayerPage extends StatefulWidget {
   final VideoModel video;
@@ -116,6 +116,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
         _watchedSeconds += 1;
         if (_watchedSeconds % 5 == 0) {
           videoProvider.updateProgress(
+            context: context, // Pass Context
             userId: widget.userId,
             videoId: widget.video.id,
             watchedSeconds: _watchedSeconds,
@@ -140,24 +141,43 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    _stopAndSaveProgress();
     _controller.dispose();
     _progressTimer?.cancel();
     _hintTimer?.cancel();
     super.dispose();
   }
 
-  void _stopAndSaveProgress() {
-    final videoProvider = Provider.of<VideoProvider>(context, listen: false);
+  /// Handles exiting the player
+  Future<void> _handleExit() async {
     _progressTimer?.cancel();
     _controller.removeListener(_youtubeListener);
     _controller.pause();
 
-    videoProvider.updateProgress(
-      userId: widget.userId,
-      videoId: widget.video.id,
-      watchedSeconds: _watchedSeconds,
-    );
+    // Save Progress
+    if (mounted) {
+      final videoProvider = Provider.of<VideoProvider>(context, listen: false);
+      await videoProvider.updateProgress(
+        context: context,
+        userId: widget.userId,
+        videoId: widget.video.id,
+        watchedSeconds: _watchedSeconds,
+      );
+    }
+
+    // Get Achievement Provider Reference before popping
+    if (mounted) {
+      final achProvider = Provider.of<AchievementProvider>(
+        context,
+        listen: false,
+      );
+
+      // Pop the Video Player
+      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      Navigator.of(context).pop();
+
+      // Trigger Pending Dialogs
+      achProvider.showPendingAchievements(context);
+    }
   }
 
   @override
@@ -171,9 +191,8 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
     return WillPopScope(
       onWillPop: () async {
-        _stopAndSaveProgress();
-        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-        return true;
+        await _handleExit();
+        return false;
       },
       child: YoutubePlayerBuilder(
         player: YoutubePlayer(
@@ -189,14 +208,14 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
               elevation: 4,
               leading: CupertinoNavigationBarBackButton(
                 color: Colors.white,
-                onPressed: () {
-                  _stopAndSaveProgress();
-                  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-                  Navigator.of(context).pop();
+                onPressed: () async {
+                  await _handleExit();
                 },
               ),
               title: Text(
-                langProvider.currentLang == "si" ? widget.video.titleSi : widget.video.title,
+                langProvider.currentLang == "si"
+                    ? widget.video.titleSi
+                    : widget.video.title,
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w600,
@@ -209,7 +228,6 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
             ),
             body: Column(
               children: [
-                // Video player
                 Container(color: Colors.black, child: player),
 
                 // Fixed progress bar (non-scrollable)
@@ -243,7 +261,11 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                           Center(
                             child: Text(
                               '${(progress * 100).toStringAsFixed(0)}%',
-                              style: selectedLabelStyle,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -252,7 +274,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                   ),
                 ),
 
-                // instructions + hints
+                // Instructions + Hints
                 Expanded(
                   child: Stack(
                     children: [

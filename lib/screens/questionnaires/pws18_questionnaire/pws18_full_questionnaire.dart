@@ -9,6 +9,7 @@ import '/constants/colors.dart';
 import '/providers/pws18_provider.dart';
 import '/providers/language_provider.dart';
 import '/utils/pws18_hints.dart';
+import '../../../providers/achievement_provider.dart';
 
 class PWS18FullQuestionnairePage extends StatefulWidget {
   const PWS18FullQuestionnairePage({super.key});
@@ -93,14 +94,14 @@ class _PWS18FullQuestionnairePageState
   Future<void> _submitAll(PWS18Provider provider) async {
     setState(() => _submitting = true);
     try {
-      // Calculate scores before saving
       final scores = provider.calculateScores();
 
+      // Save silently updates achievements
       await provider.saveAttemptToFirebase(context);
 
       if (!mounted) return;
 
-      // Show dialog using cached scores
+      // Show dialog
       _showScoresDialog(scores);
     } catch (e) {
       if (kDebugMode) print('Error saving questionnaire: $e');
@@ -149,6 +150,7 @@ class _PWS18FullQuestionnairePageState
     }
   }
 
+  // DIALOG LOGIC
   void _showScoresDialog(Map<String, double> scores) {
     final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
@@ -260,8 +262,20 @@ class _PWS18FullQuestionnairePageState
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: () {
+                          // Get Achievement Provider Reference
+                          final achProvider = Provider.of<AchievementProvider>(
+                            context,
+                            listen: false,
+                          );
+
+                          // Close Dialog
                           Navigator.of(context).pop();
+
+                          // Close Page
                           Navigator.of(context).pop();
+
+                          // Trigger Pending Achievements on Start Screen
+                          achProvider.showPendingAchievements(context);
                         },
                         child: Text(
                           isSinhala ? "හරි" : "OK",
@@ -292,7 +306,6 @@ class _PWS18FullQuestionnairePageState
 
   @override
   Widget build(BuildContext context) {
-    // ... Same build logic as previous message ...
     final provider = Provider.of<PWS18Provider>(context);
     final isMobile = MediaQuery.of(context).size.width < 600;
     final totalQuestions = _questions.length;
@@ -364,7 +377,6 @@ class _PWS18FullQuestionnairePageState
                         ),
                       ),
                       const SizedBox(height: 8),
-
                       // Questions List
                       Expanded(
                         child: ListView.builder(
@@ -520,6 +532,7 @@ class _PWS18FullQuestionnairePageState
                         ),
                       ),
                       const SizedBox(height: 16),
+                      // Navigation Buttons
                       Row(
                         children: [
                           FloatingActionButton(
@@ -579,9 +592,7 @@ class _PWS18FullQuestionnairePageState
                                         provider,
                                         _pageIndex,
                                       )) {
-                                        setState(() {
-                                          _attemptedSubmit = true;
-                                        });
+                                        setState(() => _attemptedSubmit = true);
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(

@@ -9,6 +9,7 @@ import '/constants/colors.dart';
 import '../../../providers/maas_provider.dart';
 import '/providers/language_provider.dart';
 import '../../../utils/maas_hints.dart';
+import '../../../providers/achievement_provider.dart';
 
 class MAASFullQuestionnairePage extends StatefulWidget {
   const MAASFullQuestionnairePage({super.key});
@@ -29,8 +30,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
   final int _perPage = 5;
   late final LanguageProvider _langProvider;
   bool _hintVisible = false;
-
-  // Track if user tried to submit without finishing
   bool _attemptedSubmit = false;
 
   @override
@@ -108,7 +107,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
 
       if (!mounted) return;
 
-      // Show dialog with the score we captured earlier
+      // Show dialog
       _showResultDialog(maasScore, classification);
     } catch (e) {
       if (kDebugMode) print('Error saving MAAS: $e');
@@ -138,6 +137,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
     }
   }
 
+  // DIALOG LOGIC
   void _showResultDialog(double score, String classification) {
     final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
@@ -182,7 +182,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-
                     // Score Section
                     Container(
                       width: double.infinity,
@@ -219,7 +218,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                       ),
                     ),
                     const SizedBox(height: 18),
-
                     // Classification Section
                     Container(
                       width: double.infinity,
@@ -259,7 +257,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                       ),
                     ),
                     const SizedBox(height: 28),
-
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -271,8 +268,20 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: () {
+                          // Get Reference to Achievement Provider before popping
+                          final achProvider = Provider.of<AchievementProvider>(
+                            context,
+                            listen: false,
+                          );
+
+                          // Close Dialog
                           Navigator.of(context).pop();
+                          
+                          // Close Page
                           Navigator.of(context).pop();
+
+                          // Trigger the Pending Dialog on the Start Screen
+                          achProvider.showPendingAchievements(context);
                         },
                         child: Text(
                           isSinhala ? "හරි" : "OK",
@@ -342,7 +351,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                   ),
                   child: Column(
                     children: [
-                      // Progress header
+                      // Progress Header
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
@@ -376,7 +385,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                         ),
                       ),
                       const SizedBox(height: 8),
-
                       // Questions list
                       Expanded(
                         child: ListView.builder(
@@ -386,8 +394,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           itemBuilder: (context, idx) {
                             final q = _questionsForPage(_pageIndex)[idx];
                             final qId = q['id'] as int;
-
-                            // Check if missing answer and error state is active
                             final bool isMissing =
                                 _attemptedSubmit &&
                                 provider.responses[qId - 1] == null;
@@ -397,7 +403,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                // Red border
                                 side: isMissing
                                     ? const BorderSide(
                                         color: Colors.red,
@@ -495,6 +500,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                                           .withOpacity(0.7)
                                                     : AppColors.completed,
                                                 elevation: selected ? 6 : 0,
+                                                pressElevation: 2,
                                                 onSelected: (_) {
                                                   HapticFeedback.lightImpact();
                                                   provider.setAnswer(
@@ -511,8 +517,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                         );
                                       },
                                     ),
-
-                                    // Error text message
                                     if (isMissing)
                                       Padding(
                                         padding: const EdgeInsets.only(
@@ -536,9 +540,8 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           },
                         ),
                       ),
-
-                      // Navigation buttons with Hint
                       const SizedBox(height: 16),
+                      // Navigation Buttons
                       Row(
                         children: [
                           FloatingActionButton(
@@ -561,8 +564,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                     : () {
                                         setState(() {
                                           _pageIndex -= 1;
-                                          _attemptedSubmit =
-                                              false;
+                                          _attemptedSubmit = false;
                                         });
                                         _scrollToTop();
                                       },
@@ -599,10 +601,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                         provider,
                                         _pageIndex,
                                       )) {
-                                        // Trigger visual error
-                                        setState(() {
-                                          _attemptedSubmit = true;
-                                        });
+                                        setState(() => _attemptedSubmit = true);
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -618,10 +617,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                         );
                                         return;
                                       }
-
-                                      // Clear error if success
                                       setState(() => _attemptedSubmit = false);
-
                                       if (_pageIndex < totalPages - 1) {
                                         setState(() => _pageIndex += 1);
                                         _scrollToTop();
@@ -659,13 +655,11 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                   ),
                 ),
         ),
-
         MAASHintOverlay(
           visible: _hintVisible,
-          isMobile: MediaQuery.of(context).size.width < 600,
+          isMobile: isMobile,
           onClose: () => setState(() => _hintVisible = false),
         ),
-
         if (_submitting)
           Container(
             color: AppColors.background,

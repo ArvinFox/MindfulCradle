@@ -38,12 +38,27 @@ class VideoTile extends StatelessWidget {
         ),
         backgroundColor: Colors.orange.shade700,
         duration: const Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    // Style matches Achievement Card exactly
+    final backgroundColor = isLocked
+        ? const Color(0xFFF0F0F0)
+        : AppColors.cardBackground;
+    final iconBgColor = isLocked
+        ? Colors.grey[300]
+        : AppColors.primary.withOpacity(0.1);
+    final iconColor = isLocked ? Colors.grey[500] : AppColors.primary;
+    final textColor = isLocked ? Colors.grey[500] : AppColors.text;
+    final shadowColor = isLocked
+        ? Colors.transparent
+        : Colors.black.withOpacity(0.05);
+
     return InkWell(
       onTap: () {
         if (isLocked) {
@@ -52,77 +67,58 @@ class VideoTile extends StatelessWidget {
           onTap();
         }
       },
-      borderRadius: BorderRadius.circular(16),
-      splashColor: AppColors.primary.withOpacity(0.4),
-      highlightColor: AppColors.primary.withOpacity(0.15),
+      borderRadius: BorderRadius.circular(20),
       child: Container(
         decoration: BoxDecoration(
-          color: AppColors.cardBackground,
-          borderRadius: BorderRadius.circular(16),
+          color: backgroundColor,
+          borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: shadowColor,
               blurRadius: 10,
-              offset: const Offset(0, 5),
+              offset: const Offset(0, 4),
             ),
           ],
+          // Add a subtle border for unlocked items to make them pop
+          border: isLocked
+              ? null
+              : Border.all(color: AppColors.primary.withOpacity(0.1), width: 1),
         ),
-        child: Stack(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Center(
-              child: Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.play_circle_outline_rounded,
-                      size: isMobile ? 48 : 64,
-                      color: AppColors.primary,
-                    ),
-                    const SizedBox(height: 8),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                      child: Text(
-                        title,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: isMobile ? 15 : 17,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.text,
-                        ),
-                      ),
-                    ),
-                  ],
+            // --- Icon Circle ---
+            Container(
+              width: isMobile ? 50 : 60,
+              height: isMobile ? 50 : 60,
+              decoration: BoxDecoration(
+                color: iconBgColor,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                isLocked ? Icons.lock : Icons.play_arrow_rounded,
+                size: isMobile ? 28 : 32,
+                color: iconColor,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // --- Title ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10.0),
+              child: Text(
+                title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.poppins(
+                  fontSize: isMobile ? 13 : 15,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                  height: 1.2,
                 ),
               ),
             ),
-
-            // Locked Overlay
-            if (isLocked)
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: AppColors.text.withOpacity(0.30),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.lock_rounded,
-                        color: Colors.white,
-                        size: 32,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
           ],
         ),
       ),

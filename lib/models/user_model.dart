@@ -65,4 +65,29 @@ class UserModel {
       'isUserRegistrationComplete': isUserRegistrationComplete,
     };
   }
+
+  UserModel copyWith({
+    String? id,
+    String? fullName,
+    String? email,
+    List<String>? achievements,
+    List<int>? unlockedVideos,
+    int? totalSessionTime,
+    Map<String, int>? videoProgress,
+    Map<String, int>? videoWatchTime,
+    bool? isUserRegistrationComplete,
+  }) {
+    return UserModel(
+      id: id ?? this.id,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      achievements: achievements ?? this.achievements,
+      unlockedVideos: unlockedVideos ?? this.unlockedVideos,
+      totalSessionTime: totalSessionTime ?? this.totalSessionTime,
+      videoProgress: videoProgress ?? this.videoProgress,
+      videoWatchTime: videoWatchTime ?? this.videoWatchTime,
+      isUserRegistrationComplete:
+          isUserRegistrationComplete ?? this.isUserRegistrationComplete,
+    );
+  }
 }

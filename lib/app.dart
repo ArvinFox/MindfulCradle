@@ -8,6 +8,7 @@ import 'package:mamamind/screens/auth/login_page.dart';
 import 'package:mamamind/screens/auth/user_registration_page.dart';
 import 'package:mamamind/screens/main_screen.dart';
 import 'package:mamamind/screens/splashScreen/splash_screen.dart';
+import 'package:mamamind/utils/globals.dart';
 
 class MamaMindApp extends StatefulWidget {
   const MamaMindApp({super.key});
@@ -23,7 +24,7 @@ class _MamaMindAppState extends State<MamaMindApp> {
   void initState() {
     super.initState();
 
-    // Always show splash for at least 2 seconds
+    // Always show splash for at least 4 seconds
     Future.delayed(const Duration(seconds: 4), () {
       if (mounted) {
         setState(() {
@@ -60,13 +61,17 @@ class _MamaMindAppState extends State<MamaMindApp> {
         return MaterialApp(
           title: AppConfig.appName,
           debugShowCheckedModeBanner: false,
+          scaffoldMessengerKey:
+              rootScaffoldMessengerKey, // For Global Snackbars
+          navigatorKey: navigatorKey, // For Global Dialogs
+
           theme: ThemeData(
             primaryColor: AppColors.primary,
             scaffoldBackgroundColor: AppColors.background,
             textTheme: Theme.of(context).textTheme.apply(
-                  bodyColor: AppColors.text,
-                  displayColor: AppColors.text,
-                ),
+              bodyColor: AppColors.text,
+              displayColor: AppColors.text,
+            ),
           ),
           home: home,
           routes: AppRoutes.routes,

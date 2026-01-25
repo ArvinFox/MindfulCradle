@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
+import '../providers/achievement_provider.dart';
 import 'package:provider/provider.dart';
 
 class DASS21Provider with ChangeNotifier {
@@ -202,6 +203,19 @@ class DASS21Provider with ChangeNotifier {
         'attemptNumber': currentAttemptNumber,
       });
 
+      // ACHIEVEMENT LOGIC: 'Self Aware'
+      if (currentAttemptNumber == 1) {
+        final achievementProvider = Provider.of<AchievementProvider>(
+          context,
+          listen: false,
+        );
+        await achievementProvider.unlockAchievement(
+          context, 
+          'self_aware', 
+          showUI: false
+        );
+      }
+
       await loadDASS21Data(context);
     } finally {
       isLoading = false;
@@ -234,5 +248,10 @@ class DASS21Provider with ChangeNotifier {
     return null;
   }
 
-  void resetAndLoad(UserModel user, {BuildContext? context}) {}
+  void resetAndLoad(UserModel user, {BuildContext? context}) {
+    setUser(user);
+    if (context != null) {
+      loadDASS21Data(context);
+    }
+  }
 }

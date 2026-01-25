@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:mamamind/utils/helpers.dart';
 import 'package:mamamind/utils/logout_util.dart';
 import 'package:provider/provider.dart';
 import '../../constants/colors.dart';
@@ -22,8 +21,8 @@ class _ProfilePageState extends State<ProfilePage> {
 
     final authProvider = Provider.of<AuthProvider>(context);
     final langProvider = Provider.of<LanguageProvider>(context);
-
     final user = authProvider.user;
+    final isSinhala = langProvider.currentLang == 'si';
 
     if (authProvider.isInitializing) {
       return Scaffold(
@@ -39,9 +38,7 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: AppColors.background,
         body: Center(
           child: Text(
-            langProvider.currentLang == 'en'
-                ? "User data not available"
-                : "පරිශීලක දත්ත නොමැත",
+            isSinhala ? "පරිශීලක දත්ත නොමැත" : "User data not available",
             style: GoogleFonts.poppins(
               color: AppColors.text,
               fontWeight: FontWeight.w500,
@@ -54,14 +51,19 @@ class _ProfilePageState extends State<ProfilePage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
-       title: Text(
-  langProvider.currentLang == 'en' ? "Profile" : "ප්‍රොෆයිල්",
-  style: appBarTextStyle,
-),
-        centerTitle: true,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        centerTitle: true,
+        title: Text(
+          isSinhala ? "ප්‍රොෆයිල්" : "Profile",
+          style: GoogleFonts.poppins(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: 20,
+          ),
+        ),
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -78,156 +80,253 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 130,
-                height: 130,
+      body: Column(
+        children: [
+          // HEADER & PROFILE CARD
+          Stack(
+            clipBehavior: Clip.none,
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: double.infinity,
+                height: 240,
                 decoration: BoxDecoration(
-                  color: AppColors.cardBackground,
-                  borderRadius: BorderRadius.circular(65),
+                  color: AppColors.primary,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(32),
+                    bottomRight: Radius.circular(32),
+                  ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.primary.withOpacity(0.2),
+                      color: AppColors.primary.withOpacity(0.3),
                       blurRadius: 10,
-                      offset: const Offset(0, 4),
+                      offset: const Offset(0, 5),
                     ),
                   ],
                 ),
-                child: Icon(Icons.person, size: 80, color: AppColors.primary),
               ),
-            ),
-            const SizedBox(height: 20),
-            Center(
-              child: Text(
-                user.fullName,
-                style: GoogleFonts.poppins(
-                  fontSize: isMobile ? 24 : 28,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.text,
-                ),
-              ),
-            ),
-            Center(
-              child: Text(
-                user.email,
-                style: GoogleFonts.poppins(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                  color: AppColors.text.withOpacity(0.6),
-                ),
-              ),
-            ),
-            const SizedBox(height: 32),
 
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-              color: AppColors.cardBackground,
-              elevation: 4,
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-                      child: Text(
-                        langProvider.currentLang == 'en'
-                            ? "Settings"
-                            : "සැකසුම්",
-                        style: GoogleFonts.poppins(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w600,
+              // Profile Info Card
+              Positioned(
+                top: 130,
+                child: Container(
+                  width: size.width * 0.85,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 24,
+                    horizontal: 16,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.08),
+                        blurRadius: 15,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    children: [
+                      // Avatar
+                      Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: AppColors.primary.withOpacity(0.1),
+                            width: 2,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.person,
+                          size: 60,
                           color: AppColors.primary,
                         ),
                       ),
-                    ),
-                    const Divider(
-                        height: 1, thickness: 1, indent: 16, endIndent: 16),
+                      const SizedBox(height: 16),
+                      // Name
+                      Text(
+                        user.fullName,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: isMobile ? 22 : 26,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.text,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Email
+                      Text(
+                        user.email,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
 
-                    ListTile(
-                      leading: Icon(Icons.language, color: AppColors.primary),
+          // SETTINGS CONTENT
+          Expanded(
+            child: SingleChildScrollView(
+              // Add padding to account for the overlapping card height
+              padding: const EdgeInsets.only(
+                top: 140,
+                left: 20,
+                right: 20,
+                bottom: 30,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Settings Header
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0, bottom: 12),
+                    child: Text(
+                      isSinhala ? "සැකසුම්" : "Settings",
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.text,
+                      ),
+                    ),
+                  ),
+
+                  // Language Card
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.language,
+                          color: AppColors.primary,
+                          size: 24,
+                        ),
+                      ),
                       title: Text(
-                        langProvider.currentLang == 'en'
-                            ? "Language"
-                            : "භාෂාව",
+                        isSinhala ? "භාෂාව" : "Language",
                         style: GoogleFonts.poppins(
                           color: AppColors.text,
                           fontWeight: FontWeight.w500,
                           fontSize: 16,
                         ),
                       ),
-                      trailing: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: langProvider.currentLang == 'en'
-                              ? "en"
-                              : "si",
-                          style: GoogleFonts.poppins(
+                      trailing: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value: isSinhala ? "si" : "en",
+                            style: GoogleFonts.poppins(
                               color: AppColors.text,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w500),
-                          dropdownColor: AppColors.cardBackground,
-                          items: const [
-                            DropdownMenuItem(
-                              value: "en",
-                              child: Text("English",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16)),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w600,
                             ),
-                            DropdownMenuItem(
-                              value: "si",
-                              child: Text("සිංහල",
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                      fontSize: 16)),
+                            icon: const Icon(
+                              Icons.keyboard_arrow_down,
+                              size: 20,
                             ),
-                          ],
-                          onChanged: (val) {
-                            if (val != null) {
-                              langProvider.setLanguage(val);
-                            }
-                          },
+                            dropdownColor: Colors.white,
+                            items: const [
+                              DropdownMenuItem(
+                                value: "en",
+                                child: Text("English"),
+                              ),
+                              DropdownMenuItem(
+                                value: "si",
+                                child: Text("සිංහල"),
+                              ),
+                            ],
+                            onChanged: (val) {
+                              if (val != null) {
+                                langProvider.setLanguage(val);
+                              }
+                            },
+                          ),
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Center(
-              child: TextButton.icon(
-                onPressed: () {
-                  LogoutUtils.showLogoutDialog(
-                    context: context,
-                    authProvider: authProvider,
-                    language: langProvider.currentLang,
-                    redirectRoute: '/login',
-                  );
-                },
-                icon: Icon(Icons.exit_to_app, color: Colors.redAccent),
-                label: Text(
-                  langProvider.currentLang == 'en'
-                      ? "Log Out"
-                      : "ලොග් අවුට්",
-                  style: GoogleFonts.poppins(
-                    color: Colors.redAccent,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
                   ),
-                ),
+
+                  const SizedBox(height: 30),
+
+                  // Logout Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () {
+                        LogoutUtils.showLogoutDialog(
+                          context: context,
+                          authProvider: authProvider,
+                          language: langProvider.currentLang,
+                          redirectRoute: '/login',
+                        );
+                      },
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                          side: BorderSide(color: Colors.red.withOpacity(0.2)),
+                        ),
+                        backgroundColor: Colors.red.withOpacity(0.05),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Icon(
+                            Icons.exit_to_app,
+                            color: Colors.redAccent,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            isSinhala ? "ලොග් අවුට්" : "Log Out",
+                            style: GoogleFonts.poppins(
+                              color: Colors.redAccent,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

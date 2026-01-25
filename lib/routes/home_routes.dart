@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:mamamind/screens/RAG_Chat/rag_chat_help.dart';
 import 'package:mamamind/screens/home/questionnaires.dart';
 import '../screens/home/video_player.dart';
 import '../screens/home/home_page.dart';
@@ -10,6 +11,7 @@ class HomeRoutes {
     '/main-screen': (context) => const MainScreen(),
     '/home': (context) => const HomePage(),
     '/questionnaire': (context) => const QuestionnaireMainPage(),
+    '/chat': (context) => const ChatBotPage(),
   };
 
   /// Navigate to video player page with user-specific tracking & language

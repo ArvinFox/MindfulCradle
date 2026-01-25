@@ -96,7 +96,7 @@ class _LoginPageState extends State<LoginPage> {
         : "මුරපදය";
     final rememberMeText = langProvider.currentLang == 'en'
         ? "Remember Me"
-        : "මතක් කරන්න";
+        : "මතක තබාගන්න";
     final forgotPasswordText = langProvider.currentLang == 'en'
         ? "Forgot Password?"
         : "මුරපදය අමතකද?";

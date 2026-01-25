@@ -30,6 +30,7 @@ class _PWS18FullQuestionnairePageState
   final int _perPage = 6;
   late final LanguageProvider _langProvider;
   bool _hintVisible = false;
+  bool _attemptedSubmit = false;
 
   @override
   void initState() {
@@ -92,17 +93,14 @@ class _PWS18FullQuestionnairePageState
   Future<void> _submitAll(PWS18Provider provider) async {
     setState(() => _submitting = true);
     try {
-      for (var category in provider.subscales.keys) {
-        await provider.saveCategoryAnswers(
-          category.toString(),
-          context: context,
-        );
-      }
-      await provider.loadLatest(context);
+      // Calculate scores before saving
+      final scores = provider.calculateScores();
+
+      await provider.saveAttemptToFirebase(context);
 
       if (!mounted) return;
 
-      final scores = provider.calculateScores();
+      // Show dialog using cached scores
       _showScoresDialog(scores);
     } catch (e) {
       if (kDebugMode) print('Error saving questionnaire: $e');
@@ -131,6 +129,26 @@ class _PWS18FullQuestionnairePageState
     }
   }
 
+  // --- Helper to translate PWS Categories ---
+  String _getSinhalaLabel(String key) {
+    switch (key) {
+      case 'Autonomy':
+        return 'ස්වයං පාලනය';
+      case 'Environmental Mastery':
+        return 'පරිසරය කළමනාකරණය';
+      case 'Personal Growth':
+        return 'පුද්ගලික වර්ධනය';
+      case 'Positive Relations with Others':
+        return 'යහපත් අන්තර් පුද්ගල සබඳතා';
+      case 'Purpose in Life':
+        return 'ජීවිතයේ අරමුණ';
+      case 'Self-Acceptance':
+        return 'ස්වයං පිළිගැනීම';
+      default:
+        return key;
+    }
+  }
+
   void _showScoresDialog(Map<String, double> scores) {
     final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
@@ -141,13 +159,10 @@ class _PWS18FullQuestionnairePageState
       barrierDismissible: false,
       builder: (_) => Stack(
         children: [
-          // Blurred background
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
             child: Container(color: Colors.black.withOpacity(0.1)),
           ),
-
-          // Dialog
           Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -176,9 +191,11 @@ class _PWS18FullQuestionnairePageState
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Score List
                     ...scores.entries.map((e) {
+                      final displayKey = isSinhala
+                          ? _getSinhalaLabel(e.key)
+                          : e.key;
+
                       return Container(
                         width: double.infinity,
                         margin: const EdgeInsets.only(bottom: 14),
@@ -196,7 +213,7 @@ class _PWS18FullQuestionnairePageState
                           children: [
                             Expanded(
                               child: Text(
-                                e.key,
+                                displayKey,
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
@@ -231,10 +248,7 @@ class _PWS18FullQuestionnairePageState
                         ),
                       );
                     }).toList(),
-
                     const SizedBox(height: 28),
-
-                    // OK Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -278,6 +292,7 @@ class _PWS18FullQuestionnairePageState
 
   @override
   Widget build(BuildContext context) {
+    // ... Same build logic as previous message ...
     final provider = Provider.of<PWS18Provider>(context);
     final isMobile = MediaQuery.of(context).size.width < 600;
     final totalQuestions = _questions.length;
@@ -294,9 +309,7 @@ class _PWS18FullQuestionnairePageState
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _currentLang == 'si'
-                  ? 'සතුට පරීක්ෂාව'
-                  : 'Happiness Checker',
+              _currentLang == 'si' ? 'සතුට පරීක්ෂාව' : 'Happiness Checker',
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -325,8 +338,8 @@ class _PWS18FullQuestionnairePageState
                           children: [
                             Text(
                               _currentLang == 'si'
-                                  ? 'ප්‍රශ්න: ${(_pageIndex * _perPage) + 1} - ${(_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)} න් $totalQuestions'
-                                  : 'Questions: ${(_pageIndex * _perPage) + 1} - ${(_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)} of $totalQuestions',
+                                  ? 'ප්‍රශ්න: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} න් $totalQuestions'
+                                  : 'Questions: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} of $totalQuestions',
                               style: GoogleFonts.poppins(
                                 color: AppColors.text.withOpacity(0.7),
                                 fontWeight: FontWeight.w500,
@@ -337,7 +350,9 @@ class _PWS18FullQuestionnairePageState
                             ClipRRect(
                               borderRadius: BorderRadius.circular(10),
                               child: LinearProgressIndicator(
-                                value: (_pageIndex + 1) / totalPages,
+                                value:
+                                    (_pageIndex + 1) /
+                                    (totalPages == 0 ? 1 : totalPages),
                                 color: AppColors.primary,
                                 backgroundColor: AppColors.primary.withOpacity(
                                   0.2,
@@ -359,11 +374,21 @@ class _PWS18FullQuestionnairePageState
                           itemBuilder: (context, idx) {
                             final q = _questionsForPage(_pageIndex)[idx];
                             final qId = q['id'] as int;
+                            final bool isMissing =
+                                _attemptedSubmit &&
+                                provider.responses[qId - 1] == null;
+
                             return Card(
                               color: AppColors.cardBackground,
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
+                                side: isMissing
+                                    ? const BorderSide(
+                                        color: Colors.red,
+                                        width: 2.0,
+                                      )
+                                    : BorderSide.none,
                               ),
                               elevation: 3,
                               child: Padding(
@@ -371,13 +396,32 @@ class _PWS18FullQuestionnairePageState
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '${qId}. ${q['question']}',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: isMobile ? 15 : 17,
-                                        color: AppColors.text,
-                                      ),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${qId}. ${q['question']}',
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: isMobile ? 15 : 17,
+                                              color: AppColors.text,
+                                            ),
+                                          ),
+                                        ),
+                                        if (isMissing)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 8.0,
+                                            ),
+                                            child: Icon(
+                                              Icons.error_outline,
+                                              color: Colors.red,
+                                              size: 20,
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                     const SizedBox(height: 12),
                                     LayoutBuilder(
@@ -452,6 +496,22 @@ class _PWS18FullQuestionnairePageState
                                         );
                                       },
                                     ),
+                                    if (isMissing)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 8.0,
+                                        ),
+                                        child: Text(
+                                          _currentLang == 'si'
+                                              ? '* අනිවාර්යයි'
+                                              : '* Required',
+                                          style: GoogleFonts.roboto(
+                                            color: Colors.red,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
@@ -459,8 +519,6 @@ class _PWS18FullQuestionnairePageState
                           },
                         ),
                       ),
-
-                      // Navigation buttons
                       const SizedBox(height: 16),
                       Row(
                         children: [
@@ -482,7 +540,10 @@ class _PWS18FullQuestionnairePageState
                                 onPressed: _submitting
                                     ? null
                                     : () {
-                                        setState(() => _pageIndex -= 1);
+                                        setState(() {
+                                          _pageIndex -= 1;
+                                          _attemptedSubmit = false;
+                                        });
                                         _scrollToTop();
                                       },
                                 style: ElevatedButton.styleFrom(
@@ -518,6 +579,9 @@ class _PWS18FullQuestionnairePageState
                                         provider,
                                         _pageIndex,
                                       )) {
+                                        setState(() {
+                                          _attemptedSubmit = true;
+                                        });
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -533,6 +597,7 @@ class _PWS18FullQuestionnairePageState
                                         );
                                         return;
                                       }
+                                      setState(() => _attemptedSubmit = false);
                                       if (_pageIndex < totalPages - 1) {
                                         setState(() => _pageIndex += 1);
                                         _scrollToTop();
@@ -570,14 +635,11 @@ class _PWS18FullQuestionnairePageState
                   ),
                 ),
         ),
-
         PWS18HintOverlay(
           visible: _hintVisible,
           isMobile: MediaQuery.of(context).size.width < 600,
           onClose: () => setState(() => _hintVisible = false),
         ),
-
-        // Submitting Overlay
         if (_submitting)
           Container(
             color: AppColors.background,

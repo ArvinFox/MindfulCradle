@@ -7,10 +7,20 @@ import 'package:provider/provider.dart';
 class PWS18Provider with ChangeNotifier {
   UserModel? _user;
 
+  // Global Unlock Dates
+  Map<int, DateTime> unlockDates = {};
+
+  // User's past history
+  Map<int, Map<String, dynamic>> userAttempts = {};
+
+  // Current active attempt
+  int currentAttemptNumber = 1;
+  bool isLocked = true;
+  String lockReason = "";
+
+  // Standard questionnaire state
   List<int?> responses = List<int?>.filled(18, null);
-  List<int> availableQuestionIds = [];
   bool isLoading = false;
-  DateTime? completedAt;
 
   PWS18Provider();
 
@@ -26,17 +36,17 @@ class PWS18Provider with ChangeNotifier {
     notifyListeners();
   }
 
-  /// Official reverse scoring items
+  bool get allAnswered => !responses.contains(null);
+
+  /// Logic
   int _processedScore(int questionId, int value) {
     const reverseItems = [1, 2, 3, 8, 9, 11, 12, 13, 17, 18];
     if (reverseItems.contains(questionId)) {
-      // Formula: (7 + 1) - value = 8 - value
       return 8 - value;
     }
     return value;
   }
 
-  /// Official subscale mapping
   Map<String, List<int>> get subscales => {
     'Autonomy': [15, 17, 18],
     'Environmental Mastery': [4, 8, 9],
@@ -46,7 +56,6 @@ class PWS18Provider with ChangeNotifier {
     'Self-Acceptance': [1, 2, 5],
   };
 
-  /// Calculate subscale scores (average per category)
   Map<String, double> calculateScores() {
     final Map<String, double> scores = {};
     subscales.forEach((subscale, items) {
@@ -64,153 +73,178 @@ class PWS18Provider with ChangeNotifier {
     return scores;
   }
 
-  bool categoryAnswered(String categoryName) {
-    final items = subscales[categoryName];
-    if (items == null) return false;
-    for (var qId in items) {
-      if (responses[qId - 1] == null) return false;
-    }
-    return true;
-  }
-
-  bool allCategoriesAnswered() {
-    return subscales.keys.every((cat) => categoryAnswered(cat));
-  }
-
-  /// Real-time stream for user responses
-  Stream<Map<String, int?>> responsesStream() async* {
-    final currentUser = _user;
-    if (currentUser == null) return;
-
-    final docRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.id)
-        .collection('pws18_responses')
-        .doc('latest');
-
-    await for (var snapshot in docRef.snapshots()) {
-      Map<String, int?> updatedResponses = {
-        for (int i = 1; i <= 18; i++) i.toString(): null,
-      };
-
-      if (snapshot.exists && snapshot.data()?['responses'] != null) {
-        final saved = Map<String, dynamic>.from(snapshot.data()!['responses']);
-        for (var entry in saved.entries) {
-          int qId = int.tryParse(entry.key) ?? 0;
-          if (qId > 0 && qId <= 18) {
-            updatedResponses[qId.toString()] = entry.value;
-          }
-        }
-      }
-
-      for (int i = 0; i < 18; i++) {
-        responses[i] = updatedResponses[(i + 1).toString()];
-      }
-      notifyListeners();
-      yield updatedResponses;
-    }
-  }
-
-  /// Save answers of a single category
-  Future<void> saveCategoryAnswers(
-    String category, {
-    BuildContext? context,
-  }) async {
-    final currentUser =
-        _user ??
-        (context != null
-            ? Provider.of<AuthProvider>(context, listen: false).user
-            : null);
-    if (currentUser == null) throw Exception("User not logged in");
-
-    _user = currentUser;
-
-    final docRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.id)
-        .collection('pws18_responses')
-        .doc('latest');
-
-    final snap = await docRef.get();
-    Map<String, dynamic> existingResponses = {};
-    if (snap.exists && snap.data()?['responses'] != null) {
-      existingResponses = Map<String, dynamic>.from(snap.data()!['responses']);
-    }
-
-    final ids = subscales[category]!;
-    for (var id in ids) {
-      existingResponses[id.toString()] = responses[id - 1];
-    }
-
-    await docRef.set({
-      'responses': existingResponses,
-      'completedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    if (!existingResponses.values.contains(null)) {
-      await docRef.set({
-        'subscaleScores': calculateScores(),
-        'finalCompletedAt': FieldValue.serverTimestamp(),
-      }, SetOptions(merge: true));
-    }
-  }
-
-  /// Load latest responses
-  Future<void> loadLatest(BuildContext? context, {UserModel? user}) async {
-    reset();
-    final authProvider = context != null
-        ? Provider.of<AuthProvider>(context, listen: false)
-        : null;
-
-    final currentUser = user ?? _user ?? authProvider?.user;
-    if (currentUser == null) return;
-
-    _user = currentUser;
+  /// Load Data (Control + History)
+  Future<void> loadPWS18Data(BuildContext context) async {
+    isLoading = true;
+    responses = List<int?>.filled(18, null);
+    notifyListeners();
 
     try {
-      isLoading = true;
-      notifyListeners();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      _user = authProvider.user;
+      if (_user == null) return;
 
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.id)
-          .collection('pws18_responses')
-          .doc('latest')
+      // Fetch Global Unlock Dates
+      DocumentSnapshot controlDoc = await FirebaseFirestore.instance
+          .collection('questionnaire_control')
+          .doc('pws18')
           .get();
 
-      if (snapshot.exists) {
-        final data = snapshot.data();
-        if (data != null && data['responses'] != null) {
-          Map<String, dynamic> saved = Map<String, dynamic>.from(
-            data['responses'],
-          );
-          completedAt = (data['completedAt'] as Timestamp).toDate();
-          for (var entry in saved.entries) {
-            int qId = int.tryParse(entry.key) ?? 0;
-            if (qId > 0 && qId <= 18) responses[qId - 1] = entry.value;
+      if (controlDoc.exists && controlDoc.data() != null) {
+        final data = controlDoc.data() as Map<String, dynamic>;
+        if (data['attempt_1_date'] != null)
+          unlockDates[1] = (data['attempt_1_date'] as Timestamp).toDate();
+        if (data['attempt_2_date'] != null)
+          unlockDates[2] = (data['attempt_2_date'] as Timestamp).toDate();
+        if (data['attempt_3_date'] != null)
+          unlockDates[3] = (data['attempt_3_date'] as Timestamp).toDate();
+      }
+
+      // Fetch User's Past Attempts
+      QuerySnapshot attemptSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.id)
+          .collection('pws18_responses')
+          .get();
+
+      userAttempts.clear();
+      for (var doc in attemptSnapshot.docs) {
+        if (doc.id.startsWith('attempt_')) {
+          int? num = int.tryParse(doc.id.split('_').last);
+          if (num != null) {
+            userAttempts[num] = doc.data() as Map<String, dynamic>;
           }
-          notifyListeners();
         }
       }
+
+      _determineCurrentStatus();
+    } catch (e) {
+      print("Error loading PWS18 data: $e");
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  /// Reset everything
+  void _determineCurrentStatus() {
+    DateTime now = DateTime.now();
+
+    // Check Attempt 1
+    if (!userAttempts.containsKey(1)) {
+      currentAttemptNumber = 1;
+      DateTime? date = unlockDates[1];
+      if (date != null && now.isAfter(date)) {
+        isLocked = false;
+      } else {
+        isLocked = true;
+        lockReason = "Available on ${date.toString().split(' ')[0]}";
+      }
+      return;
+    }
+
+    // Check Attempt 2
+    if (!userAttempts.containsKey(2)) {
+      currentAttemptNumber = 2;
+      DateTime? date = unlockDates[2];
+      if (date != null && now.isAfter(date)) {
+        isLocked = false;
+      } else {
+        isLocked = true;
+      }
+      return;
+    }
+
+    // Check Attempt 3
+    if (!userAttempts.containsKey(3)) {
+      currentAttemptNumber = 3;
+      DateTime? date = unlockDates[3];
+      if (date != null && now.isAfter(date)) {
+        isLocked = false;
+      } else {
+        isLocked = true;
+      }
+      return;
+    }
+
+    currentAttemptNumber = 4;
+    isLocked = true;
+  }
+
+  /// Save Entire Attempt
+  Future<void> saveAttemptToFirebase(BuildContext context) async {
+    if (!allAnswered) return;
+    if (_user == null) throw Exception("User not found");
+
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final subscaleScores = calculateScores();
+
+      // Create map of all responses
+      final responseMap = Map.fromIterables(
+        List.generate(18, (i) => (i + 1).toString()),
+        responses.map((e) => e ?? 0),
+      );
+
+      final docId = 'attempt_$currentAttemptNumber';
+
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.id)
+          .collection('pws18_responses')
+          .doc(docId);
+
+      await docRef.set({
+        'responses': responseMap,
+        'subscaleScores': subscaleScores,
+        'completedAt': FieldValue.serverTimestamp(),
+        'attemptNumber': currentAttemptNumber,
+      });
+
+      await loadPWS18Data(context);
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  // Helper to get past scores safely
+  Map<String, double>? getPastScores(int attempt) {
+    if (userAttempts.containsKey(attempt)) {
+      final data = userAttempts[attempt]!['subscaleScores'];
+      if (data != null) {
+        return Map<String, double>.from(
+          data.map((k, v) => MapEntry(k, (v as num).toDouble())),
+        );
+      }
+    }
+    return null;
+  }
+
+  // Helper to get date safely
+  DateTime? getAttemptDate(int attempt) {
+    if (userAttempts.containsKey(attempt)) {
+      final dynamic timestamp = userAttempts[attempt]!['completedAt'];
+      if (timestamp is Timestamp) {
+        return timestamp.toDate();
+      }
+    }
+    return null;
+  }
+
   void reset() {
     _user = null;
     responses = List<int?>.filled(18, null);
-    availableQuestionIds.clear();
+    userAttempts.clear();
     isLoading = false;
     notifyListeners();
   }
 
-  /// Reset and load new user
   Future<void> resetAndLoad(UserModel user, {BuildContext? context}) async {
-    reset();
     setUser(user);
-    await loadLatest(context, user: user);
+    if (context != null) {
+      await loadPWS18Data(context);
+    }
   }
 }

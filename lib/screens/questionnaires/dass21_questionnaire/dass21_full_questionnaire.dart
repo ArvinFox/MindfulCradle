@@ -31,6 +31,9 @@ class _DASS21FullQuestionnairePageState
   late final LanguageProvider _langProvider;
   bool _hintVisible = false;
 
+  // Track if user tried to submit without finishing
+  bool _attemptedSubmit = false;
+
   @override
   void initState() {
     super.initState();
@@ -96,11 +99,13 @@ class _DASS21FullQuestionnairePageState
   Future<void> _submitAll(DASS21Provider provider) async {
     setState(() => _submitting = true);
     try {
+      // Calculate scores before saving
+      final scores = provider.calculateScores();
+
       await provider.saveToFirebase(context);
 
       if (!mounted) return;
 
-      final scores = provider.calculateScores();
       _showScoresDialog(scores);
     } catch (e) {
       if (kDebugMode) print('Error saving questionnaire: $e');
@@ -135,7 +140,6 @@ class _DASS21FullQuestionnairePageState
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
-    // Map keys to display labels in English and Sinhala
     final labelMap = {
       'depression': isSinhala ? 'මානසික අවපීඩනය' : 'Depression',
       'anxiety': isSinhala ? 'කාංසාව' : 'Anxiety',
@@ -147,13 +151,10 @@ class _DASS21FullQuestionnairePageState
       barrierDismissible: false,
       builder: (_) => Stack(
         children: [
-          // Blurred background
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
             child: Container(color: Colors.black.withOpacity(0.1)),
           ),
-
-          // Dialog
           Center(
             child: ConstrainedBox(
               constraints: BoxConstraints(
@@ -173,9 +174,7 @@ class _DASS21FullQuestionnairePageState
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isSinhala
-                          ? "අවසාන ලකුණු"
-                          : "Final Scores",
+                      isSinhala ? "අවසාන ලකුණු" : "Final Scores",
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: isSmallScreen ? 20 : 22,
@@ -184,8 +183,6 @@ class _DASS21FullQuestionnairePageState
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // Score List
                     ...scores.entries.map((e) {
                       final displayKey = labelMap[e.key] ?? e.key;
                       return Container(
@@ -240,10 +237,7 @@ class _DASS21FullQuestionnairePageState
                         ),
                       );
                     }).toList(),
-
                     const SizedBox(height: 28),
-
-                    // OK Button
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -303,9 +297,7 @@ class _DASS21FullQuestionnairePageState
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _currentLang == 'si'
-                  ? 'හැඟීම් පරික්ෂාව'
-                  : 'Feelings Checker',
+              _currentLang == 'si' ? 'හැඟීම් පරික්ෂාව' : 'Feelings Checker',
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -370,11 +362,24 @@ class _DASS21FullQuestionnairePageState
                           itemBuilder: (context, idx) {
                             final q = _questionsForPage(_pageIndex)[idx];
                             final qId = q['id'] as int;
+
+                            // Check if this specific question is missing an answer and submission was attempted
+                            final bool isMissing =
+                                _attemptedSubmit &&
+                                provider.responses[qId - 1] == null;
+
                             return Card(
                               color: AppColors.cardBackground,
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
+                                // Red Border
+                                side: isMissing
+                                    ? const BorderSide(
+                                        color: Colors.red,
+                                        width: 2.0,
+                                      )
+                                    : BorderSide.none,
                               ),
                               elevation: 3,
                               child: Padding(
@@ -382,15 +387,35 @@ class _DASS21FullQuestionnairePageState
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '${qId}. ${q['question']}',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: isMobile ? 15 : 17,
-                                        color: AppColors.text,
-                                      ),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${qId}. ${q['question']}',
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: isMobile ? 15 : 17,
+                                              color: AppColors.text,
+                                            ),
+                                          ),
+                                        ),
+                                        if (isMissing)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 8.0,
+                                            ),
+                                            child: Icon(
+                                              Icons.error_outline,
+                                              color: Colors.red,
+                                              size: 20,
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                     const SizedBox(height: 12),
+
                                     LayoutBuilder(
                                       builder: (context, constraints) {
                                         final chipWidth =
@@ -463,6 +488,24 @@ class _DASS21FullQuestionnairePageState
                                         );
                                       },
                                     ),
+
+                                    // Optional text message for error
+                                    if (isMissing)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 8.0,
+                                        ),
+                                        child: Text(
+                                          _currentLang == 'si'
+                                              ? '* අනිවාර්යයි'
+                                              : '* Required',
+                                          style: GoogleFonts.roboto(
+                                            color: Colors.red,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
@@ -493,7 +536,11 @@ class _DASS21FullQuestionnairePageState
                                 onPressed: _submitting
                                     ? null
                                     : () {
-                                        setState(() => _pageIndex -= 1);
+                                        setState(() {
+                                          _pageIndex -= 1;
+                                          _attemptedSubmit =
+                                              false;
+                                        });
                                         _scrollToTop();
                                       },
                                 style: ElevatedButton.styleFrom(
@@ -529,6 +576,9 @@ class _DASS21FullQuestionnairePageState
                                         provider,
                                         _pageIndex,
                                       )) {
+                                        setState(() {
+                                          _attemptedSubmit = true;
+                                        });
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -544,6 +594,10 @@ class _DASS21FullQuestionnairePageState
                                         );
                                         return;
                                       }
+
+                                      // If successful, reset error state and proceed
+                                      setState(() => _attemptedSubmit = false);
+
                                       if (_pageIndex < totalPages - 1) {
                                         setState(() => _pageIndex += 1);
                                         _scrollToTop();

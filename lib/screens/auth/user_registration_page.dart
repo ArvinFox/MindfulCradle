@@ -25,7 +25,6 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
   // Page 1 fields
   late TextEditingController ageController;
   late TextEditingController residenceController;
-  late TextEditingController idController;
 
   // Page 2 fields
   String pregnancyMonth = '';
@@ -45,23 +44,21 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     super.initState();
     ageController = TextEditingController();
     residenceController = TextEditingController();
-    idController = TextEditingController();
   }
 
   @override
   void dispose() {
     ageController.dispose();
     residenceController.dispose();
-    idController.dispose();
     super.dispose();
   }
 
   // checkbox
   Widget _buildCheckbox(
-      String title,
-      bool value,
-      void Function(bool) onChanged,
-      ) {
+    String title,
+    bool value,
+    void Function(bool) onChanged,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
       child: Row(
@@ -75,10 +72,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
           Expanded(
             child: Text(
               title,
-              style: GoogleFonts.roboto(
-                fontSize: 15,
-                color: AppColors.text,
-              ),
+              style: GoogleFonts.roboto(fontSize: 15, color: AppColors.text),
             ),
           ),
         ],
@@ -145,7 +139,6 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
       await userDoc.update({
         'age': int.tryParse(ageController.text) ?? 0,
         'residence': residenceController.text.trim(),
-        'identificationNumber': idController.text.trim(),
         'pregnancyMonth': pregnancyMonth,
         'firstTimeMother': firstTimeMother,
         'employed': employed,
@@ -166,9 +159,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            texts['saveSuccess'] ?? 'Registration complete!',
-          ),
+          content: Text(texts['saveSuccess'] ?? 'Registration complete!'),
         ),
       );
 
@@ -179,9 +170,9 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     } catch (e) {
       if (!mounted) return;
       HapticFeedback.vibrate();
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(texts['saveError']! + e.toString())));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(texts['saveError']! + e.toString())),
+      );
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
@@ -210,7 +201,6 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
               children: [
                 _buildConfRow(texts['age']!, ageController.text),
                 _buildConfRow(texts['residence']!, residenceController.text),
-                _buildConfRow(texts['idNumber']!, idController.text),
                 const Divider(height: 20),
                 _buildConfRow(texts['pregnancyMonth']!, pregnancyMonth),
                 _buildConfRow(
@@ -242,56 +232,69 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
               ],
             ),
           ),
-          actionsPadding:
-          const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           actions: [
-            Expanded(
-              child: OutlinedButton(
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.text,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(color: AppColors.primary, width: 1.5),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppColors.text,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      side: const BorderSide(
+                        color: AppColors.primary,
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                    onPressed: () => Navigator.pop(ctx),
+                    child: Text(
+                      texts['cancel']!,
+                      style: GoogleFonts.roboto(fontSize: 16),
+                    ),
                   ),
                 ),
-                onPressed: () => Navigator.pop(ctx),
-                child: Text(
-                  texts['cancel']!,
-                  style: GoogleFonts.roboto(fontSize: 16),
-                ),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      elevation: 5,
+                    ),
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _saveToFirebase();
+                    },
+                    child: _isSaving
+                        ? const SizedBox(
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            texts['confirm']!,
+                            style: GoogleFonts.roboto(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                   ),
-                  elevation: 5,
                 ),
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _saveToFirebase();
-                },
-                child: _isSaving
-                    ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                    : Text(
-                  texts['confirm']!,
-                  style: GoogleFonts.roboto(fontSize: 16, fontWeight: FontWeight.w600),
-                ),
-              ),
+              ],
             ),
           ],
         );
@@ -302,10 +305,10 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
   // --- Page Builder Functions ---
 
   Widget _buildPage1(
-      BuildContext context,
-      bool isMobile,
-      Map<String, String> texts,
-      ) {
+    BuildContext context,
+    bool isMobile,
+    Map<String, String> texts,
+  ) {
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -344,27 +347,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
           controller: residenceController,
           decoration: customInputDecoration(texts['residence']!),
           validator: (val) =>
-          val == null || val.isEmpty ? texts['required'] : null,
-        ),
-        const SizedBox(height: 16),
-
-        TextFormField(
-          controller: idController,
-          decoration: customInputDecoration(texts['idNumber']!),
-          keyboardType: TextInputType.text,
-          textCapitalization: TextCapitalization.characters,
-          validator: (val) {
-            if (val == null || val.isEmpty) return texts['required'];
-
-            final oldIdReg = RegExp(r'^(\d{9})([VXvx])$'); // 9 digits + V/X
-            final newIdReg = RegExp(r'^(\d{12})$'); // 12 digits
-
-            if (oldIdReg.hasMatch(val) || newIdReg.hasMatch(val)) {
-              return null;
-            } else {
-              return texts['invalidId'];
-            }
-          },
+              val == null || val.isEmpty ? texts['required'] : null,
         ),
         const SizedBox(height: 30),
 
@@ -375,11 +358,11 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
               onPressed: _isSaving
                   ? null
                   : () {
-                HapticFeedback.lightImpact();
-                if (_formKey.currentState!.validate()) {
-                  setState(() => _currentStep = 1);
-                }
-              },
+                      HapticFeedback.lightImpact();
+                      if (_formKey.currentState!.validate()) {
+                        setState(() => _currentStep = 1);
+                      }
+                    },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.buttonText,
@@ -407,10 +390,10 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
   }
 
   Widget _buildPage2(
-      BuildContext context,
-      bool isMobile,
-      Map<String, String> texts,
-      ) {
+    BuildContext context,
+    bool isMobile,
+    Map<String, String> texts,
+  ) {
     final durationOptions = [
       texts['lessThan1Month']!,
       texts['1month']!,
@@ -444,7 +427,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
             decoration: customInputDecoration(texts['pregnancyMonth']!),
             items: List.generate(
               9,
-                  (index) => DropdownMenuItem(
+              (index) => DropdownMenuItem(
                 value: '${index + 1}',
                 child: Text(
                   '${index + 1} ${texts['month']}',
@@ -454,7 +437,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
             ),
             onChanged: (val) => setState(() => pregnancyMonth = val ?? ''),
             validator: (val) =>
-            val == null || val.isEmpty ? texts['required'] : null,
+                val == null || val.isEmpty ? texts['required'] : null,
           ),
           const SizedBox(height: 20),
 
@@ -468,28 +451,24 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
           _buildCheckbox(
             texts['obstetricComplication']!,
             obstetricComplication,
-                (val) {
+            (val) {
               setState(() => obstetricComplication = val);
             },
           ),
-          _buildCheckbox(
-            texts['psychologicalSupport']!,
-            psychologicalSupport,
-                (val) {
-              setState(() => psychologicalSupport = val);
-            },
-          ),
+          _buildCheckbox(texts['psychologicalSupport']!, psychologicalSupport, (
+            val,
+          ) {
+            setState(() => psychologicalSupport = val);
+          }),
           _buildCheckbox(texts['distressingEvents']!, distressingEvents, (val) {
             setState(() => distressingEvents = val);
           }),
-          _buildCheckbox(
-            texts['practicedMindfulness']!,
-            practicedMindfulness,
-                (val) {
-              setState(() => practicedMindfulness = val);
-              if (!val) mindfulnessDuration = ''; // Reset duration if unchecked
-            },
-          ),
+          _buildCheckbox(texts['practicedMindfulness']!, practicedMindfulness, (
+            val,
+          ) {
+            setState(() => practicedMindfulness = val);
+            if (!val) mindfulnessDuration = ''; // Reset duration if unchecked
+          }),
           const SizedBox(height: 10),
 
           // Mindfulness Duration Dropdown
@@ -498,19 +477,26 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
               padding: const EdgeInsets.only(top: 10.0),
               child: DropdownButtonFormField<String>(
                 value: mindfulnessDuration.isEmpty ? null : mindfulnessDuration,
-                decoration: customInputDecoration(texts['mindfulnessDuration']!),
+                decoration: customInputDecoration(
+                  texts['mindfulnessDuration']!,
+                ),
                 items: durationOptions
-                    .map((e) => DropdownMenuItem(
-                  value: e,
-                  child: Text(e, style: GoogleFonts.roboto(color: AppColors.text)),
-                ))
+                    .map(
+                      (e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(
+                          e,
+                          style: GoogleFonts.roboto(color: AppColors.text),
+                        ),
+                      ),
+                    )
                     .toList(),
                 onChanged: (val) =>
                     setState(() => mindfulnessDuration = val ?? ''),
                 validator: (val) =>
                     practicedMindfulness && (val == null || val.isEmpty)
-                        ? texts['required']
-                        : null,
+                    ? texts['required']
+                    : null,
               ),
             ),
           const SizedBox(height: 30),
@@ -522,9 +508,9 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                 onPressed: _isSaving
                     ? null
                     : () {
-                  HapticFeedback.lightImpact();
-                  setState(() => _currentStep = 0);
-                },
+                        HapticFeedback.lightImpact();
+                        setState(() => _currentStep = 0);
+                      },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.text,
                   padding: const EdgeInsets.symmetric(
@@ -549,12 +535,12 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                 onPressed: _isSaving
                     ? null
                     : () {
-                  HapticFeedback.mediumImpact();
-                  if (_formKey.currentState!.validate()) {
-                    setState(() {});
-                    _showConfirmationDialog(texts);
-                  }
-                },
+                        HapticFeedback.mediumImpact();
+                        if (_formKey.currentState!.validate()) {
+                          setState(() {});
+                          _showConfirmationDialog(texts);
+                        }
+                      },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.buttonText,
@@ -569,20 +555,20 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                 ),
                 child: _isSaving
                     ? const SizedBox(
-                  height: 20,
-                  width: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
                     : Text(
-                  texts['finish']!,
-                  style: GoogleFonts.roboto(
-                    fontSize: isMobile ? 18 : 20,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
+                        texts['finish']!,
+                        style: GoogleFonts.roboto(
+                          fontSize: isMobile ? 18 : 20,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
               ),
             ],
           ),
@@ -603,79 +589,75 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
 
     texts = langProvider.currentLang == 'en'
         ? {
-      'basicInfo': 'Basic Information',
-      'age': 'Age',
-      'residence': 'Residence (City)',
-      'idNumber': 'Identification Number (ID)',
-      'required': 'Required',
-      'mustNumber': 'Must be a number',
-      'ageLimit': 'Age must be 18–70',
-      'invalidId': 'Invalid ID format (9 digits + V/X or 12 digits)',
-      'next': 'Next',
-      'pregnancyInfo': 'Pregnancy & Background Info',
-      'pregnancyMonth': 'Current month of pregnancy',
-      'month': 'month',
-      'firstTimeMother': 'First-time mother?',
-      'employed': 'Employed?',
-      'obstetricComplication': 'Obstetric complication?',
-      'psychologicalSupport': 'Receiving psychological support?',
-      'distressingEvents': 'Experiencing distressing life events?',
-      'practicedMindfulness': 'Practiced mindfulness before?',
-      'mindfulnessDuration': 'Mindfulness duration',
-      'lessThan1Month': 'Less than 1 month',
-      '1month': '1 Months',
-      '2month': '2 Months',
-      '3month': '3 Months',
-      '4month': '4 Months',
-      '5month': '5 Months',
-      'moreThan6Months': 'More than 6 months',
-      'back': 'Back',
-      'confirmDetails': 'Confirm Your Details',
-      'confirm': 'Confirm',
-      'finish': 'Finish',
-      'cancel': 'Cancel',
-      'yes': 'Yes',
-      'no': 'No',
-      'saveSuccess': 'Registration complete!',
-      'saveError': 'Error saving data: ',
-    }
+            'basicInfo': 'Basic Information',
+            'age': 'Age',
+            'residence': 'Residence (City)',
+            'required': 'Required',
+            'mustNumber': 'Must be a number',
+            'ageLimit': 'Age must be 18–70',
+            'next': 'Next',
+            'pregnancyInfo': 'Background Info',
+            'pregnancyMonth': 'Current month of pregnancy',
+            'month': 'month',
+            'firstTimeMother': 'Are you a First-time mother?',
+            'employed': 'Are you employed?',
+            'obstetricComplication': 'Have any pregnancy complications?',
+            'psychologicalSupport': 'Undergoing psychological therapy',
+            'distressingEvents': 'Experiencing distressing life events',
+            'practicedMindfulness': 'Have you practiced mindfulness before?',
+            'mindfulnessDuration': 'Mindfulness practice duration',
+            'lessThan1Month': 'Less than 1 month',
+            '1month': '1 Months',
+            '2month': '2 Months',
+            '3month': '3 Months',
+            '4month': '4 Months',
+            '5month': '5 Months',
+            'moreThan6Months': 'More than 6 months',
+            'back': 'Back',
+            'confirmDetails': 'Confirm Your Details',
+            'confirm': 'Confirm',
+            'finish': 'Finish',
+            'cancel': 'Cancel',
+            'yes': 'Yes',
+            'no': 'No',
+            'saveSuccess': 'Registration complete!',
+            'saveError': 'Error saving data: ',
+          }
         : {
-      'basicInfo': 'මූලික තොරතුරු',
-      'age': 'වයස',
-      'residence': 'නගරය / නේවාසික ස්ථානය',
-      'idNumber': 'හැඳුනුම්පත් අංකය',
-      'required': 'අවශ්‍යයි',
-      'mustNumber': 'අංකයක් විය යුතුය',
-      'ageLimit': 'වයස 18–70 අතර විය යුතුය',
-      'invalidId': 'අවලංගු හැඳුනුම්පත් ආකෘතිය (ඉලක්කම් 9 + V/X හෝ ඉලක්කම් 12)',
-      'next': 'ඊළඟ',
-      'pregnancyInfo': 'ගර්භණී සහ පසුබිම් තොරතුරු',
-      'pregnancyMonth': 'වත්මන් ගර්භ මාසය',
-      'month': 'මාසය',
-      'firstTimeMother': 'මුල් වරට මවක්ද?',
-      'employed': 'රැකියාවක නිරත වේද?',
-      'obstetricComplication': 'ගර්භාණු සම්බන්ධ අපහසුතා?',
-      'psychologicalSupport': 'මානසික සහාය ලබනවාද?',
-      'distressingEvents': 'පීඩාකාරී සිදුවීම් සිදුවේද/ සිදුවී තිබේද?',
-      'practicedMindfulness': 'පෙර මනෝආවරණය පුරුදු වියදේද?',
-      'mindfulnessDuration': 'මනෝආවරණ කාලය',
-      'lessThan1Month': 'මාස 1ට අඩු',
-      '1month': 'මාස 1 යි',
-      '2month': 'මාස 2 යි',
-      '3month': 'මාස 3 යි',
-      '4month': 'මාස 4 යි',
-      '5month': 'මාස 5 යි',
-      'moreThan6Months': 'මාස 6ට වැඩි',
-      'back': 'පසු',
-      'confirmDetails': 'ඔබේ විස්තර තහවුරු කරන්න',
-      'confirm': 'තහවුරු කරන්න',
-      'finish': 'නිම කරන්න',
-      'cancel': 'අවලංගු කරන්න',
-      'yes': 'ඔව්',
-      'no': 'නැත',
-      'saveSuccess': 'ලියාපදිංචිය සම්පූර්ණයි!',
-      'saveError': 'දත්ත ගබඩා කිරීමේ දෝෂය: ',
-    };
+            'basicInfo': 'මූලික තොරතුරු',
+            'age': 'වයස',
+            'residence': 'නගරය / නේවාසික ස්ථානය',
+            'required': 'අවශ්‍යයි',
+            'mustNumber': 'අංකයක් විය යුතුය',
+            'ageLimit': 'වයස 18–70 අතර විය යුතුය',
+            'next': 'ඊළඟ',
+            'pregnancyInfo': 'පසුබිම් තොරතුරු',
+            'pregnancyMonth': 'වත්මන් ගර්භණී මාසය',
+            'month': 'මාසය',
+            'firstTimeMother': 'මෙය පළමු ගැබ් ගැනීමද?',
+            'employed': 'රැකියාවක නිරත වේද?',
+            'obstetricComplication': 'ගර්භණී සංකුලතා තිබේද?',
+            'psychologicalSupport': 'මානසික ප්‍රතිකාර ලබනවාද?',
+            'distressingEvents': 'මානසික පීඩාකාරී සිදුවීම් අත්විඳිනවාද?',
+            'practicedMindfulness': 'සතිමත්බව පුහුණුකර තිබේද?',
+            'mindfulnessDuration': 'එසේ නම් කොපමණ කල්ද?',
+            'lessThan1Month': 'මාස 1ට අඩු',
+            '1month': 'මාස 1 යි',
+            '2month': 'මාස 2 යි',
+            '3month': 'මාස 3 යි',
+            '4month': 'මාස 4 යි',
+            '5month': 'මාස 5 යි',
+            'moreThan6Months': 'මාස 6ට වැඩි',
+            'back': 'පසු',
+            'confirmDetails': 'ඔබේ විස්තර තහවුරු කරන්න',
+            'confirm': 'තහවුරු කරන්න',
+            'finish': 'නිම කරන්න',
+            'cancel': 'අවලංගු කරන්න',
+            'yes': 'ඔව්',
+            'no': 'නැත',
+            'saveSuccess': 'ලියාපදිංචිය සම්පූර්ණයි!',
+            'saveError': 'දත්ත ගබඩා කිරීමේ දෝෂය: ',
+          };
 
     return WillPopScope(
       onWillPop: () async {
@@ -720,13 +702,16 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
             Container(
               width: double.infinity,
               height: double.infinity,
-              color: AppColors.background.withOpacity(0.10), 
+              color: AppColors.background.withOpacity(0.10),
             ),
 
             // Form Card
             Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 40,
+                ),
                 child: Container(
                   width: isMobile ? size.width * 0.9 : 500,
                   padding: const EdgeInsets.all(30),

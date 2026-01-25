@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:mamamind/screens/RAG_Chat/rag_chat_help.dart';
 import 'package:mamamind/utils/helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:mamamind/screens/home/questionnaires.dart';
@@ -23,6 +24,7 @@ class _MainScreenState extends State<MainScreen> {
   final List<Widget> _pages = const [
     HomePage(),
     QuestionnaireMainPage(),
+    ChatBotPage(),
     AchievementsPage(),
     ProfilePage(),
   ];
@@ -49,8 +51,8 @@ class _MainScreenState extends State<MainScreen> {
     final isSinhala = langProvider.currentLang == 'si';
 
     final List<String> labels = isSinhala
-        ? ["මුල් පිටුව", "ප්‍රතිචාර", "ජයග්‍රහණ", "ප්‍රොෆයිල්"]
-        : ["Home", "Feedback", "Achievements", "Profile"];
+        ? ["මුල් පිටුව", "ප්‍රතිචාර", "චැට්", "ජයග්‍රහණ", "ප්‍රොෆයිල්"]
+        : ["Home", "Feedback", "Chat", "Achievements", "Profile"];
 
     return BottomNavigationBar(
       currentIndex: _currentIndex,
@@ -70,23 +72,28 @@ class _MainScreenState extends State<MainScreen> {
       },
       items: [
         BottomNavigationBarItem(
-            icon: const Icon(Icons.home_rounded), label: labels[0]),
+          icon: const Icon(Icons.home_rounded), 
+          label: labels[0],
+        ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.assignment),
           label: labels[1],
         ),
         BottomNavigationBarItem(
-          icon: const Icon(Icons.star_rounded),
+          icon: const Icon(Icons.chat),
           label: labels[2],
         ),
         BottomNavigationBarItem(
-          icon: const Icon(Icons.person_rounded),
+          icon: const Icon(Icons.star_rounded),
           label: labels[3],
+        ),
+        BottomNavigationBarItem(
+          icon: const Icon(Icons.person_rounded),
+          label: labels[4],
         ),
       ],
     );
   }
-
   // --- Main Build Method ---
 
   @override

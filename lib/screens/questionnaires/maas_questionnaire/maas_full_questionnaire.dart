@@ -30,6 +30,9 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
   late final LanguageProvider _langProvider;
   bool _hintVisible = false;
 
+  // Track if user tried to submit without finishing
+  bool _attemptedSubmit = false;
+
   @override
   void initState() {
     super.initState();
@@ -95,14 +98,17 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
   Future<void> _submitAll(MAASProvider provider) async {
     setState(() => _submitting = true);
     try {
+      final maasScore = provider.calculateScores();
+      final classification = provider.classifyScore(
+        maasScore,
+        isSinhala: _currentLang == 'si',
+      );
+      // Save to Firebase
       await provider.saveToFirebase(context);
+
       if (!mounted) return;
 
-      final maasScore = provider.latestMAASScore ?? provider.calculateScores();
-      final classification =
-          provider.latestMAASClassification ??
-          provider.classifyScore(maasScore, isSinhala: _currentLang == 'si');
-
+      // Show dialog with the score we captured earlier
       _showResultDialog(maasScore, classification);
     } catch (e) {
       if (kDebugMode) print('Error saving MAAS: $e');
@@ -137,13 +143,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
-    // Get localized classification only for UI display
-    final maasProvider = Provider.of<MAASProvider>(context, listen: false);
-    final localizedClassification = maasProvider.classifyScore(
-      score,
-      isSinhala: isSinhala,
-    );
-
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -172,7 +171,9 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isSinhala ? "අවසාන සතිමත් බවේ ලකුණ" : "Final Mindulness Score",
+                      isSinhala
+                          ? "අවසාන සතිමත් බවේ ලකුණ"
+                          : "Final Mindfulness Score",
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: isSmallScreen ? 20 : 22,
@@ -246,7 +247,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            localizedClassification,
+                            classification,
                             textAlign: TextAlign.start,
                             style: GoogleFonts.poppins(
                               fontSize: isSmallScreen ? 17 : 18,
@@ -318,7 +319,9 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _currentLang == 'si' ? 'සතිමත් බව පරීක්ෂාව' : 'Mindfulness Checker',
+              _currentLang == 'si'
+                  ? 'සතිමත් බව පරීක්ෂාව'
+                  : 'Mindfulness Checker',
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -383,11 +386,24 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           itemBuilder: (context, idx) {
                             final q = _questionsForPage(_pageIndex)[idx];
                             final qId = q['id'] as int;
+
+                            // Check if missing answer and error state is active
+                            final bool isMissing =
+                                _attemptedSubmit &&
+                                provider.responses[qId - 1] == null;
+
                             return Card(
                               color: AppColors.cardBackground,
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
+                                // Red border
+                                side: isMissing
+                                    ? const BorderSide(
+                                        color: Colors.red,
+                                        width: 2.0,
+                                      )
+                                    : BorderSide.none,
                               ),
                               elevation: 3,
                               child: Padding(
@@ -395,13 +411,32 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      '${qId}. ${q['question']}',
-                                      style: GoogleFonts.poppins(
-                                        fontWeight: FontWeight.w600,
-                                        fontSize: isMobile ? 15 : 17,
-                                        color: AppColors.text,
-                                      ),
+                                    Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Expanded(
+                                          child: Text(
+                                            '${qId}. ${q['question']}',
+                                            style: GoogleFonts.poppins(
+                                              fontWeight: FontWeight.w600,
+                                              fontSize: isMobile ? 15 : 17,
+                                              color: AppColors.text,
+                                            ),
+                                          ),
+                                        ),
+                                        if (isMissing)
+                                          Padding(
+                                            padding: const EdgeInsets.only(
+                                              left: 8.0,
+                                            ),
+                                            child: Icon(
+                                              Icons.error_outline,
+                                              color: Colors.red,
+                                              size: 20,
+                                            ),
+                                          ),
+                                      ],
                                     ),
                                     const SizedBox(height: 12),
                                     LayoutBuilder(
@@ -455,12 +490,19 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                                     width: selected ? 2 : 1,
                                                   ),
                                                 ),
+                                                shadowColor: selected
+                                                    ? AppColors.completed
+                                                          .withOpacity(0.7)
+                                                    : AppColors.completed,
                                                 elevation: selected ? 6 : 0,
                                                 onSelected: (_) {
                                                   HapticFeedback.lightImpact();
                                                   provider.setAnswer(
                                                     qId,
                                                     intVal,
+                                                  );
+                                                  setState(
+                                                    () => _hintVisible = false,
                                                   );
                                                 },
                                               ),
@@ -469,6 +511,24 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                         );
                                       },
                                     ),
+
+                                    // Error text message
+                                    if (isMissing)
+                                      Padding(
+                                        padding: const EdgeInsets.only(
+                                          top: 8.0,
+                                        ),
+                                        child: Text(
+                                          _currentLang == 'si'
+                                              ? '* අනිවාර්යයි'
+                                              : '* Required',
+                                          style: GoogleFonts.roboto(
+                                            color: Colors.red,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
                                   ],
                                 ),
                               ),
@@ -499,7 +559,11 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                 onPressed: _submitting
                                     ? null
                                     : () {
-                                        setState(() => _pageIndex -= 1);
+                                        setState(() {
+                                          _pageIndex -= 1;
+                                          _attemptedSubmit =
+                                              false;
+                                        });
                                         _scrollToTop();
                                       },
                                 style: ElevatedButton.styleFrom(
@@ -535,6 +599,10 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                         provider,
                                         _pageIndex,
                                       )) {
+                                        // Trigger visual error
+                                        setState(() {
+                                          _attemptedSubmit = true;
+                                        });
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -550,6 +618,10 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                         );
                                         return;
                                       }
+
+                                      // Clear error if success
+                                      setState(() => _attemptedSubmit = false);
+
                                       if (_pageIndex < totalPages - 1) {
                                         setState(() => _pageIndex += 1);
                                         _scrollToTop();
@@ -586,8 +658,14 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                     ],
                   ),
                 ),
-          // Hint overlay
         ),
+
+        MAASHintOverlay(
+          visible: _hintVisible,
+          isMobile: MediaQuery.of(context).size.width < 600,
+          onClose: () => setState(() => _hintVisible = false),
+        ),
+
         if (_submitting)
           Container(
             color: AppColors.background,
@@ -612,12 +690,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
               ),
             ),
           ),
-
-        MAASHintOverlay(
-          visible: _hintVisible,
-          onClose: () => setState(() => _hintVisible = false),
-          isMobile: isMobile,
-        ),
       ],
     );
   }

@@ -7,13 +7,19 @@ import 'package:provider/provider.dart';
 class MAASProvider with ChangeNotifier {
   UserModel? _user;
 
-  List<int?> responses = List<int?>.filled(15, null); // 15 questions
-  List<int> availableQuestionIds = [];
-  bool isLoading = false;
+  // Global Unlock Dates
+  Map<int, DateTime> unlockDates = {};
 
-  double? latestMAASScore;
-  String? latestMAASClassification;
-  DateTime? completedAt;
+  // User's past history
+  Map<int, Map<String, dynamic>> userAttempts = {};
+
+  // Current active attempt
+  int currentAttemptNumber = 1;
+  bool isLocked = true;
+  String lockReason = "";
+
+  List<int?> responses = List<int?>.filled(15, null);
+  bool isLoading = false;
 
   MAASProvider();
 
@@ -31,154 +37,181 @@ class MAASProvider with ChangeNotifier {
 
   bool get allAnswered => !responses.contains(null);
 
-  /// Calculate the MAAS score as the average of all responses
+  /// Logic
   double calculateScores() {
     final total = responses.fold<int>(0, (sum, val) => sum + (val ?? 0));
     return total / responses.length;
   }
 
-  /// Classify the score according to your thresholds
   String classifyScore(double score, {bool isSinhala = false}) {
     if (score >= 4.0) {
       return isSinhala ? 'සතිමත් බව ඉහළයි' : 'High Level of Mindfulness';
     } else if (score >= 3.0) {
-      return isSinhala ? 'සතිමත් බව සාමාන්‍යයි' : 'Average Level of Mindfulness';
+      return isSinhala
+          ? 'සතිමත් බව සාමාන්‍යයි'
+          : 'Average Level of Mindfulness';
     } else {
       return isSinhala ? 'සතිමත් බව අඩුයි' : 'Low Level of Mindfulness';
     }
   }
 
-  /// --- Real-time Firestore updates stream ---
-  Stream<Map<String, int?>> responsesStream() async* {
-    final currentUser = _user;
-    if (currentUser == null) return;
-
-    final docRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.id)
-        .collection('maas_responses')
-        .doc('latest');
-
-    await for (var snapshot in docRef.snapshots()) {
-      Map<String, int?> updatedResponses = {
-        for (int i = 1; i <= 15; i++) i.toString(): null,
-      };
-
-      if (snapshot.exists && snapshot.data()?['responses'] != null) {
-        final saved = Map<String, dynamic>.from(snapshot.data()!['responses']);
-        for (var entry in saved.entries) {
-          int qId = int.tryParse(entry.key) ?? 0;
-          if (qId > 0 && qId <= 15) {
-            updatedResponses[qId.toString()] = entry.value;
-          }
-        }
-      }
-
-      for (int i = 0; i < 15; i++) {
-        responses[i] = updatedResponses[(i + 1).toString()];
-      }
-
-      notifyListeners();
-      yield updatedResponses;
-    }
-  }
-
-  /// --- Save to Firebase ---
-  Future<void> saveToFirebase(BuildContext context) async {
-    if (!allAnswered) return;
-
-    final maasScore = calculateScores();
-
-    final responseMap = Map.fromIterables(
-      List.generate(15, (i) => (i + 1).toString()),
-      responses.map((e) => e ?? 0),
-    );
-
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final currentUser = _user ?? authProvider.user;
-    if (currentUser == null) throw Exception("User not found");
-
-    _user = currentUser;
-
-    final docRef = FirebaseFirestore.instance
-        .collection('users')
-        .doc(currentUser.id)
-        .collection('maas_responses')
-        .doc('latest');
-
-    await docRef.set({
-      'responses': responseMap,
-      'maasScore': maasScore,
-      'classification': classifyScore(maasScore),
-      'completedAt': FieldValue.serverTimestamp(),
-    }, SetOptions(merge: true));
-
-    latestMAASScore = maasScore;
-    latestMAASClassification = classifyScore(maasScore);
+  /// Load Data (Control + History)
+  Future<void> loadMAASData(BuildContext context) async {
+    isLoading = true;
+    responses = List<int?>.filled(15, null);
     notifyListeners();
-  }
-
-  /// --- Load latest responses ---
-  Future<void> loadLatest(BuildContext? context, {UserModel? user}) async {
-    reset();
-    final authProvider = context != null
-        ? Provider.of<AuthProvider>(context, listen: false)
-        : null;
-
-    final currentUser = user ?? _user ?? authProvider?.user;
-    if (currentUser == null) return;
-
-    _user = currentUser;
 
     try {
-      isLoading = true;
-      notifyListeners();
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      _user = authProvider.user;
+      if (_user == null) return;
 
-      final snapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(currentUser.id)
-          .collection('maas_responses')
-          .doc('latest')
+      // Fetch Global Unlock Dates
+      DocumentSnapshot controlDoc = await FirebaseFirestore.instance
+          .collection('questionnaire_control')
+          .doc('maas')
           .get();
 
-      if (snapshot.exists) {
-        final data = snapshot.data();
-        if (data != null && data['responses'] != null) {
-          Map<String, dynamic> saved = Map<String, dynamic>.from(
-            data['responses'],
-          );
-          completedAt = (data['completedAt'] as Timestamp).toDate();
-          for (var entry in saved.entries) {
-            int qId = int.tryParse(entry.key) ?? 0;
-            if (qId > 0 && qId <= 15) responses[qId - 1] = entry.value;
-          }
+      if (controlDoc.exists && controlDoc.data() != null) {
+        final data = controlDoc.data() as Map<String, dynamic>;
+        if (data['attempt_1_date'] != null)
+          unlockDates[1] = (data['attempt_1_date'] as Timestamp).toDate();
+        if (data['attempt_2_date'] != null)
+          unlockDates[2] = (data['attempt_2_date'] as Timestamp).toDate();
+        if (data['attempt_3_date'] != null)
+          unlockDates[3] = (data['attempt_3_date'] as Timestamp).toDate();
+      }
 
-          latestMAASScore = (data['maasScore'] as num?)?.toDouble();
-          latestMAASClassification = data['classification'] as String?;
-          notifyListeners();
+      // Fetch User's Past Attempts
+      QuerySnapshot attemptSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.id)
+          .collection('maas_responses')
+          .get();
+
+      userAttempts.clear();
+      for (var doc in attemptSnapshot.docs) {
+        if (doc.id.startsWith('attempt_')) {
+          int? num = int.tryParse(doc.id.split('_').last);
+          if (num != null) {
+            userAttempts[num] = doc.data() as Map<String, dynamic>;
+          }
         }
       }
+
+      _determineCurrentStatus();
+    } catch (e) {
+      print("Error loading MAAS data: $e");
     } finally {
       isLoading = false;
       notifyListeners();
     }
   }
 
-  /// --- Reset all data ---
+  void _determineCurrentStatus() {
+    DateTime now = DateTime.now();
+
+    // Check Attempt 1
+    if (!userAttempts.containsKey(1)) {
+      currentAttemptNumber = 1;
+      DateTime? date = unlockDates[1];
+      if (date != null && now.isAfter(date)) {
+        isLocked = false;
+      } else {
+        isLocked = true;
+        lockReason = "Available on ${date.toString().split(' ')[0]}";
+      }
+      return;
+    }
+
+    // Check Attempt 2
+    if (!userAttempts.containsKey(2)) {
+      currentAttemptNumber = 2;
+      DateTime? date = unlockDates[2];
+      if (date != null && now.isAfter(date)) {
+        isLocked = false;
+      } else {
+        isLocked = true;
+      }
+      return;
+    }
+
+    // Check Attempt 3
+    if (!userAttempts.containsKey(3)) {
+      currentAttemptNumber = 3;
+      DateTime? date = unlockDates[3];
+      if (date != null && now.isAfter(date)) {
+        isLocked = false;
+      } else {
+        isLocked = true;
+      }
+      return;
+    }
+
+    currentAttemptNumber = 4;
+    isLocked = true;
+  }
+
+  Future<void> saveToFirebase(BuildContext context) async {
+    if (!allAnswered) return;
+    if (_user == null) throw Exception("User not found");
+
+    isLoading = true;
+    notifyListeners();
+
+    try {
+      final maasScore = calculateScores();
+      final responseMap = Map.fromIterables(
+        List.generate(15, (i) => (i + 1).toString()),
+        responses.map((e) => e ?? 0),
+      );
+
+      final docId = 'attempt_$currentAttemptNumber';
+
+      final docRef = FirebaseFirestore.instance
+          .collection('users')
+          .doc(_user!.id)
+          .collection('maas_responses')
+          .doc(docId);
+
+      await docRef.set({
+        'responses': responseMap,
+        'maasScore': maasScore,
+        'classification': classifyScore(maasScore),
+        'completedAt': FieldValue.serverTimestamp(),
+        'attemptNumber': currentAttemptNumber,
+      });
+
+      await loadMAASData(context);
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
+
   void reset() {
     _user = null;
     responses = List<int?>.filled(15, null);
-    availableQuestionIds.clear();
+    userAttempts.clear();
     isLoading = false;
-    latestMAASScore = null;
-    latestMAASClassification = null;
     notifyListeners();
   }
 
-  /// --- Reset and load a new user ---
-  Future<void> resetAndLoad(UserModel user, {BuildContext? context}) async {
-    reset();
-    setUser(user);
-    await loadLatest(context, user: user);
+  // Helper to get past score data safely
+  Map<String, dynamic>? getAttemptData(int attempt) {
+    return userAttempts[attempt];
   }
+
+  // Helper to get date safely
+  DateTime? getAttemptDate(int attempt) {
+    if (userAttempts.containsKey(attempt)) {
+      final dynamic timestamp = userAttempts[attempt]!['completedAt'];
+      if (timestamp is Timestamp) {
+        return timestamp.toDate();
+      }
+    }
+    return null;
+  }
+
+  Future<void> resetAndLoad(UserModel user, {BuildContext? context}) async {}
 }

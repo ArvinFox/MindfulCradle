@@ -35,6 +35,10 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
   @override
   void initState() {
     super.initState();
+
+    // ENTER IMMERSIVE MODE
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
     _langProvider = Provider.of<LanguageProvider>(context, listen: false);
     _currentLang = _langProvider.currentLang == 'si' ? 'si' : 'en';
     _loadJson(_currentLang);
@@ -44,6 +48,16 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
     if (provider.user != null) {
       provider.resetAndLoad(provider.user!, context: context);
     }
+  }
+
+  @override
+  void dispose() {
+    // EXIT IMMERSIVE MODE
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    _langProvider.removeListener(_onLangChanged);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _onLangChanged() {
@@ -276,7 +290,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
 
                           // Close Dialog
                           Navigator.of(context).pop();
-                          
+
                           // Close Page
                           Navigator.of(context).pop();
 
@@ -301,13 +315,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _langProvider.removeListener(_onLangChanged);
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override
@@ -447,7 +454,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                     LayoutBuilder(
                                       builder: (context, constraints) {
                                         final chipWidth =
-                                            (constraints.maxWidth / 3) - 8;
+                                            (constraints.maxWidth / 4) - 8;
                                         return Wrap(
                                           spacing: 8,
                                           runSpacing: 8,
@@ -461,8 +468,8 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                                 intVal;
                                             return SizedBox(
                                               width: chipWidth.clamp(
-                                                70.0,
-                                                160.0,
+                                                60.0,
+                                                150.0,
                                               ),
                                               child: ChoiceChip(
                                                 label: Text(
@@ -499,7 +506,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                                     ? AppColors.completed
                                                           .withOpacity(0.7)
                                                     : AppColors.completed,
-                                                elevation: selected ? 6 : 0,
+                                                elevation: selected ? 8 : 0,
                                                 pressElevation: 2,
                                                 onSelected: (_) {
                                                   HapticFeedback.lightImpact();
@@ -541,7 +548,8 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Navigation Buttons
+
+                      // IMPROVED BUTTON LAYOUT ---
                       Row(
                         children: [
                           FloatingActionButton(
@@ -556,7 +564,9 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                             ),
                           ),
                           const SizedBox(width: 16),
-                          if (_pageIndex > 0)
+
+                          // Previous Button (Only show if > Page 0)
+                          if (_pageIndex > 0) ...[
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: _submitting
@@ -588,10 +598,13 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                 ),
                               ),
                             ),
-                          if (_pageIndex > 0)
-                            const SizedBox(width: 16)
-                          else
-                            const Expanded(child: SizedBox.shrink()),
+                            // Gap between buttons
+                            const SizedBox(width: 16),
+                          ] else
+                            // Push Next button to right on Page 0 without stretching
+                            const Spacer(),
+
+                          // Next / Submit Button
                           Expanded(
                             child: ElevatedButton(
                               onPressed: _submitting

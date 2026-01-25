@@ -37,11 +37,13 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   String _currentHint = "";
   Timer? _hintTimer;
   bool _hintVisible = true;
+  bool _wasFullScreen = false;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     final videoProvider = Provider.of<VideoProvider>(context, listen: false);
@@ -54,6 +56,11 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
         mute: false,
         hideControls: false,
         controlsVisibleAtStart: true,
+        disableDragSeek: false,
+        loop: false,
+        isLive: false,
+        forceHD: false,
+        enableCaption: false,
       ),
     );
 
@@ -92,6 +99,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
       if (_hints.isEmpty) return;
       setState(() => _hintVisible = false);
       Future.delayed(const Duration(milliseconds: 300), () {
+        if (!mounted) return;
         setState(() {
           _currentHint = (_hints..shuffle()).first;
           _hintVisible = true;
@@ -101,9 +109,16 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   }
 
   void _youtubeListener() {
-    if (mounted) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    if (!mounted) return;
+    if (_controller.value.isFullScreen != _wasFullScreen) {
+      _wasFullScreen = _controller.value.isFullScreen;
+      if (_wasFullScreen) {
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+      } else {
+        SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+      }
     }
+
     setState(() {});
   }
 
@@ -116,7 +131,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
         _watchedSeconds += 1;
         if (_watchedSeconds % 5 == 0) {
           videoProvider.updateProgress(
-            context: context, // Pass Context
+            context: context,
             userId: widget.userId,
             videoId: widget.video.id,
             watchedSeconds: _watchedSeconds,
@@ -128,12 +143,10 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
       _progressTimer?.cancel();
     } else if (state == AppLifecycleState.resumed) {
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
       _startProgressTimer();
     }
   }
@@ -141,17 +154,27 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    // Force portrait when page is destroyed
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    // Ensure bars are visible when leaving
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
     _controller.dispose();
     _progressTimer?.cancel();
     _hintTimer?.cancel();
     super.dispose();
   }
 
-  /// Handles exiting the player
-  Future<void> _handleExit() async {
+  /// Handles exiting: Saves progress -> Resets Orientation -> Checks Achievements -> Pops
+  Future<void> _handleExit({bool isSystemBack = false}) async {
     _progressTimer?.cancel();
     _controller.removeListener(_youtubeListener);
     _controller.pause();
+
+    // Force Portrait Mode immediately
+    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+
+    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     // Save Progress
     if (mounted) {
@@ -164,18 +187,18 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
       );
     }
 
-    // Get Achievement Provider Reference before popping
+    // Handle Achievements & Pop
     if (mounted) {
       final achProvider = Provider.of<AchievementProvider>(
         context,
         listen: false,
       );
 
-      // Pop the Video Player
-      SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-      Navigator.of(context).pop();
+      if (!isSystemBack) {
+        Navigator.of(context).pop();
+      }
 
-      // Trigger Pending Dialogs
+      // Trigger Pending Dialogs (shows on the home screen)
       achProvider.showPendingAchievements(context);
     }
   }
@@ -191,14 +214,27 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
     return WillPopScope(
       onWillPop: () async {
-        await _handleExit();
-        return false;
+        // HANDLE FULL SCREEN BACK PRESS
+        if (_controller.value.isFullScreen) {
+          _controller.toggleFullScreenMode();
+          return false; 
+        }
+        await _handleExit(isSystemBack: true);
+        return true;
       },
       child: YoutubePlayerBuilder(
         player: YoutubePlayer(
           controller: _controller,
           showVideoProgressIndicator: true,
           progressIndicatorColor: AppColors.primary,
+          bottomActions: [
+            CurrentPosition(),
+            const SizedBox(width: 10),
+            ProgressBar(isExpanded: true),
+            const SizedBox(width: 10),
+            RemainingDuration(),
+            const FullScreenButton(),
+          ],
         ),
         builder: (context, player) {
           return Scaffold(
@@ -206,12 +242,13 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
             appBar: AppBar(
               backgroundColor: AppColors.primary,
               elevation: 4,
-              leading: CupertinoNavigationBarBackButton(
-                color: Colors.white,
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
                 onPressed: () async {
-                  await _handleExit();
+                  await _handleExit(isSystemBack: false);
                 },
               ),
+
               title: Text(
                 langProvider.currentLang == "si"
                     ? widget.video.titleSi
@@ -228,9 +265,10 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
             ),
             body: Column(
               children: [
+                // Video Player Area
                 Container(color: Colors.black, child: player),
 
-                // Fixed progress bar (non-scrollable)
+                // Fixed Progress Bar
                 Padding(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 20,
@@ -274,11 +312,10 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                   ),
                 ),
 
-                // Instructions + Hints
+                // Instructions & Hints
                 Expanded(
                   child: Stack(
                     children: [
-                      // Background icon
                       Positioned.fill(
                         child: Opacity(
                           opacity: 0.12,
@@ -288,7 +325,6 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                           ),
                         ),
                       ),
-
                       SingleChildScrollView(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
@@ -306,7 +342,6 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                               ),
                             ),
                             const SizedBox(height: 12),
-
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
@@ -370,9 +405,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                                       ),
                                     ),
                             ),
-
                             const SizedBox(height: 30),
-
                             Text(
                               isSinhala ? "උපදේශන සටහන්:" : "Hints:",
                               style: const TextStyle(
@@ -382,7 +415,6 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                               ),
                             ),
                             const SizedBox(height: 12),
-
                             if (_currentHint.isNotEmpty)
                               AnimatedOpacity(
                                 opacity: _hintVisible ? 1.0 : 0.0,
@@ -422,7 +454,6 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                                   ),
                                 ),
                               ),
-
                             const SizedBox(height: 40),
                           ],
                         ),

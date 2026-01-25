@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mamamind/constants/app_config.dart';
-import 'package:mamamind/utils/helpers.dart';
 import 'package:mamamind/utils/logout_util.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -33,28 +32,28 @@ class _HomePageState extends State<HomePage> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final videoProvider = Provider.of<VideoProvider>(context, listen: false);
 
-    // Wait until AuthProvider finishes initializing
+    // Wait for auth to be ready
     while (authProvider.isInitializing) {
       await Future.delayed(const Duration(milliseconds: 50));
     }
 
-    // Listen to user changes
+    // Listener for future auth changes
     _authListener = () async {
       final user = authProvider.user;
-      if (user != null) {
+      if (user != null && mounted) {
         videoProvider.reset();
-        videoProvider.setUser(user);
+        videoProvider.setUser(user, context);
         await videoProvider.waitForInitialProgress();
         if (mounted) setState(() => _loading = false);
       }
     };
     authProvider.addListener(_authListener);
 
-    // Initial load if user already exists
+    // Immediate check
     final user = authProvider.user;
-    if (user != null) {
+    if (user != null && mounted) {
       videoProvider.reset();
-      videoProvider.setUser(user);
+      videoProvider.setUser(user, context);
       await videoProvider.waitForInitialProgress();
     }
 
@@ -73,6 +72,7 @@ class _HomePageState extends State<HomePage> {
     final authProvider = Provider.of<AuthProvider>(context);
     final videoProvider = Provider.of<VideoProvider>(context);
     final langProvider = Provider.of<LanguageProvider>(context);
+
     final user = videoProvider.user;
     final videos = videoProvider.videos;
     final size = MediaQuery.of(context).size;
@@ -96,7 +96,7 @@ class _HomePageState extends State<HomePage> {
             currentLang == 'en'
                 ? "User data loading failed"
                 : "පරිශීලක දත්ත පූරණය අසාර්ථක විය",
-            style: GoogleFonts.roboto(),
+            style: GoogleFonts.roboto(color: Colors.grey),
           ),
         ),
       );
@@ -104,8 +104,11 @@ class _HomePageState extends State<HomePage> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
+      extendBodyBehindAppBar: true,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
         title: Text(
           AppConfig.appName,
           style: GoogleFonts.poppins(
@@ -114,10 +117,7 @@ class _HomePageState extends State<HomePage> {
             fontSize: 22,
           ),
         ),
-        elevation: 4,
-        systemOverlayStyle: SystemUiOverlayStyle.light.copyWith(
-          statusBarColor: AppColors.primary,
-        ),
+        systemOverlayStyle: SystemUiOverlayStyle.light,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
@@ -139,104 +139,161 @@ class _HomePageState extends State<HomePage> {
           ? Center(
               child: Text(
                 currentLang == 'en' ? "No sessions available." : "සැසි නොමැත.",
-                style: GoogleFonts.roboto(color: Colors.grey.shade600),
+                style: GoogleFonts.poppins(color: Colors.grey.shade600),
               ),
             )
-          : SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Welcome Title
-                  Text(
-                    currentLang == 'en'
-                        ? "Welcome, ${user.fullName.split(' ').first}!"
-                        : "ආයුබෝවන්, ${user.fullName.split(' ').first}!",
-                    style: GoogleFonts.poppins(
-                      fontSize: isMobile ? 27 : 32,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.text,
-                      height: 1.1,
+          : Column(
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.fromLTRB(24, 110, 24, 25),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(32),
+                      bottomRight: Radius.circular(32),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withOpacity(0.3),
+                        blurRadius: 10,
+                        offset: const Offset(0, 5),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        currentLang == 'en'
+                            ? "Welcome, ${user.fullName.split(' ').first}!"
+                            : "ආයුබෝවන්, ${user.fullName.split(' ').first}!",
+                        style: GoogleFonts.poppins(
+                          fontSize: isMobile ? 24 : 28,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        currentLang == 'en'
+                            ? "Take a moment to relax."
+                            : "මදක් විරාම ගන්න.",
+                        style: GoogleFonts.roboto(
+                          fontSize: isMobile ? 14 : 16,
+                          fontWeight: FontWeight.w400,
+                          color: Colors.white.withOpacity(0.9),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                // GRID CONTENT
+                Expanded(
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Section Title
+                        Row(
+                          children: [
+                            Container(
+                              height: 20,
+                              width: 4,
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              currentLang == 'en'
+                                  ? "Meditation Sessions"
+                                  : "ධ්‍යානය සැසි",
+                              style: GoogleFonts.poppins(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: AppColors.text,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+
+                        // Clean Grid
+                        GridView.builder(
+                          padding: EdgeInsets.zero,
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: isMobile ? 2 : 3,
+                                mainAxisSpacing: 12,
+                                crossAxisSpacing: 12,
+                                childAspectRatio: 1.0,
+                              ),
+                          itemCount: videos.length,
+                          itemBuilder: (context, index) {
+                            final video = videos[index];
+                            final isUnlocked = videoProvider.isVideoUnlocked(
+                              video,
+                            );
+
+                            return VideoTile(
+                              title: currentLang == 'en'
+                                  ? video.title
+                                  : video.titleSi,
+                              isLocked: !isUnlocked,
+                              isMobile: isMobile,
+                              onTap: isUnlocked
+                                  ? () {
+                                      HapticFeedback.lightImpact();
+                                      final youtubeId = video.getYoutubeId(
+                                        currentLang,
+                                      );
+                                      HomeRoutes.goToVideoPlayer(
+                                        context,
+                                        video,
+                                        user.id,
+                                        youtubeId,
+                                      );
+                                    }
+                                  : () {
+                                      HapticFeedback.vibrate();
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            currentLang == 'en'
+                                                ? "Complete previous session."
+                                                : "පෙර සැසිය සම්පූර්ණ කරන්න.",
+                                            style: GoogleFonts.roboto(),
+                                          ),
+                                          backgroundColor:
+                                              Colors.orange.shade800,
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          duration: const Duration(seconds: 1),
+                                        ),
+                                      );
+                                    },
+                            );
+                          },
+                        ),
+                        const SizedBox(height: 24),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-
-                  // Subtitle/Motto
-                  Text(
-                    currentLang == 'en'
-                        ? "Take a moment to relax and meditate daily."
-                        : "දිනපතා විරාම ගෙන නිතරම ධ්‍යානය කරන්න.",
-                    style: GoogleFonts.roboto(
-                      fontSize: isMobile ? 16 : 20,
-                      fontWeight: FontWeight.w400,
-                      color: Colors.grey.shade600,
-                    ),
-                  ),
-                  const SizedBox(height: 30),
-
-                  // Section Header
-                  Text(
-                    currentLang == 'en'
-                        ? "Meditation Sessions"
-                        : "ධ්‍යානය සැසි",
-                    style: primaryColorTitleStyle,
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Video Grid
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: isMobile ? 2 : 3,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 0.9,
-                    ),
-                    itemCount: videos.length,
-                    itemBuilder: (context, index) {
-                      final video = videos[index];
-                      final isUnlocked = videoProvider.isVideoUnlocked(video);
-
-                      return VideoTile(
-                        title: currentLang == 'en'
-                            ? video.title
-                            : video.titleSi,
-                        isLocked: !isUnlocked,
-                        isMobile: isMobile,
-                        onTap: isUnlocked
-                            ? () {
-                                HapticFeedback.lightImpact();
-                                final youtubeId = video.getYoutubeId(
-                                  currentLang,
-                                );
-                                HomeRoutes.goToVideoPlayer(
-                                  context,
-                                  video,
-                                  user.id,
-                                  youtubeId,
-                                );
-                              }
-                            : () {
-                                HapticFeedback.vibrate();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      currentLang == 'en'
-                                          ? "Complete the previous session to unlock this one."
-                                          : "මෙය විවෘත කිරීමට පෙර සැසිය සම්පූර්ණ කරන්න.",
-                                      style: GoogleFonts.roboto(),
-                                    ),
-                                    backgroundColor: Colors.orange.shade800,
-                                  ),
-                                );
-                              },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                ],
-              ),
+                ),
+              ],
             ),
     );
   }

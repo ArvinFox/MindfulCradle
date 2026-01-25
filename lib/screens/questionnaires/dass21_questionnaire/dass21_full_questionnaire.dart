@@ -9,6 +9,7 @@ import '/constants/colors.dart';
 import '../../../providers/dass21_provider.dart';
 import '/providers/language_provider.dart';
 import '../../../utils/dass21_hints.dart';
+import '../../../providers/achievement_provider.dart';
 
 class DASS21FullQuestionnairePage extends StatefulWidget {
   const DASS21FullQuestionnairePage({super.key});
@@ -30,8 +31,6 @@ class _DASS21FullQuestionnairePageState
   final int _perPage = 7;
   late final LanguageProvider _langProvider;
   bool _hintVisible = false;
-
-  // Track if user tried to submit without finishing
   bool _attemptedSubmit = false;
 
   @override
@@ -99,13 +98,11 @@ class _DASS21FullQuestionnairePageState
   Future<void> _submitAll(DASS21Provider provider) async {
     setState(() => _submitting = true);
     try {
-      // Calculate scores before saving
       final scores = provider.calculateScores();
-
+      // This will now unlock achievement SILENTLY
       await provider.saveToFirebase(context);
 
       if (!mounted) return;
-
       _showScoresDialog(scores);
     } catch (e) {
       if (kDebugMode) print('Error saving questionnaire: $e');
@@ -135,6 +132,7 @@ class _DASS21FullQuestionnairePageState
     }
   }
 
+  // DIALOG LOGIC
   void _showScoresDialog(Map<String, int> scores) {
     final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
@@ -249,8 +247,19 @@ class _DASS21FullQuestionnairePageState
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: () {
+                          final achProvider = Provider.of<AchievementProvider>(
+                            context,
+                            listen: false,
+                          );
+
+                          // Close Dialog
                           Navigator.of(context).pop();
+
+                          // Close Page (Go back to Start Screen)
                           Navigator.of(context).pop();
+
+                          // Trigger the Pending Dialog on the Start Screen
+                          achProvider.showPendingAchievements(context);
                         },
                         child: Text(
                           isSinhala ? "හරි" : "OK",
@@ -318,7 +327,7 @@ class _DASS21FullQuestionnairePageState
                   ),
                   child: Column(
                     children: [
-                      // Progress header
+                      // Progress Header
                       Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8),
                         child: Column(
@@ -352,7 +361,6 @@ class _DASS21FullQuestionnairePageState
                         ),
                       ),
                       const SizedBox(height: 8),
-
                       // Questions List
                       Expanded(
                         child: ListView.builder(
@@ -362,8 +370,6 @@ class _DASS21FullQuestionnairePageState
                           itemBuilder: (context, idx) {
                             final q = _questionsForPage(_pageIndex)[idx];
                             final qId = q['id'] as int;
-
-                            // Check if this specific question is missing an answer and submission was attempted
                             final bool isMissing =
                                 _attemptedSubmit &&
                                 provider.responses[qId - 1] == null;
@@ -373,7 +379,6 @@ class _DASS21FullQuestionnairePageState
                               margin: const EdgeInsets.symmetric(vertical: 6),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                // Red Border
                                 side: isMissing
                                     ? const BorderSide(
                                         color: Colors.red,
@@ -415,7 +420,6 @@ class _DASS21FullQuestionnairePageState
                                       ],
                                     ),
                                     const SizedBox(height: 12),
-
                                     LayoutBuilder(
                                       builder: (context, constraints) {
                                         final chipWidth =
@@ -488,8 +492,6 @@ class _DASS21FullQuestionnairePageState
                                         );
                                       },
                                     ),
-
-                                    // Optional text message for error
                                     if (isMissing)
                                       Padding(
                                         padding: const EdgeInsets.only(
@@ -513,9 +515,8 @@ class _DASS21FullQuestionnairePageState
                           },
                         ),
                       ),
-
-                      // Navigation buttons
                       const SizedBox(height: 16),
+                      // Navigation Buttons
                       Row(
                         children: [
                           FloatingActionButton(
@@ -538,8 +539,7 @@ class _DASS21FullQuestionnairePageState
                                     : () {
                                         setState(() {
                                           _pageIndex -= 1;
-                                          _attemptedSubmit =
-                                              false;
+                                          _attemptedSubmit = false;
                                         });
                                         _scrollToTop();
                                       },
@@ -576,9 +576,7 @@ class _DASS21FullQuestionnairePageState
                                         provider,
                                         _pageIndex,
                                       )) {
-                                        setState(() {
-                                          _attemptedSubmit = true;
-                                        });
+                                        setState(() => _attemptedSubmit = true);
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
@@ -594,10 +592,7 @@ class _DASS21FullQuestionnairePageState
                                         );
                                         return;
                                       }
-
-                                      // If successful, reset error state and proceed
                                       setState(() => _attemptedSubmit = false);
-
                                       if (_pageIndex < totalPages - 1) {
                                         setState(() => _pageIndex += 1);
                                         _scrollToTop();
@@ -635,13 +630,11 @@ class _DASS21FullQuestionnairePageState
                   ),
                 ),
         ),
-
         DASS21HintOverlay(
           visible: _hintVisible,
-          isMobile: MediaQuery.of(context).size.width < 600,
+          isMobile: isMobile,
           onClose: () => setState(() => _hintVisible = false),
         ),
-
         if (_submitting)
           Container(
             color: AppColors.background,

@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/video_model.dart';
 import '../models/user_model.dart';
 import '../services/video_service.dart';
+import '../providers/achievement_provider.dart';
 
-class VideoProvider extends ChangeNotifier {
+class VideoProvider with ChangeNotifier {
   final VideoService _videoService = VideoService();
 
   List<VideoModel> _videos = [];
@@ -20,7 +22,8 @@ class VideoProvider extends ChangeNotifier {
   UserModel? get user => _user;
 
   /// Set current user and start listening to videos & progress
-  void setUser(UserModel user) {
+  void setUser(UserModel user, BuildContext context) {
+    // Accept Context to find AchievementProvider
     _progressSub?.cancel();
     _videosSub?.cancel();
 
@@ -32,7 +35,7 @@ class VideoProvider extends ChangeNotifier {
     // Listen to user progress
     _progressSub = _videoService.streamUserProgress(user.id).listen((progress) {
       _userProgress = progress;
-      _checkUnlocks();
+      _checkUnlocks(context);
       notifyListeners();
 
       _firstProgressCompleter?.complete();
@@ -41,7 +44,7 @@ class VideoProvider extends ChangeNotifier {
     // Listen to videos live
     _videosSub = _videoService.streamAllVideos().listen((videos) {
       _videos = videos;
-      _checkUnlocks();
+      _checkUnlocks(context);
       notifyListeners();
     });
 
@@ -57,6 +60,7 @@ class VideoProvider extends ChangeNotifier {
 
   /// Update watched seconds for the user & video
   Future<void> updateProgress({
+    required BuildContext context,
     required String userId,
     required String videoId,
     required int watchedSeconds,
@@ -71,22 +75,23 @@ class VideoProvider extends ChangeNotifier {
         videoId: videoId,
         watchedSeconds: watchedSeconds,
       );
-      await _checkUnlocks(); // now also updates Firestore
+      // We don't await this so it doesn't block the UI loop
+      _checkUnlocks(context);
       notifyListeners();
     }
   }
 
-  /// Unlock logic (90% watched) and save unlocked videos to Firestore
-  Future<void> _checkUnlocks() async {
-    if (_user == null) return;
+  /// Unlock logic (90% watched) + Achievement Logic
+  Future<void> _checkUnlocks(BuildContext context) async {
+    if (_user == null || _videos.isEmpty) return;
     bool updated = false;
 
+    // Video Unlocking Logic (Sequential Access)
     for (int i = 1; i < _videos.length; i++) {
       final prevVideo = _videos[i - 1];
       final nextVideo = _videos[i];
       final watched = _userProgress[prevVideo.id] ?? 0;
 
-      // Unlock if watched >= 90% of previous video
       if (watched >= ((prevVideo.duration * 0.9).ceil()) &&
           !_user!.unlockedVideos.contains(nextVideo.sessionNumber)) {
         _user!.unlockedVideos.add(nextVideo.sessionNumber);
@@ -94,12 +99,60 @@ class VideoProvider extends ChangeNotifier {
       }
     }
 
-    // If unlocked videos updated, save to Firestore
-    if (updated && _user != null) {
+    // Save unlocked videos to Firestore
+    if (updated) {
       await _videoService.updateUnlockedVideos(
         _user!.id,
         _user!.unlockedVideos,
       );
+    }
+
+    // ACHIEVEMENT LOGIC: Count total completed videos
+    int completedCount = 0;
+    for (var video in _videos) {
+      final watched = _userProgress[video.id] ?? 0;
+      // If watched more than 90%, it counts as complete
+      if (watched >= ((video.duration * 0.9).ceil())) {
+        completedCount++;
+      }
+    }
+
+    try {
+      if (context.mounted) {
+        final achievementProvider = Provider.of<AchievementProvider>(
+          context,
+          listen: false,
+        );
+
+        // Badge 1: First Step
+        if (completedCount >= 1) {
+          await achievementProvider.unlockAchievement(
+            context,
+            'first_step',
+            showUI: false,
+          );
+        }
+
+        // Badge 2: Halfway There
+        if (completedCount >= 4) {
+          await achievementProvider.unlockAchievement(
+            context,
+            'halfway_there',
+            showUI: false,
+          );
+        }
+
+        // Badge 3: Zen Master
+        if (completedCount >= 8) {
+          await achievementProvider.unlockAchievement(
+            context,
+            'zen_master',
+            showUI: false,
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Error updating achievements in VideoProvider: $e");
     }
   }
 

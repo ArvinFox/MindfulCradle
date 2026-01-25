@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import '../providers/achievement_provider.dart';
 
 class MAASProvider with ChangeNotifier {
   UserModel? _user;
@@ -182,6 +183,19 @@ class MAASProvider with ChangeNotifier {
         'attemptNumber': currentAttemptNumber,
       });
 
+      // ACHIEVEMENT LOGIC: Unlock 'Mindful Observer'
+      if (currentAttemptNumber == 1) {
+        final achievementProvider = Provider.of<AchievementProvider>(
+          context,
+          listen: false,
+        );
+        await achievementProvider.unlockAchievement(
+          context,
+          'mindful_observer',
+          showUI: false,
+        );
+      }
+
       await loadMAASData(context);
     } finally {
       isLoading = false;
@@ -213,5 +227,10 @@ class MAASProvider with ChangeNotifier {
     return null;
   }
 
-  Future<void> resetAndLoad(UserModel user, {BuildContext? context}) async {}
+  Future<void> resetAndLoad(UserModel user, {BuildContext? context}) async {
+    setUser(user);
+    if (context != null) {
+      await loadMAASData(context);
+    }
+  }
 }

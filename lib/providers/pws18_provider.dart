@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
+import '../providers/achievement_provider.dart';
 
 class PWS18Provider with ChangeNotifier {
   UserModel? _user;
@@ -201,6 +202,19 @@ class PWS18Provider with ChangeNotifier {
         'completedAt': FieldValue.serverTimestamp(),
         'attemptNumber': currentAttemptNumber,
       });
+
+      // ACHIEVEMENT LOGIC: Unlock 'Happiness Seeker'
+      if (currentAttemptNumber == 1) {
+        final achievementProvider = Provider.of<AchievementProvider>(
+          context,
+          listen: false,
+        );
+        await achievementProvider.unlockAchievement(
+          context,
+          'happiness_seeker',
+          showUI: false,
+        );
+      }
 
       await loadPWS18Data(context);
     } finally {

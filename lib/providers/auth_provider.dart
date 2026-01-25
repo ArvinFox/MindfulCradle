@@ -83,7 +83,7 @@ class AuthProvider with ChangeNotifier {
         }
       }
 
-      return result; // null = success, string = error
+      return result;
     } catch (e) {
       return e.toString();
     } finally {
@@ -109,6 +109,17 @@ class AuthProvider with ChangeNotifier {
       if (kDebugMode) print("Logout error: $e");
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  void addLocalAchievement(String achievementId) {
+    if (_user != null && !_user!.achievements.contains(achievementId)) {
+      final updatedList = List<String>.from(_user!.achievements)
+        ..add(achievementId);
+
+      _user = _user!.copyWith(achievements: updatedList);
+
       notifyListeners();
     }
   }

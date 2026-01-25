@@ -36,6 +36,9 @@ class _DASS21FullQuestionnairePageState
   @override
   void initState() {
     super.initState();
+    // Enable immersive mode for the questionnaire
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
     _langProvider = Provider.of<LanguageProvider>(context, listen: false);
     _currentLang = _langProvider.currentLang == 'si' ? 'si' : 'en';
     _loadJson(_currentLang);
@@ -45,6 +48,16 @@ class _DASS21FullQuestionnairePageState
     if (provider.user != null) {
       provider.resetAndLoad(provider.user!, context: context);
     }
+  }
+
+  @override
+  void dispose() {
+    // Restore edge-to-edge mode when leaving
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    _langProvider.removeListener(_onLangChanged);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _onLangChanged() {
@@ -99,7 +112,6 @@ class _DASS21FullQuestionnairePageState
     setState(() => _submitting = true);
     try {
       final scores = provider.calculateScores();
-      // This will now unlock achievement SILENTLY
       await provider.saveToFirebase(context);
 
       if (!mounted) return;
@@ -132,7 +144,6 @@ class _DASS21FullQuestionnairePageState
     }
   }
 
-  // DIALOG LOGIC
   void _showScoresDialog(Map<String, int> scores) {
     final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
@@ -251,14 +262,8 @@ class _DASS21FullQuestionnairePageState
                             context,
                             listen: false,
                           );
-
-                          // Close Dialog
                           Navigator.of(context).pop();
-
-                          // Close Page (Go back to Start Screen)
                           Navigator.of(context).pop();
-
-                          // Trigger the Pending Dialog on the Start Screen
                           achProvider.showPendingAchievements(context);
                         },
                         child: Text(
@@ -279,13 +284,6 @@ class _DASS21FullQuestionnairePageState
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _langProvider.removeListener(_onLangChanged);
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override
@@ -516,7 +514,6 @@ class _DASS21FullQuestionnairePageState
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Navigation Buttons
                       Row(
                         children: [
                           FloatingActionButton(
@@ -531,7 +528,9 @@ class _DASS21FullQuestionnairePageState
                             ),
                           ),
                           const SizedBox(width: 16),
-                          if (_pageIndex > 0)
+
+                          // PREVIOUS BUTTON (Only show if > page 0)
+                          if (_pageIndex > 0) ...[
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: _submitting
@@ -563,10 +562,11 @@ class _DASS21FullQuestionnairePageState
                                 ),
                               ),
                             ),
-                          if (_pageIndex > 0)
-                            const SizedBox(width: 16)
-                          else
-                            const Expanded(child: SizedBox.shrink()),
+                            const SizedBox(width: 16),
+                          ] else
+                            const Spacer(),
+
+                          // NEXT / SUBMIT BUTTON
                           Expanded(
                             child: ElevatedButton(
                               onPressed: _submitting

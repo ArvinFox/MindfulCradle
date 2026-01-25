@@ -112,7 +112,7 @@ class VideoTile extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.poppins(
-                  fontSize: isMobile ? 13 : 15,
+                  fontSize: 15,
                   fontWeight: FontWeight.bold,
                   color: textColor,
                   height: 1.2,

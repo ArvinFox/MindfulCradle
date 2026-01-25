@@ -177,10 +177,10 @@ class _HomePageState extends State<HomePage> {
                       const SizedBox(height: 4),
                       Text(
                         currentLang == 'en'
-                            ? "Take a moment to relax."
-                            : "මදක් විරාම ගන්න.",
+                            ? "Take a moment to step back and find your inner peace." 
+                            : "කාර්යබහුල දවසින් මදකට මිදී, සිත නිවාගන්නට සොඳුරු මොහොතක්.",
                         style: GoogleFonts.roboto(
-                          fontSize: isMobile ? 14 : 16,
+                          fontSize: 15,
                           fontWeight: FontWeight.w400,
                           color: Colors.white.withOpacity(0.9),
                         ),

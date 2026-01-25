@@ -36,6 +36,10 @@ class _PWS18FullQuestionnairePageState
   @override
   void initState() {
     super.initState();
+
+    // ENTER IMMERSIVE MODE ---
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+
     _langProvider = Provider.of<LanguageProvider>(context, listen: false);
     _currentLang = _langProvider.currentLang == 'si' ? 'si' : 'en';
     _loadJson(_currentLang);
@@ -45,6 +49,16 @@ class _PWS18FullQuestionnairePageState
     if (provider.user != null) {
       provider.resetAndLoad(provider.user!, context: context);
     }
+  }
+
+  @override
+  void dispose() {
+    // EXIT IMMERSIVE MODE ---
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    _langProvider.removeListener(_onLangChanged);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _onLangChanged() {
@@ -262,7 +276,7 @@ class _PWS18FullQuestionnairePageState
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: () {
-                          // Get Achievement Provider Reference
+                          // Achievement Provider Logic
                           final achProvider = Provider.of<AchievementProvider>(
                             context,
                             listen: false,
@@ -295,13 +309,6 @@ class _PWS18FullQuestionnairePageState
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _langProvider.removeListener(_onLangChanged);
-    _scrollController.dispose();
-    super.dispose();
   }
 
   @override
@@ -532,7 +539,8 @@ class _PWS18FullQuestionnairePageState
                         ),
                       ),
                       const SizedBox(height: 16),
-                      // Navigation Buttons
+
+                      // IMPROVED BUTTON LAYOUT ---
                       Row(
                         children: [
                           FloatingActionButton(
@@ -547,7 +555,9 @@ class _PWS18FullQuestionnairePageState
                             ),
                           ),
                           const SizedBox(width: 16),
-                          if (_pageIndex > 0)
+
+                          // Previous Button (Only show if > Page 0)
+                          if (_pageIndex > 0) ...[
                             Expanded(
                               child: ElevatedButton(
                                 onPressed: _submitting
@@ -579,10 +589,13 @@ class _PWS18FullQuestionnairePageState
                                 ),
                               ),
                             ),
-                          if (_pageIndex > 0)
-                            const SizedBox(width: 16)
-                          else
-                            const Expanded(child: SizedBox.shrink()),
+                            // Gap between buttons
+                            const SizedBox(width: 16),
+                          ] else
+                            // Push Next button to right on Page 0 without stretching
+                            const Spacer(),
+
+                          // Next / Submit Button
                           Expanded(
                             child: ElevatedButton(
                               onPressed: _submitting

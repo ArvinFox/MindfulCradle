@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mamamind/constants/colors.dart';
 import 'package:provider/provider.dart';
 import 'auth_provider.dart';
 import '../models/achievement_data.dart';
 import '../providers/language_provider.dart';
+import '../services/achievement_service.dart';
 import '../utils/globals.dart';
 
 class AchievementProvider with ChangeNotifier {
+  final AchievementService _achievementService = AchievementService();
   final List<Achievement> _pendingBadges = [];
 
   Future<void> unlockAchievement(
@@ -21,50 +22,28 @@ class AchievementProvider with ChangeNotifier {
 
     if (user == null) return;
 
-    // Check if already unlocked
-    if (user.achievements.contains(achievementId)) {
-      return;
-    }
-
     try {
-      // Update Firebase
-      await FirebaseFirestore.instance.collection('users').doc(user.id).update({
-        'achievements': FieldValue.arrayUnion([achievementId]),
-      });
+      final unlockedIds = await _achievementService.unlockAchievement(
+        userId: user.id,
+        currentAchievements: user.achievements,
+        achievementId: achievementId,
+      );
 
-      // Update Local State
-      authProvider.addLocalAchievement(achievementId);
+      if (unlockedIds.isEmpty) return;
 
-      // Handle UI
-      final badge = AchievementData.findById(achievementId);
+      for (final id in unlockedIds) {
+        authProvider.addLocalAchievement(id);
+        final badge = AchievementData.findById(id);
 
-      if (badge != null) {
-        if (showUI) {
-          await Future.delayed(const Duration(milliseconds: 300));
-          final globalContext = navigatorKey.currentContext;
-          if (globalContext != null) {
-            _showUnlockDialog(globalContext, badge);
+        if (badge != null) {
+          if (showUI) {
+            await Future.delayed(const Duration(milliseconds: 300));
+            final globalContext = navigatorKey.currentContext ?? context;
+            await _showUnlockDialog(globalContext, badge);
+          } else {
+            _pendingBadges.add(badge);
           }
-        } else {
-          _pendingBadges.add(badge);
         }
-      }
-
-      // Check for "Super Mom"
-      const requiredBadges = [
-        'first_step',
-        'halfway_there',
-        'zen_master',
-        'self_aware',
-        'mindful_observer',
-        'happiness_seeker',
-      ];
-
-      final currentBadges = authProvider.user?.achievements ?? [];
-      final hasAll = requiredBadges.every((id) => currentBadges.contains(id));
-
-      if (hasAll && !currentBadges.contains('super_mom')) {
-        await unlockAchievement(context, 'super_mom', showUI: showUI);
       }
     } catch (e) {
       debugPrint("Error unlocking achievement: $e");

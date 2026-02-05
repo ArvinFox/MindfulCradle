@@ -3,9 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/achievement_provider.dart';
+import '../services/dass21_service.dart';
 import 'package:provider/provider.dart';
 
 class DASS21Provider with ChangeNotifier {
+  final DASS21Service _dass21Service = DASS21Service();
   UserModel? _user;
 
   // Global Unlock Dates
@@ -22,11 +24,6 @@ class DASS21Provider with ChangeNotifier {
   // Standard questionnaire state
   List<int?> responses = List<int?>.filled(21, null);
   bool isLoading = false;
-
-  // Subscales
-  final List<int> depressionQ = [3, 5, 10, 13, 16, 17, 21];
-  final List<int> anxietyQ = [2, 4, 7, 9, 15, 19, 20];
-  final List<int> stressQ = [1, 6, 8, 11, 12, 14, 18];
 
   DASS21Provider();
 
@@ -45,35 +42,20 @@ class DASS21Provider with ChangeNotifier {
 
   // Calculation Logic
   Map<String, int> calculateScores() {
-    int rawDe = depressionQ.fold(0, (sum, q) => sum + (responses[q - 1] ?? 0));
-    int rawAn = anxietyQ.fold(0, (sum, q) => sum + (responses[q - 1] ?? 0));
-    int rawSt = stressQ.fold(0, (sum, q) => sum + (responses[q - 1] ?? 0));
-    return {'depression': rawDe * 2, 'anxiety': rawAn * 2, 'stress': rawSt * 2};
+    return _dass21Service.calculateScores(responses);
   }
 
   // Classifications
   String classifyDepression(int score, {bool isSinhala = false}) {
-    if (score <= 9) return isSinhala ? 'සාමාන්‍ය' : 'Normal';
-    if (score <= 13) return isSinhala ? 'මදක්' : 'Mild';
-    if (score <= 20) return isSinhala ? 'මධ්‍යම' : 'Moderate';
-    if (score <= 27) return isSinhala ? 'දරුණු' : 'Severe';
-    return isSinhala ? 'අතිශය දරුණු' : 'Extremely Severe';
+    return _dass21Service.classifyDepression(score, isSinhala: isSinhala);
   }
 
   String classifyAnxiety(int score, {bool isSinhala = false}) {
-    if (score <= 7) return isSinhala ? 'සාමාන්‍ය' : 'Normal';
-    if (score <= 9) return isSinhala ? 'මදක්' : 'Mild';
-    if (score <= 14) return isSinhala ? 'මධ්‍යම' : 'Moderate';
-    if (score <= 19) return isSinhala ? 'දරුණු' : 'Severe';
-    return isSinhala ? 'අතිශය දරුණු' : 'Extremely Severe';
+    return _dass21Service.classifyAnxiety(score, isSinhala: isSinhala);
   }
 
   String classifyStress(int score, {bool isSinhala = false}) {
-    if (score <= 14) return isSinhala ? 'සාමාන්‍ය' : 'Normal';
-    if (score <= 18) return isSinhala ? 'මදක්' : 'Mild';
-    if (score <= 25) return isSinhala ? 'මධ්‍යම' : 'Moderate';
-    if (score <= 33) return isSinhala ? 'දරුණු' : 'Severe';
-    return isSinhala ? 'අතිශය දරුණු' : 'Extremely Severe';
+    return _dass21Service.classifyStress(score, isSinhala: isSinhala);
   }
 
   // Load Data
@@ -86,91 +68,18 @@ class DASS21Provider with ChangeNotifier {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       _user = authProvider.user;
       if (_user == null) return;
-
-      // Fetch Global Unlock Dates
-      DocumentSnapshot controlDoc = await FirebaseFirestore.instance
-          .collection('questionnaire_control')
-          .doc('dass21')
-          .get();
-
-      if (controlDoc.exists && controlDoc.data() != null) {
-        final data = controlDoc.data() as Map<String, dynamic>;
-        if (data['attempt_1_date'] != null)
-          unlockDates[1] = (data['attempt_1_date'] as Timestamp).toDate();
-        if (data['attempt_2_date'] != null)
-          unlockDates[2] = (data['attempt_2_date'] as Timestamp).toDate();
-        if (data['attempt_3_date'] != null)
-          unlockDates[3] = (data['attempt_3_date'] as Timestamp).toDate();
-      }
-
-      // Fetch User's Past Attempts
-      QuerySnapshot attemptSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_user!.id)
-          .collection('dass21_responses')
-          .get();
-
-      userAttempts.clear();
-      for (var doc in attemptSnapshot.docs) {
-        if (doc.id.startsWith('attempt_')) {
-          int? num = int.tryParse(doc.id.split('_').last);
-          if (num != null) {
-            userAttempts[num] = doc.data() as Map<String, dynamic>;
-          }
-        }
-      }
-
-      _determineCurrentStatus();
+      final result = await _dass21Service.loadData(_user!.id);
+      unlockDates = result.unlockDates;
+      userAttempts = result.userAttempts;
+      currentAttemptNumber = result.currentAttemptNumber;
+      isLocked = result.isLocked;
+      lockReason = result.lockReason;
     } catch (e) {
       print("Error loading DASS data: $e");
     } finally {
       isLoading = false;
       notifyListeners();
     }
-  }
-
-  void _determineCurrentStatus() {
-    DateTime now = DateTime.now();
-
-    if (!userAttempts.containsKey(1)) {
-      currentAttemptNumber = 1;
-      DateTime? date = unlockDates[1];
-      if (date != null && now.isAfter(date)) {
-        isLocked = false;
-      } else {
-        isLocked = true;
-        lockReason = "Available on ${date.toString().split(' ')[0]}";
-      }
-      return;
-    }
-
-    if (!userAttempts.containsKey(2)) {
-      currentAttemptNumber = 2;
-      DateTime? date = unlockDates[2];
-      if (date != null && now.isAfter(date)) {
-        isLocked = false;
-      } else {
-        isLocked = true;
-        lockReason = "Locked";
-      }
-      return;
-    }
-
-    if (!userAttempts.containsKey(3)) {
-      currentAttemptNumber = 3;
-      DateTime? date = unlockDates[3];
-      if (date != null && now.isAfter(date)) {
-        isLocked = false;
-      } else {
-        isLocked = true;
-        lockReason = "Locked";
-      }
-      return;
-    }
-
-    currentAttemptNumber = 4;
-    isLocked = true;
-    lockReason = "All attempts completed";
   }
 
   // Save Function
@@ -183,25 +92,12 @@ class DASS21Provider with ChangeNotifier {
 
     try {
       final scores = calculateScores();
-      final responseMap = Map.fromIterables(
-        List.generate(21, (i) => (i + 1).toString()),
-        responses.map((e) => e ?? 0),
+      await _dass21Service.saveAttempt(
+        userId: _user!.id,
+        attemptNumber: currentAttemptNumber,
+        responses: responses,
+        scores: scores,
       );
-
-      final docId = 'attempt_$currentAttemptNumber';
-
-      final docRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(_user!.id)
-          .collection('dass21_responses')
-          .doc(docId);
-
-      await docRef.set({
-        'responses': responseMap,
-        'scores': scores,
-        'completedAt': FieldValue.serverTimestamp(),
-        'attemptNumber': currentAttemptNumber,
-      });
 
       // ACHIEVEMENT LOGIC: 'Self Aware'
       if (currentAttemptNumber == 1) {
@@ -210,9 +106,9 @@ class DASS21Provider with ChangeNotifier {
           listen: false,
         );
         await achievementProvider.unlockAchievement(
-          context, 
-          'self_aware', 
-          showUI: false
+          context,
+          'self_aware',
+          showUI: false,
         );
       }
 

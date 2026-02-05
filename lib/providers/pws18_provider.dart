@@ -4,8 +4,10 @@ import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/achievement_provider.dart';
+import '../services/pws18_service.dart';
 
 class PWS18Provider with ChangeNotifier {
+  final PWS18Service _pws18Service = PWS18Service();
   UserModel? _user;
 
   // Global Unlock Dates
@@ -40,14 +42,6 @@ class PWS18Provider with ChangeNotifier {
   bool get allAnswered => !responses.contains(null);
 
   /// Logic
-  int _processedScore(int questionId, int value) {
-    const reverseItems = [1, 2, 3, 8, 9, 11, 12, 13, 17, 18];
-    if (reverseItems.contains(questionId)) {
-      return 8 - value;
-    }
-    return value;
-  }
-
   Map<String, List<int>> get subscales => {
     'Autonomy': [15, 17, 18],
     'Environmental Mastery': [4, 8, 9],
@@ -58,20 +52,7 @@ class PWS18Provider with ChangeNotifier {
   };
 
   Map<String, double> calculateScores() {
-    final Map<String, double> scores = {};
-    subscales.forEach((subscale, items) {
-      double total = 0;
-      int count = 0;
-      for (var qId in items) {
-        final val = responses[qId - 1];
-        if (val != null) {
-          total += _processedScore(qId, val).toDouble();
-          count++;
-        }
-      }
-      scores[subscale] = count > 0 ? total / count : 0.0;
-    });
-    return scores;
+    return _pws18Service.calculateScores(responses, subscales);
   }
 
   /// Load Data (Control + History)
@@ -84,91 +65,18 @@ class PWS18Provider with ChangeNotifier {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       _user = authProvider.user;
       if (_user == null) return;
-
-      // Fetch Global Unlock Dates
-      DocumentSnapshot controlDoc = await FirebaseFirestore.instance
-          .collection('questionnaire_control')
-          .doc('pws18')
-          .get();
-
-      if (controlDoc.exists && controlDoc.data() != null) {
-        final data = controlDoc.data() as Map<String, dynamic>;
-        if (data['attempt_1_date'] != null)
-          unlockDates[1] = (data['attempt_1_date'] as Timestamp).toDate();
-        if (data['attempt_2_date'] != null)
-          unlockDates[2] = (data['attempt_2_date'] as Timestamp).toDate();
-        if (data['attempt_3_date'] != null)
-          unlockDates[3] = (data['attempt_3_date'] as Timestamp).toDate();
-      }
-
-      // Fetch User's Past Attempts
-      QuerySnapshot attemptSnapshot = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(_user!.id)
-          .collection('pws18_responses')
-          .get();
-
-      userAttempts.clear();
-      for (var doc in attemptSnapshot.docs) {
-        if (doc.id.startsWith('attempt_')) {
-          int? num = int.tryParse(doc.id.split('_').last);
-          if (num != null) {
-            userAttempts[num] = doc.data() as Map<String, dynamic>;
-          }
-        }
-      }
-
-      _determineCurrentStatus();
+      final result = await _pws18Service.loadData(_user!.id);
+      unlockDates = result.unlockDates;
+      userAttempts = result.userAttempts;
+      currentAttemptNumber = result.currentAttemptNumber;
+      isLocked = result.isLocked;
+      lockReason = result.lockReason;
     } catch (e) {
       print("Error loading PWS18 data: $e");
     } finally {
       isLoading = false;
       notifyListeners();
     }
-  }
-
-  void _determineCurrentStatus() {
-    DateTime now = DateTime.now();
-
-    // Check Attempt 1
-    if (!userAttempts.containsKey(1)) {
-      currentAttemptNumber = 1;
-      DateTime? date = unlockDates[1];
-      if (date != null && now.isAfter(date)) {
-        isLocked = false;
-      } else {
-        isLocked = true;
-        lockReason = "Available on ${date.toString().split(' ')[0]}";
-      }
-      return;
-    }
-
-    // Check Attempt 2
-    if (!userAttempts.containsKey(2)) {
-      currentAttemptNumber = 2;
-      DateTime? date = unlockDates[2];
-      if (date != null && now.isAfter(date)) {
-        isLocked = false;
-      } else {
-        isLocked = true;
-      }
-      return;
-    }
-
-    // Check Attempt 3
-    if (!userAttempts.containsKey(3)) {
-      currentAttemptNumber = 3;
-      DateTime? date = unlockDates[3];
-      if (date != null && now.isAfter(date)) {
-        isLocked = false;
-      } else {
-        isLocked = true;
-      }
-      return;
-    }
-
-    currentAttemptNumber = 4;
-    isLocked = true;
   }
 
   /// Save Entire Attempt
@@ -181,27 +89,12 @@ class PWS18Provider with ChangeNotifier {
 
     try {
       final subscaleScores = calculateScores();
-
-      // Create map of all responses
-      final responseMap = Map.fromIterables(
-        List.generate(18, (i) => (i + 1).toString()),
-        responses.map((e) => e ?? 0),
+      await _pws18Service.saveAttempt(
+        userId: _user!.id,
+        attemptNumber: currentAttemptNumber,
+        responses: responses,
+        subscaleScores: subscaleScores,
       );
-
-      final docId = 'attempt_$currentAttemptNumber';
-
-      final docRef = FirebaseFirestore.instance
-          .collection('users')
-          .doc(_user!.id)
-          .collection('pws18_responses')
-          .doc(docId);
-
-      await docRef.set({
-        'responses': responseMap,
-        'subscaleScores': subscaleScores,
-        'completedAt': FieldValue.serverTimestamp(),
-        'attemptNumber': currentAttemptNumber,
-      });
 
       // ACHIEVEMENT LOGIC: Unlock 'Happiness Seeker'
       if (currentAttemptNumber == 1) {

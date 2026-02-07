@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:marquee/marquee.dart';
 import '/constants/colors.dart';
 import '../../../providers/maas_provider.dart';
 import '/providers/language_provider.dart';
 import 'maas_full_questionnaire.dart';
 import 'package:mamamind/utils/maas_hints.dart';
 import 'package:mamamind/utils/helpers.dart';
+import '/widgets/questionnaires/questionnaire_attempt_card.dart';
+import '/widgets/questionnaires/questionnaire_intro_screen.dart';
+import '/widgets/questionnaires/questionnaire_marquee_title.dart';
+import '/widgets/questionnaires/questionnaire_result_tiles.dart';
 
 class MAASQuestionnaireStartPage extends StatefulWidget {
   const MAASQuestionnaireStartPage({super.key});
@@ -21,7 +24,6 @@ class MAASQuestionnaireStartPage extends StatefulWidget {
 class _MAASQuestionnaireStartPageState
     extends State<MAASQuestionnaireStartPage> {
   bool _initialized = false;
-  bool _pauseMarquee = false;
 
   bool _showHint = false;
   bool _navigateAfterHint = false;
@@ -58,11 +60,13 @@ class _MAASQuestionnaireStartPageState
         Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
-            title: _buildMarqueeTitle(isSinhala, titleTextStyle),
+            title: QuestionnaireMarqueeTitle(
+              text: isSinhala ? 'සතිමත් බව පරීක්ෂාව' : 'Mindfulness Checker',
+              style: titleTextStyle,
+            ),
             centerTitle: true,
             backgroundColor: AppColors.primary,
-            automaticallyImplyLeading:
-                false,
+            automaticallyImplyLeading: false,
             actions: [
               IconButton(
                 icon: const Icon(Icons.help_outline, color: Colors.white),
@@ -82,7 +86,24 @@ class _MAASQuestionnaireStartPageState
                   ),
                 )
               : showIntro
-              ? _buildIntroScreen(isSinhala, isMobile)
+              ? QuestionnaireIntroScreen(
+                  title: isSinhala
+                      ? 'සතිමත්බව පරීක්ෂාව (MAAS) වෙත සාදරයෙන් පිළිගනිමු!'
+                      : 'Welcome to the Mindfulness Checker (MAAS)',
+                  subtitle: isSinhala
+                      ? 'මෙම ප්‍රශ්නාවලිය ඔබේ අවධානය සහ වත්මන් අවස්ථාවේ හැඟීම් පිළිබඳ අවබෝධය මැනේ.'
+                      : 'This questionnaire measures your awareness and mindfulness level in daily life.',
+                  buttonText: isSinhala
+                      ? 'ප්‍රතිචාර ආරම්භ කරන්න'
+                      : 'Start Feedback',
+                  onStart: () {
+                    setState(() {
+                      _showHint = true;
+                      _navigateAfterHint = true;
+                    });
+                  },
+                  isMobile: isMobile,
+                )
               : RefreshIndicator(
                   onRefresh: () async => await provider.loadMAASData(context),
                   color: AppColors.primary,
@@ -147,88 +168,6 @@ class _MAASQuestionnaireStartPageState
     );
   }
 
-  // Intro Screen
-  Widget _buildIntroScreen(bool isSinhala, bool isMobile) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              isSinhala
-                  ? 'සතිමත්බව පරීක්ෂාව (MAAS) වෙත සාදරයෙන් පිළිගනිමු!'
-                  : 'Welcome to the Mindfulness Checker (MAAS)',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: isMobile ? 20 : 22,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              isSinhala
-                  ? 'මෙම ප්‍රශ්නාවලිය ඔබේ අවධානය සහ වත්මන් අවස්ථාවේ හැඟීම් පිළිබඳ අවබෝධය මැනේ.'
-                  : 'This questionnaire measures your awareness and mindfulness level in daily life.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.roboto(
-                fontSize: isMobile ? 14 : 16,
-                color: AppColors.text,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  setState(() {
-                    _showHint = true;
-                    _navigateAfterHint = true;
-                  });
-                },
-                child: Text(
-                  isSinhala ? 'ප්‍රතිචාර ආරම්භ කරන්න' : 'Start Feedback',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.buttonText,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMarqueeTitle(bool isSinhala, TextStyle style) {
-    final text = isSinhala ? 'සතිමත් බව පරීක්ෂාව' : 'Mindfulness Checker';
-    return GestureDetector(
-      onTap: () => setState(() => _pauseMarquee = !_pauseMarquee),
-      child: SizedBox(
-        height: 30,
-        child: Marquee(
-          text: text,
-          style: style,
-          scrollAxis: Axis.horizontal,
-          blankSpace: 60,
-          velocity: _pauseMarquee ? 0.001 : 30.0,
-          pauseAfterRound: const Duration(seconds: 1),
-          startPadding: 10.0,
-        ),
-      ),
-    );
-  }
-
   // Attempt Card
   Widget _buildAttemptCard(
     BuildContext context,
@@ -249,13 +188,6 @@ class _MAASQuestionnaireStartPageState
       }
     }
 
-    final cardBg = isCompleted
-        ? AppColors.completed.withOpacity(0.05)
-        : AppColors.cardBackground;
-    final borderColor = isCompleted
-        ? AppColors.completed.withOpacity(0.5)
-        : Colors.grey.withOpacity(0.2);
-
     String dateStr = isSinhala ? 'නොදනී' : 'TBD';
     if (unlockDate != null) {
       dateStr = DateFormat('MMM d, yyyy').format(unlockDate);
@@ -271,255 +203,86 @@ class _MAASQuestionnaireStartPageState
 
     bool isExpanded = _expandedAttempts.contains(attemptNum);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: isCompleted
-                ? () {
-                    setState(() {
-                      if (isExpanded) {
-                        _expandedAttempts.remove(attemptNum);
-                      } else {
-                        _expandedAttempts.add(attemptNum);
-                      }
-                    });
-                  }
-                : null,
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: isCompleted
-                          ? AppColors.completed
-                          : (isLocked ? Colors.grey[400] : AppColors.primary),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isCompleted
-                          ? Icons.check
-                          : (isLocked
-                                ? Icons.lock_outline
-                                : Icons.play_arrow_rounded),
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isSinhala
-                              ? 'අදියර $attemptNum'
-                              : 'Attempt $attemptNum',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.text,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isCompleted
-                              ? (isSinhala
-                                    ? (isExpanded
-                                          ? 'ප්‍රතිඵල සඟවන්න'
-                                          : 'ප්‍රතිඵල පෙන්වන්න')
-                                    : (isExpanded
-                                          ? 'Hide Results'
-                                          : 'View Results'))
-                              : isLocked
-                              ? (isSinhala
-                                    ? 'විවෘත වන දිනය: $dateStr'
-                                    : 'Unlocks on: $dateStr')
-                              : (isSinhala ? 'දැන් විවෘතයි' : 'Available Now'),
-                          style: GoogleFonts.roboto(
-                            fontSize: 14,
-                            color: isCompleted
-                                ? AppColors.completed
-                                : (isLocked ? Colors.grey : AppColors.primary),
-                            fontWeight: isCompleted || !isLocked
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+    final statusText = isCompleted
+        ? (isSinhala
+              ? (isExpanded ? 'ප්‍රතිඵල සඟවන්න' : 'ප්‍රතිඵල පෙන්වන්න')
+              : (isExpanded ? 'Hide Results' : 'View Results'))
+        : isLocked
+        ? (isSinhala ? 'විවෘත වන දිනය: $dateStr' : 'Unlocks on: $dateStr')
+        : (isSinhala ? 'දැන් විවෘතයි' : 'Available Now');
 
-                  if (isCompleted)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Icon(
-                        isExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        color: AppColors.text.withOpacity(0.6),
-                        size: 32,
-                      ),
-                    )
-                  else if (!isLocked)
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _showHint = true;
-                          _navigateAfterHint = true;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: Text(
-                        isSinhala ? 'අරඹන්න' : 'Start',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
+    final completedDateText = completedDateStr.isNotEmpty
+        ? (isSinhala
+              ? 'සම්පූර්ණ කළ දිනය: $completedDateStr'
+              : 'Completed on: $completedDateStr')
+        : null;
 
-          // Collapsible Results
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: (isCompleted && isExpanded)
-                ? Column(
-                    children: [
-                      Container(height: 1, color: borderColor),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            if (completedDateStr.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 16.0),
-                                child: Text(
-                                  isSinhala
-                                      ? 'සම්පූර්ණ කළ දිනය: $completedDateStr'
-                                      : 'Completed on: $completedDateStr',
-                                  style: GoogleFonts.roboto(
-                                    fontSize: 14,
-                                    color: AppColors.text.withOpacity(0.6),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            _buildScoreTile(
-                              (provider.getAttemptData(attemptNum)?['maasScore']
-                                      as num?)
-                                  ?.toDouble(),
-                              provider.getAttemptData(
-                                    attemptNum,
-                                  )?['classification'] ??
-                                  '',
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
+    return QuestionnaireAttemptCard(
+      attemptNumber: attemptNum,
+      isSinhala: isSinhala,
+      isCompleted: isCompleted,
+      isLocked: isLocked,
+      isExpanded: isExpanded,
+      statusText: statusText,
+      completedDateText: completedDateText,
+      onToggleExpanded: isCompleted
+          ? () {
+              setState(() {
+                if (isExpanded) {
+                  _expandedAttempts.remove(attemptNum);
+                } else {
+                  _expandedAttempts.add(attemptNum);
+                }
+              });
+            }
+          : null,
+      onStart: (!isCompleted && !isLocked)
+          ? () {
+              setState(() {
+                _showHint = true;
+                _navigateAfterHint = true;
+              });
+            }
+          : null,
+      results: QuestionnaireResultTile(
+        title: isSinhala ? "සතිමත් බ‌වේ වර්ගීකරණය" : "Mindfulness Level",
+        scoreText:
+            (provider.getAttemptData(attemptNum)?['maasScore'] as num?)
+                ?.toDouble()
+                .toStringAsFixed(2) ??
+            "-",
+        classification: _translateClassification(
+          (provider.getAttemptData(attemptNum)?['classification'] as String?) ??
+              "-",
+          isSinhala,
+        ),
+        tileColor:
+            (provider.getAttemptData(attemptNum)?['maasScore'] as num?) != null
+            ? scoreToColorMAAS(
+                (provider.getAttemptData(attemptNum)?['maasScore'] as num)
+                    .toDouble(),
+              )
+            : AppColors.tileInactive,
+        isColumnLayout: true,
+        screenWidth: MediaQuery.of(context).size.width,
       ),
     );
   }
 
-  // Score Tile
-  Widget _buildScoreTile(double? score, String classification) {
-    final tileColor = score != null
-        ? scoreToColorMAAS(score)
-        : AppColors.tileInactive;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isSinhala =
-        Provider.of<LanguageProvider>(context, listen: false).currentLang ==
-        'si';
+  // TRANSLATION HELPER
+  String _translateClassification(String classification, bool isSinhala) {
+    if (!isSinhala) return classification;
 
-    double titleFont = screenWidth < 600 ? 18 : 18;
-    double scoreFont = screenWidth < 600 ? 18 : 28;
-    double classFont = screenWidth < 600 ? 15 : 16;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: tileColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: tileColor, width: 1.5),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            isSinhala ? "සතිමත් බ‌වේ වර්ගීකරණය" : "Mindfulness Level",
-            textAlign: TextAlign.center,
-            style: GoogleFonts.poppins(
-              fontSize: titleFont,
-              fontWeight: FontWeight.w600,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            score != null ? score.toStringAsFixed(2) : "-",
-            style: GoogleFonts.poppins(
-              fontSize: scoreFont,
-              fontWeight: FontWeight.w700,
-              color: Colors.white,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            classification.isNotEmpty ? classification : "-",
-            style: GoogleFonts.poppins(
-              fontSize: classFont,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.9),
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ],
-      ),
-    );
+    switch (classification) {
+      case 'High Level of Mindfulness':
+        return 'සතිමත් බව ඉහළයි';
+      case 'Average Level of Mindfulness':
+        return 'සතිමත් බව සාමාන්‍යයි';
+      case 'Low Level of Mindfulness':
+        return 'සතිමත් බව අඩුයි';
+      default:
+        return classification;
+    }
   }
 
   void _startQuestionnaire(BuildContext context, MAASProvider provider) {

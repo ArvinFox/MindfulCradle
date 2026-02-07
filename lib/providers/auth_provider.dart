@@ -65,12 +65,17 @@ class AuthProvider with ChangeNotifier {
     String email,
     String password, {
     bool rememberMe = false,
+    String langCode = 'en',
   }) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final result = await _authService.login(email: email, password: password);
+      final result = await _authService.login(
+        email: email,
+        password: password,
+        langCode: langCode,
+      );
 
       if (result == null) {
         final user = FirebaseAuth.instance.currentUser;
@@ -85,7 +90,9 @@ class AuthProvider with ChangeNotifier {
 
       return result;
     } catch (e) {
-      return e.toString();
+      return langCode == 'si'
+          ? 'සත්‍යාපනය අසාර්ථකයි. කරුණාකර නැවත උත්සාහ කරන්න.'
+          : 'Authentication failed. Please try again.';
     } finally {
       _isLoading = false;
       notifyListeners();

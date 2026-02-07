@@ -2,13 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
-import 'package:marquee/marquee.dart';
 import '/constants/colors.dart';
 import '/providers/pws18_provider.dart';
 import '/providers/language_provider.dart';
 import 'pws18_full_questionnaire.dart';
 import '/utils/helpers.dart';
 import '/utils/pws18_hints.dart';
+import '/widgets/questionnaires/questionnaire_attempt_card.dart';
+import '/widgets/questionnaires/questionnaire_intro_screen.dart';
+import '/widgets/questionnaires/questionnaire_marquee_title.dart';
+import '/widgets/questionnaires/questionnaire_result_tiles.dart';
 
 class PWS18QuestionnaireStartPage extends StatefulWidget {
   const PWS18QuestionnaireStartPage({super.key});
@@ -21,7 +24,6 @@ class PWS18QuestionnaireStartPage extends StatefulWidget {
 class _PWS18QuestionnaireStartPageState
     extends State<PWS18QuestionnaireStartPage> {
   bool _initialized = false;
-  bool _pauseMarquee = false;
 
   bool _showHint = false;
   bool _navigateAfterHint = false;
@@ -78,11 +80,15 @@ class _PWS18QuestionnaireStartPageState
         Scaffold(
           backgroundColor: AppColors.background,
           appBar: AppBar(
-            title: _buildMarqueeTitle(isSinhala, titleTextStyle),
+            title: QuestionnaireMarqueeTitle(
+              text: isSinhala
+                  ? 'මානසික සොඛ්‍ය සහ සතුට සොඛ්‍ය පරීක්ෂාව'
+                  : 'Mental Health & Happiness Checker',
+              style: titleTextStyle,
+            ),
             centerTitle: true,
             backgroundColor: AppColors.primary,
-            automaticallyImplyLeading:
-                false,
+            automaticallyImplyLeading: false,
             actions: [
               IconButton(
                 icon: const Icon(Icons.help_outline, color: Colors.white),
@@ -102,7 +108,24 @@ class _PWS18QuestionnaireStartPageState
                   ),
                 )
               : showIntro
-              ? _buildIntroScreen(isSinhala, isMobile)
+              ? QuestionnaireIntroScreen(
+                  title: isSinhala
+                      ? 'මානසික සොඛ්‍ය සහ සතුට සොඛ්‍ය පරීක්ෂාව (PWS-18) වෙත සාදරයෙන් පිළිගනිමු!'
+                      : 'Welcome to Psychological Well-Being Scale (PWS-18)',
+                  subtitle: isSinhala
+                      ? 'මෙම ප්‍රශ්නාවලිය ඔබේ සතුට, සොඛ්‍යය සහ මනෝවිද්‍යාත්මක ස්වභාවය පිළිබඳ විශ්ලේෂණයක් ලබා දේ.'
+                      : 'This questionnaire provides insights into your psychological well-being and personal growth.',
+                  buttonText: isSinhala
+                      ? 'ප්‍රතිචාර ආරම්භ කරන්න'
+                      : 'Start Feedback',
+                  onStart: () {
+                    setState(() {
+                      _showHint = true;
+                      _navigateAfterHint = true;
+                    });
+                  },
+                  isMobile: isMobile,
+                )
               : RefreshIndicator(
                   onRefresh: () async => await provider.loadPWS18Data(context),
                   color: AppColors.primary,
@@ -167,92 +190,6 @@ class _PWS18QuestionnaireStartPageState
     );
   }
 
-  // Intro Screen
-  Widget _buildIntroScreen(bool isSinhala, bool isMobile) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              isSinhala
-                  ? 'මානසික සෞඛ්‍ය සහ සතුට සෞඛ්‍ය පරීක්ෂාව (PWS-18) වෙත සාදරයෙන් පිළිගනිමු!'
-                  : 'Welcome to Psychological Well-Being Scale (PWS-18)',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.poppins(
-                fontSize: isMobile ? 20 : 22,
-                fontWeight: FontWeight.w700,
-                color: AppColors.primary,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              isSinhala
-                  ? 'මෙම ප්‍රශ්නාවලිය ඔබේ සතුට, සෞඛ්‍යය සහ මනෝවිද්‍යාත්මක ස්වභාවය පිළිබඳ විශ්ලේෂණයක් ලබා දේ.'
-                  : 'This questionnaire provides insights into your psychological well-being and personal growth.',
-              textAlign: TextAlign.center,
-              style: GoogleFonts.roboto(
-                fontSize: isMobile ? 14 : 16,
-                fontWeight: FontWeight.w400,
-                color: AppColors.text,
-              ),
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                onPressed: () {
-                  setState(() {
-                    _showHint = true;
-                    _navigateAfterHint = true;
-                  });
-                },
-                child: Text(
-                  isSinhala ? 'ප්‍රතිචාර ආරම්භ කරන්න' : 'Start Feedback',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.buttonText,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMarqueeTitle(bool isSinhala, TextStyle style) {
-    final text = isSinhala
-        ? 'මානසික සෞඛ්‍ය සහ සතුට සෞඛ්‍ය පරීක්ෂාව'
-        : 'Mental Health & Happiness Checker';
-
-    return GestureDetector(
-      onTap: () => setState(() => _pauseMarquee = !_pauseMarquee),
-      child: SizedBox(
-        height: 30,
-        child: Marquee(
-          text: text,
-          style: style,
-          scrollAxis: Axis.horizontal,
-          blankSpace: 60,
-          velocity: _pauseMarquee ? 0.001 : 30.0,
-          pauseAfterRound: const Duration(seconds: 1),
-          startPadding: 10.0,
-        ),
-      ),
-    );
-  }
-
   // Attempt Card
   Widget _buildAttemptCard(
     BuildContext context,
@@ -273,13 +210,6 @@ class _PWS18QuestionnaireStartPageState
       }
     }
 
-    final cardBg = isCompleted
-        ? AppColors.completed.withOpacity(0.05)
-        : AppColors.cardBackground;
-    final borderColor = isCompleted
-        ? AppColors.completed.withOpacity(0.5)
-        : Colors.grey.withOpacity(0.2);
-
     String dateStr = isSinhala ? 'නොදනී' : 'TBD';
     if (unlockDate != null) {
       dateStr = DateFormat('MMM d, yyyy').format(unlockDate);
@@ -295,180 +225,48 @@ class _PWS18QuestionnaireStartPageState
 
     bool isExpanded = _expandedAttempts.contains(attemptNum);
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 300),
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: cardBg,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Column(
-        children: [
-          InkWell(
-            onTap: isCompleted
-                ? () {
-                    setState(() {
-                      if (isExpanded) {
-                        _expandedAttempts.remove(attemptNum);
-                      } else {
-                        _expandedAttempts.add(attemptNum);
-                      }
-                    });
-                  }
-                : null,
-            borderRadius: BorderRadius.circular(16),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Row(
-                children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: isCompleted
-                          ? AppColors.completed
-                          : (isLocked ? Colors.grey[400] : AppColors.primary),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(
-                      isCompleted
-                          ? Icons.check
-                          : (isLocked
-                                ? Icons.lock_outline
-                                : Icons.play_arrow_rounded),
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isSinhala
-                              ? 'අදියර $attemptNum'
-                              : 'Attempt $attemptNum',
-                          style: GoogleFonts.poppins(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.text,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isCompleted
-                              ? (isSinhala
-                                    ? (isExpanded
-                                          ? 'ප්‍රතිඵල සඟවන්න'
-                                          : 'ප්‍රතිඵල පෙන්වන්න')
-                                    : (isExpanded
-                                          ? 'Hide Results'
-                                          : 'View Results'))
-                              : isLocked
-                              ? (isSinhala
-                                    ? 'විවෘත වන දිනය: $dateStr'
-                                    : 'Unlocks on: $dateStr')
-                              : (isSinhala ? 'දැන් විවෘතයි' : 'Available Now'),
-                          style: GoogleFonts.roboto(
-                            fontSize: 14,
-                            color: isCompleted
-                                ? AppColors.completed
-                                : (isLocked ? Colors.grey : AppColors.primary),
-                            fontWeight: isCompleted || !isLocked
-                                ? FontWeight.w600
-                                : FontWeight.normal,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (isCompleted)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 8.0),
-                      child: Icon(
-                        isExpanded
-                            ? Icons.keyboard_arrow_up
-                            : Icons.keyboard_arrow_down,
-                        color: AppColors.text.withOpacity(0.6),
-                        size: 32,
-                      ),
-                    )
-                  else if (!isLocked)
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          _showHint = true;
-                          _navigateAfterHint = true;
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                      ),
-                      child: Text(
-                        isSinhala ? 'අරඹන්න' : 'Start',
-                        style: GoogleFonts.poppins(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-          ),
+    final statusText = isCompleted
+        ? (isSinhala
+              ? (isExpanded ? 'ප්‍රතිඵල සඟවන්න' : 'ප්‍රතිඵල පෙන්වන්න')
+              : (isExpanded ? 'Hide Results' : 'View Results'))
+        : isLocked
+        ? (isSinhala ? 'විවෘත වන දිනය: $dateStr' : 'Unlocks on: $dateStr')
+        : (isSinhala ? 'දැන් විවෘතයි' : 'Available Now');
 
-          // Results
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: (isCompleted && isExpanded)
-                ? Column(
-                    children: [
-                      Container(height: 1, color: borderColor),
-                      Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            if (completedDateStr.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(bottom: 16.0),
-                                child: Text(
-                                  isSinhala
-                                      ? 'සම්පූර්ණ කළ දිනය: $completedDateStr'
-                                      : 'Completed on: $completedDateStr',
-                                  style: GoogleFonts.roboto(
-                                    fontSize: 14,
-                                    color: AppColors.text.withOpacity(0.6),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ),
-                            _buildResultGrid(attemptNum, provider, isSinhala),
-                          ],
-                        ),
-                      ),
-                    ],
-                  )
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
+    final completedDateText = completedDateStr.isNotEmpty
+        ? (isSinhala
+              ? 'සම්පූර්ණ කළ දිනය: $completedDateStr'
+              : 'Completed on: $completedDateStr')
+        : null;
+
+    return QuestionnaireAttemptCard(
+      attemptNumber: attemptNum,
+      isSinhala: isSinhala,
+      isCompleted: isCompleted,
+      isLocked: isLocked,
+      isExpanded: isExpanded,
+      statusText: statusText,
+      completedDateText: completedDateText,
+      onToggleExpanded: isCompleted
+          ? () {
+              setState(() {
+                if (isExpanded) {
+                  _expandedAttempts.remove(attemptNum);
+                } else {
+                  _expandedAttempts.add(attemptNum);
+                }
+              });
+            }
+          : null,
+      onStart: (!isCompleted && !isLocked)
+          ? () {
+              setState(() {
+                _showHint = true;
+                _navigateAfterHint = true;
+              });
+            }
+          : null,
+      results: _buildResultGrid(attemptNum, provider, isSinhala),
     );
   }
 
@@ -491,58 +289,14 @@ class _PWS18QuestionnaireStartPageState
         final score = scores[key];
         final displayTitle = isSinhala ? _getSinhalaLabel(key) : key;
 
-        return _buildCategoryTile(displayTitle, true, score);
+        return QuestionnaireCategoryTile(
+          title: displayTitle,
+          score: score,
+          tileColor: score != null
+              ? scoreToColorPWS18(score)
+              : AppColors.tileInactive,
+        );
       }).toList(),
-    );
-  }
-
-  Widget _buildCategoryTile(String title, bool answered, double? score) {
-    final tileColor = answered && score != null
-        ? scoreToColorPWS18(score)
-        : AppColors.tileInactive;
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: tileColor,
-        borderRadius: BorderRadius.circular(12),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: tileColor, width: 1.5),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Flexible(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              style: GoogleFonts.poppins(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Colors.white,
-              ),
-            ),
-          ),
-          if (score != null) ...[
-            const SizedBox(height: 8),
-            Text(
-              score.toStringAsFixed(2),
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: Colors.white,
-              ),
-            ),
-          ],
-        ],
-      ),
     );
   }
 

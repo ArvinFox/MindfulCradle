@@ -10,6 +10,7 @@ import '../../../providers/maas_provider.dart';
 import '/providers/language_provider.dart';
 import '../../../utils/maas_hints.dart';
 import '../../../providers/achievement_provider.dart';
+import '/widgets/questionnaires/questionnaire_question_card.dart';
 
 class MAASFullQuestionnairePage extends StatefulWidget {
   const MAASFullQuestionnairePage({super.key});
@@ -405,144 +406,20 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                 _attemptedSubmit &&
                                 provider.responses[qId - 1] == null;
 
-                            return Card(
-                              color: AppColors.cardBackground,
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                side: isMissing
-                                    ? const BorderSide(
-                                        color: Colors.red,
-                                        width: 2.0,
-                                      )
-                                    : BorderSide.none,
-                              ),
-                              elevation: 3,
-                              child: Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            '${qId}. ${q['question']}',
-                                            style: GoogleFonts.poppins(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: isMobile ? 15 : 17,
-                                              color: AppColors.text,
-                                            ),
-                                          ),
-                                        ),
-                                        if (isMissing)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 8.0,
-                                            ),
-                                            child: Icon(
-                                              Icons.error_outline,
-                                              color: Colors.red,
-                                              size: 20,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        final chipWidth =
-                                            (constraints.maxWidth / 4) - 8;
-                                        return Wrap(
-                                          spacing: 8,
-                                          runSpacing: 8,
-                                          children: _options.entries.map((
-                                            entry,
-                                          ) {
-                                            final intVal =
-                                                int.tryParse(entry.key) ?? 0;
-                                            final selected =
-                                                provider.responses[qId - 1] ==
-                                                intVal;
-                                            return SizedBox(
-                                              width: chipWidth.clamp(
-                                                60.0,
-                                                150.0,
-                                              ),
-                                              child: ChoiceChip(
-                                                label: Text(
-                                                  entry.value,
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts.roboto(
-                                                    fontSize: isMobile
-                                                        ? 13
-                                                        : 14,
-                                                    color: selected
-                                                        ? Colors.white
-                                                        : AppColors.text,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                selected: selected,
-                                                selectedColor:
-                                                    AppColors.completed,
-                                                backgroundColor:
-                                                    AppColors.cardBackground,
-                                                checkmarkColor: Colors.white,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                  side: BorderSide(
-                                                    color: selected
-                                                        ? AppColors.completed
-                                                        : AppColors.tileInactive
-                                                              .withOpacity(0.5),
-                                                    width: selected ? 2 : 1,
-                                                  ),
-                                                ),
-                                                shadowColor: selected
-                                                    ? AppColors.completed
-                                                          .withOpacity(0.7)
-                                                    : AppColors.completed,
-                                                elevation: selected ? 8 : 0,
-                                                pressElevation: 2,
-                                                onSelected: (_) {
-                                                  HapticFeedback.lightImpact();
-                                                  provider.setAnswer(
-                                                    qId,
-                                                    intVal,
-                                                  );
-                                                  setState(
-                                                    () => _hintVisible = false,
-                                                  );
-                                                },
-                                              ),
-                                            );
-                                          }).toList(),
-                                        );
-                                      },
-                                    ),
-                                    if (isMissing)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          top: 8.0,
-                                        ),
-                                        child: Text(
-                                          _currentLang == 'si'
-                                              ? '* අනිවාර්යයි'
-                                              : '* Required',
-                                          style: GoogleFonts.roboto(
-                                            color: Colors.red,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
-                                ),
-                              ),
+                            return QuestionnaireQuestionCard(
+                              questionId: qId,
+                              questionText: q['question'],
+                              options: _options,
+                              selectedValue: provider.responses[qId - 1],
+                              onAnswerSelected: (intVal) {
+                                provider.setAnswer(qId, intVal);
+                                setState(() => _hintVisible = false);
+                              },
+                              isMissing: isMissing,
+                              isMobile: isMobile,
+                              missingText: _currentLang == 'si'
+                                  ? '* අනිවාර්යයි'
+                                  : '* Required',
                             );
                           },
                         ),

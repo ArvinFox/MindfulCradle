@@ -11,6 +11,8 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/helpers.dart';
 import 'user_registration_page.dart';
+import '../../widgets/auth/auth_primary_button.dart';
+import '../../widgets/auth/auth_scaffold.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -26,15 +28,43 @@ class _LoginPageState extends State<LoginPage> {
   bool rememberMe = false;
   String? errorMessage;
   bool isPasswordVisible = false;
+  String? _lastLang;
+  AutovalidateMode _autoValidateMode = AutovalidateMode.disabled;
+
+  static const String _authFailedEn =
+      'Authentication failed. Please try again.';
+  static const String _authFailedSi =
+      'සත්‍යාපනය අසාර්ථකයි. කරුණාකර නැවත උත්සාහ කරන්න.';
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final lang = Provider.of<LanguageProvider>(context).currentLang;
+    if (_lastLang != null && _lastLang != lang) {
+      if (errorMessage == _authFailedEn || errorMessage == _authFailedSi) {
+        errorMessage = lang == 'si' ? _authFailedSi : _authFailedEn;
+      }
+      if (_autoValidateMode != AutovalidateMode.disabled) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _formKey.currentState?.validate();
+        });
+      }
+    }
+    _lastLang = lang;
+  }
 
   Future<void> _handleLogin(
     BuildContext context,
-    AuthProvider authProvider,
-  ) async {
+    AuthProvider authProvider, {
+    required String langCode,
+  }) async {
     // 1. Initial State & Validation
     setState(() => errorMessage = null);
     if (!_formKey.currentState!.validate()) {
       HapticFeedback.lightImpact();
+      setState(() {
+        _autoValidateMode = AutovalidateMode.onUserInteraction;
+      });
       return;
     }
     _formKey.currentState!.save();
@@ -43,6 +73,7 @@ class _LoginPageState extends State<LoginPage> {
       email,
       password,
       rememberMe: rememberMe,
+      langCode: langCode,
     );
 
     if (!mounted) return;
@@ -71,9 +102,11 @@ class _LoginPageState extends State<LoginPage> {
           Navigator.pushReplacementNamed(context, '/main-screen');
         }
       } catch (e) {
-        setState(
-          () => errorMessage = "Error loading user data. Please try again.",
-        );
+        setState(() {
+          errorMessage = langCode == 'si'
+              ? 'පරිශීලක දත්ත පූරණය කිරීමේ දෝෂයක්. කරුණාකර නැවත උත්සාහ කරන්න.'
+              : 'Error loading user data. Please try again.';
+        });
       }
     } else {
       // UX: Error Haptic Feedback
@@ -87,6 +120,7 @@ class _LoginPageState extends State<LoginPage> {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
     final langProvider = Provider.of<LanguageProvider>(context);
+    final isSinhala = langProvider.currentLang == 'si';
 
     // Translations
     final loginText = langProvider.currentLang == 'en' ? "Login" : "ඇතුළු වන්න";
@@ -115,294 +149,214 @@ class _LoginPageState extends State<LoginPage> {
           );
         }
 
-        return Scaffold(
-          body: Stack(
-            children: [
-              Container(
-                width: double.infinity,
-                height: double.infinity,
-                decoration: const BoxDecoration(
-                  image: DecorationImage(
-                    image: AssetImage("assets/login/app_background.png"),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-
-              Container(
-                width: double.infinity,
-                height: double.infinity,
-                color: AppColors.background.withOpacity(0.10),
-              ),
-
-              Center(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 40,
-                  ),
+        return AuthScaffold(
+          child: Form(
+            key: _formKey,
+            autovalidateMode: _autoValidateMode,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
                   child: Container(
-                    width: isMobile ? size.width * 0.9 : 400,
-                    padding: const EdgeInsets.all(30),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(20),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.1),
-                          spreadRadius: 3,
-                          blurRadius: 15,
-                          offset: const Offset(0, 8),
-                        ),
-                        BoxShadow(
-                          color: AppColors.primary.withOpacity(0.05),
-                          spreadRadius: -2,
-                          blurRadius: 10,
-                          offset: const Offset(-5, -5),
-                        ),
-                      ],
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
                     ),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.inputBackground,
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                ),
-                              ),
-                              child: DropdownButtonHideUnderline(
-                                child: DropdownButton<String>(
-                                  value: langProvider.currentLang == 'en'
-                                      ? "English"
-                                      : "සිංහල",
-                                  style: GoogleFonts.roboto(
-                                    fontSize: 14,
-                                    color: AppColors.text,
-                                  ),
-                                  iconEnabledColor: AppColors.text,
-                                  items: [
-                                    DropdownMenuItem(
-                                      value: "English",
-                                      child: Text(
-                                        "English",
-                                        style: TextStyle(color: AppColors.text),
-                                      ),
-                                    ),
-                                    DropdownMenuItem(
-                                      value: "සිංහල",
-                                      child: Text(
-                                        "සිංහල",
-                                        style: TextStyle(color: AppColors.text),
-                                      ),
-                                    ),
-                                  ],
-                                  onChanged: (val) {
-                                    if (val == null) return;
-                                    langProvider.setLanguage(
-                                      val == "English" ? "en" : "si",
-                                    );
-                                  },
-                                ),
-                              ),
+                    decoration: BoxDecoration(
+                      color: AppColors.inputBackground,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: AppColors.primary.withOpacity(0.1),
+                      ),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: langProvider.currentLang == 'en'
+                            ? "English"
+                            : "සිංහල",
+                        style: GoogleFonts.roboto(
+                          fontSize: 14,
+                          color: AppColors.text,
+                        ),
+                        iconEnabledColor: AppColors.text,
+                        items: [
+                          DropdownMenuItem(
+                            value: "English",
+                            child: Text(
+                              "English",
+                              style: TextStyle(color: AppColors.text),
                             ),
                           ),
-                          const SizedBox(height: 15),
-
-                          Text(
-                            AppConfig.appName,
-                            style: GoogleFonts.poppins(
-                              fontSize: isMobile ? 36 : 42,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.primary,
+                          DropdownMenuItem(
+                            value: "සිංහල",
+                            child: Text(
+                              "සිංහල",
+                              style: TextStyle(color: AppColors.text),
                             ),
-                          ),
-                          const SizedBox(height: 30),
-
-                          // Error Message
-                          if (errorMessage != null)
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              margin: const EdgeInsets.only(bottom: 20),
-                              decoration: BoxDecoration(
-                                color: Colors.red.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(10),
-                                border: Border.all(color: Colors.red.shade300),
-                              ),
-                              child: Text(
-                                errorMessage!,
-                                style: GoogleFonts.roboto(
-                                  color: Colors.red.shade700,
-                                  fontWeight: FontWeight.w500,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ),
-
-                          // Email Field
-                          TextFormField(
-                            keyboardType: TextInputType.emailAddress,
-                            decoration: customInputDecoration(emailText)
-                                .copyWith(
-                                  prefixIcon: const Icon(
-                                    Icons.email_outlined,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                            validator: Validators.validateEmail,
-                            onSaved: (val) => email = val ?? '',
-                          ),
-                          const SizedBox(height: 20),
-
-                          // Password Field
-                          TextFormField(
-                            obscureText: !isPasswordVisible,
-                            decoration: customInputDecoration(passwordText)
-                                .copyWith(
-                                  prefixIcon: const Icon(
-                                    Icons.lock_outline,
-                                    color: AppColors.primary,
-                                  ),
-                                  suffixIcon: IconButton(
-                                    icon: Icon(
-                                      isPasswordVisible
-                                          ? Icons.visibility_off_outlined
-                                          : Icons.visibility_outlined,
-                                      color: AppColors.text.withOpacity(0.6),
-                                    ),
-                                    onPressed: () {
-                                      setState(() {
-                                        isPasswordVisible = !isPasswordVisible;
-                                      });
-                                    },
-                                  ),
-                                ),
-                            validator: Validators.validatePassword,
-                            onSaved: (val) => password = val ?? '',
-                          ),
-                          const SizedBox(height: 10),
-
-                          // Remember Me & Forgot Password
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              GestureDetector(
-                                onTap: () =>
-                                    setState(() => rememberMe = !rememberMe),
-                                child: Row(
-                                  children: [
-                                    Checkbox(
-                                      value: rememberMe,
-                                      onChanged: (val) => setState(
-                                        () => rememberMe = val ?? false,
-                                      ),
-                                      activeColor: AppColors.primary,
-                                    ),
-                                    Text(
-                                      rememberMeText,
-                                      style: GoogleFonts.roboto(),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () => Navigator.pushNamed(
-                                  context,
-                                  '/forgot-password',
-                                ),
-                                child: Text(
-                                  forgotPasswordText,
-                                  style: GoogleFonts.roboto(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 30),
-
-                          // Login Button
-                          SizedBox(
-                            width: double.infinity,
-                            child: ElevatedButton(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                foregroundColor: AppColors.buttonText,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 18,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(15),
-                                ),
-                                elevation: 5,
-                              ),
-                              onPressed: authProvider.isLoading
-                                  ? null
-                                  : () => _handleLogin(context, authProvider),
-                              child: authProvider.isLoading
-                                  ? const SizedBox(
-                                      height: 24,
-                                      width: 24,
-                                      child: CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 3,
-                                      ),
-                                    )
-                                  : Text(
-                                      loginText,
-                                      style: GoogleFonts.poppins(
-                                        fontSize: isMobile ? 18 : 20,
-                                        fontWeight: FontWeight.w600,
-                                        color: AppColors.buttonText,
-                                      ),
-                                    ),
-                            ),
-                          ),
-                          const SizedBox(height: 30),
-
-                          // Sign Up Link
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                dontHaveAccountText,
-                                style: GoogleFonts.roboto(
-                                  color: AppColors.text,
-                                ),
-                              ),
-                              GestureDetector(
-                                onTap: () =>
-                                    Navigator.pushNamed(context, '/signup'),
-                                child: Text(
-                                  signUpText,
-                                  style: GoogleFonts.roboto(
-                                    color: AppColors.primary,
-                                    fontWeight: FontWeight.bold,
-                                    decoration: TextDecoration.underline,
-                                  ),
-                                ),
-                              ),
-                            ],
                           ),
                         ],
+                        onChanged: (val) {
+                          if (val == null) return;
+                          langProvider.setLanguage(
+                            val == "English" ? "en" : "si",
+                          );
+                        },
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 15),
+
+                Text(
+                  AppConfig.appName,
+                  style: GoogleFonts.poppins(
+                    fontSize: isMobile ? 36 : 42,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const SizedBox(height: 30),
+
+                // Error Message
+                if (errorMessage != null)
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 20),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: Colors.red.shade300),
+                    ),
+                    child: Text(
+                      errorMessage!,
+                      style: GoogleFonts.roboto(
+                        color: Colors.red.shade700,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+
+                // Email Field
+                TextFormField(
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: customInputDecoration(emailText).copyWith(
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                  validator: (val) => Validators.validateEmailLocalized(
+                    val,
+                    isSinhala: isSinhala,
+                  ),
+                  onSaved: (val) => email = val ?? '',
+                ),
+                const SizedBox(height: 20),
+
+                // Password Field
+                TextFormField(
+                  obscureText: !isPasswordVisible,
+                  decoration: customInputDecoration(passwordText).copyWith(
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: AppColors.primary,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        isPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppColors.text.withOpacity(0.6),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isPasswordVisible = !isPasswordVisible;
+                        });
+                      },
+                    ),
+                  ),
+                  validator: (val) => Validators.validatePasswordLocalized(
+                    val,
+                    isSinhala: isSinhala,
+                  ),
+                  onSaved: (val) => password = val ?? '',
+                ),
+                const SizedBox(height: 10),
+
+                // Remember Me & Forgot Password
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    GestureDetector(
+                      onTap: () => setState(() => rememberMe = !rememberMe),
+                      child: Row(
+                        children: [
+                          Checkbox(
+                            value: rememberMe,
+                            onChanged: (val) =>
+                                setState(() => rememberMe = val ?? false),
+                            activeColor: AppColors.primary,
+                          ),
+                          Text(rememberMeText, style: GoogleFonts.roboto()),
+                        ],
+                      ),
+                    ),
+                    GestureDetector(
+                      onTap: () =>
+                          Navigator.pushNamed(context, '/forgot-password'),
+                      child: Text(
+                        forgotPasswordText,
+                        style: GoogleFonts.roboto(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 30),
+
+                // Login Button
+                AuthPrimaryButton(
+                  text: loginText,
+                  isLoading: authProvider.isLoading,
+                  onPressed: authProvider.isLoading
+                      ? null
+                      : () => _handleLogin(
+                          context,
+                          authProvider,
+                          langCode: langProvider.currentLang,
+                        ),
+                  fontSize: isMobile ? 18 : 20,
+                ),
+                const SizedBox(height: 30),
+
+                // Sign Up Link
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      dontHaveAccountText,
+                      style: GoogleFonts.roboto(color: AppColors.text),
+                    ),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/signup'),
+                      child: Text(
+                        signUpText,
+                        style: GoogleFonts.roboto(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         );
       },

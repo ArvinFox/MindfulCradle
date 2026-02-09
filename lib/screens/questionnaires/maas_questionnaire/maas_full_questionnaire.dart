@@ -11,6 +11,8 @@ import '/providers/language_provider.dart';
 import '../../../utils/maas_hints.dart';
 import '../../../providers/achievement_provider.dart';
 import '/widgets/questionnaires/questionnaire_question_card.dart';
+import '../../../widgets/connectivity_banner.dart';
+import '../../../providers/connectivity_provider.dart';
 
 class MAASFullQuestionnairePage extends StatefulWidget {
   const MAASFullQuestionnairePage({super.key});
@@ -85,7 +87,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
         _options = Map<String, String>.from(data['options'] ?? {});
       });
     } catch (e) {
-      if (kDebugMode) print('MAAS JSON load error: $e');
+      if (kDebugMode) debugPrint('MAAS JSON load error.');
       setState(() {
         _questions = [];
         _options = {};
@@ -125,7 +127,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
       // Show dialog
       _showResultDialog(maasScore, classification);
     } catch (e) {
-      if (kDebugMode) print('Error saving MAAS: $e');
+      if (kDebugMode) debugPrint('Error saving MAAS.');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -321,9 +323,12 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<MAASProvider>(context);
+    final hasInternet = Provider.of<ConnectivityProvider>(context).hasInternet;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final totalQuestions = _questions.length;
     final totalPages = (totalQuestions / _perPage).ceil();
+    final isLastPage = _pageIndex >= totalPages - 1;
+    final disableSubmit = isLastPage && !hasInternet;
 
     return Stack(
       children: [
@@ -425,6 +430,19 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                         ),
                       ),
                       const SizedBox(height: 16),
+                      if (disableSubmit)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: ConnectivityBanner(
+                            useSafeArea: false,
+                            showShadow: false,
+                            borderRadius: BorderRadius.circular(12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
 
                       // IMPROVED BUTTON LAYOUT ---
                       Row(
@@ -484,7 +502,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           // Next / Submit Button
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: _submitting
+                              onPressed: (_submitting || disableSubmit)
                                   ? null
                                   : () {
                                       if (!_pageAnswered(
@@ -574,6 +592,12 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
               ),
             ),
           ),
+        const Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: ConnectivityBanner(),
+        ),
       ],
     );
   }

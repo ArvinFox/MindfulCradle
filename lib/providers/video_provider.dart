@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/video_model.dart';
@@ -152,7 +153,9 @@ class VideoProvider with ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint("Error updating achievements in VideoProvider: $e");
+      if (kDebugMode) {
+        debugPrint("Error updating achievements in VideoProvider.");
+      }
     }
   }
 

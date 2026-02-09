@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class DASS21LoadResult {
   final Map<int, DateTime> unlockDates;
@@ -18,6 +20,10 @@ class DASS21LoadResult {
 
 class DASS21Service {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  bool _isCurrentUser(String userId) {
+    final current = FirebaseAuth.instance.currentUser?.uid;
+    return current != null && current == userId;
+  }
 
   final List<int> _depressionQ = [3, 5, 10, 13, 16, 17, 21];
   final List<int> _anxietyQ = [2, 4, 7, 9, 15, 19, 20];
@@ -108,6 +114,10 @@ class DASS21Service {
     required List<int?> responses,
     required Map<String, int> scores,
   }) async {
+    if (!_isCurrentUser(userId)) {
+      if (kDebugMode) debugPrint('Blocked saveAttempt for non-owner.');
+      return;
+    }
     final responseMap = Map.fromIterables(
       List.generate(21, (i) => (i + 1).toString()),
       responses.map((e) => e ?? 0),

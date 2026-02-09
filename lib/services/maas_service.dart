@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class MAASLoadResult {
   final Map<int, DateTime> unlockDates;
@@ -18,6 +20,11 @@ class MAASLoadResult {
 
 class MAASService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  bool _isCurrentUser(String userId) {
+    final current = FirebaseAuth.instance.currentUser?.uid;
+    return current != null && current == userId;
+  }
 
   double calculateScores(List<int?> responses) {
     final total = responses.fold<int>(0, (sum, val) => sum + (val ?? 0));
@@ -91,6 +98,10 @@ class MAASService {
     required double maasScore,
     required String classification,
   }) async {
+    if (!_isCurrentUser(userId)) {
+      if (kDebugMode) debugPrint('Blocked saveAttempt for non-owner.');
+      return;
+    }
     final responseMap = Map.fromIterables(
       List.generate(15, (i) => (i + 1).toString()),
       responses.map((e) => e ?? 0),

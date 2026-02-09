@@ -11,6 +11,8 @@ import '/providers/language_provider.dart';
 import '/utils/pws18_hints.dart';
 import '../../../providers/achievement_provider.dart';
 import '/widgets/questionnaires/questionnaire_question_card.dart';
+import '../../../widgets/connectivity_banner.dart';
+import '../../../providers/connectivity_provider.dart';
 
 class PWS18FullQuestionnairePage extends StatefulWidget {
   const PWS18FullQuestionnairePage({super.key});
@@ -84,7 +86,7 @@ class _PWS18FullQuestionnairePageState
         _options = Map<String, String>.from(data['options']);
       });
     } catch (e) {
-      if (kDebugMode) print('PWS18 JSON load error: $e');
+      if (kDebugMode) debugPrint('PWS18 JSON load error.');
       setState(() {
         _questions = [];
         _options = {};
@@ -119,7 +121,7 @@ class _PWS18FullQuestionnairePageState
       // Show dialog
       _showScoresDialog(scores);
     } catch (e) {
-      if (kDebugMode) print('Error saving questionnaire: $e');
+      if (kDebugMode) debugPrint('Error saving questionnaire.');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -315,9 +317,12 @@ class _PWS18FullQuestionnairePageState
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<PWS18Provider>(context);
+    final hasInternet = Provider.of<ConnectivityProvider>(context).hasInternet;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final totalQuestions = _questions.length;
     final totalPages = (totalQuestions / _perPage).ceil();
+    final isLastPage = _pageIndex >= totalPages - 1;
+    final disableSubmit = isLastPage && !hasInternet;
 
     return Stack(
       children: [
@@ -417,6 +422,19 @@ class _PWS18FullQuestionnairePageState
                         ),
                       ),
                       const SizedBox(height: 16),
+                      if (disableSubmit)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: ConnectivityBanner(
+                            useSafeArea: false,
+                            showShadow: false,
+                            borderRadius: BorderRadius.circular(12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
 
                       // IMPROVED BUTTON LAYOUT ---
                       Row(
@@ -476,7 +494,7 @@ class _PWS18FullQuestionnairePageState
                           // Next / Submit Button
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: _submitting
+                              onPressed: (_submitting || disableSubmit)
                                   ? null
                                   : () {
                                       if (!_pageAnswered(
@@ -566,6 +584,12 @@ class _PWS18FullQuestionnairePageState
               ),
             ),
           ),
+        const Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: ConnectivityBanner(),
+        ),
       ],
     );
   }

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mamamind/constants/colors.dart';
@@ -46,7 +47,7 @@ class AchievementProvider with ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint("Error unlocking achievement: $e");
+      if (kDebugMode) debugPrint("Error unlocking achievement.");
     }
   }
 

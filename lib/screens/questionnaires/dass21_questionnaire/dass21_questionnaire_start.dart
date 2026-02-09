@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
 import '/constants/colors.dart';
 import '../../../providers/dass21_provider.dart';
+import '../../../providers/connectivity_provider.dart';
 import '/providers/language_provider.dart';
 import 'dass21_full_questionnaire.dart';
 import '../../../utils/dass21_hints.dart';
@@ -23,6 +24,8 @@ class DASS21QuestionnaireStartPage extends StatefulWidget {
 class _DASS21QuestionnaireStartPageState
     extends State<DASS21QuestionnaireStartPage> {
   bool _initialized = false;
+
+  DateTime? _lastBlockedMessageAt;
 
   // Hint State
   bool _showHint = false;
@@ -63,6 +66,10 @@ class _DASS21QuestionnaireStartPageState
   Widget build(BuildContext context) {
     final langProvider = Provider.of<LanguageProvider>(context);
     final provider = Provider.of<DASS21Provider>(context);
+    final hasInternet = Provider.of<ConnectivityProvider>(
+      context,
+      listen: true,
+    ).hasInternet;
     final isSinhala = langProvider.currentLang == 'si';
     final isMobile = MediaQuery.of(context).size.width < 600;
 
@@ -73,6 +80,10 @@ class _DASS21QuestionnaireStartPageState
     );
 
     // Logic to decide which screen to show
+    final hasData =
+        provider.unlockDates.isNotEmpty || provider.userAttempts.isNotEmpty;
+    final canStart = hasInternet && hasData && !provider.isLoading;
+    final helperText = _helperText(isSinhala, hasInternet, hasData);
     bool showIntro = !provider.isLoading && provider.userAttempts.isEmpty;
 
     return Stack(
@@ -116,7 +127,18 @@ class _DASS21QuestionnaireStartPageState
                   buttonText: isSinhala
                       ? 'ප්‍රතිචාර ආරම්භ කරන්න'
                       : 'Start Feedback',
+                  isEnabled: canStart,
+                  helperText: helperText,
                   onStart: () {
+                    if (!canStart) {
+                      _showStartBlockedMessage(
+                        context,
+                        isSinhala,
+                        hasInternet,
+                        hasData,
+                      );
+                      return;
+                    }
                     setState(() {
                       _showHint = true;
                       _navigateAfterHint = true;
@@ -183,7 +205,13 @@ class _DASS21QuestionnaireStartPageState
             if (_navigateAfterHint) {
               _navigateAfterHint = false;
               await Future.delayed(const Duration(milliseconds: 250));
-              _startQuestionnaire(context, provider);
+              _startQuestionnaire(
+                context,
+                provider,
+                hasInternet,
+                hasData,
+                isSinhala,
+              );
             }
           },
         ),
@@ -262,6 +290,22 @@ class _DASS21QuestionnaireStartPageState
           : null,
       onStart: (!isCompleted && !isLocked)
           ? () {
+              final hasInternet = Provider.of<ConnectivityProvider>(
+                context,
+                listen: false,
+              ).hasInternet;
+              final hasData =
+                  provider.unlockDates.isNotEmpty ||
+                  provider.userAttempts.isNotEmpty;
+              if (!hasInternet || !hasData) {
+                _showStartBlockedMessage(
+                  context,
+                  isSinhala,
+                  hasInternet,
+                  hasData,
+                );
+                return;
+              }
               setState(() {
                 _showHint = true;
                 _navigateAfterHint = true;
@@ -323,7 +367,17 @@ class _DASS21QuestionnaireStartPageState
     );
   }
 
-  void _startQuestionnaire(BuildContext context, DASS21Provider provider) {
+  void _startQuestionnaire(
+    BuildContext context,
+    DASS21Provider provider,
+    bool hasInternet,
+    bool hasData,
+    bool isSinhala,
+  ) {
+    if (!hasInternet || !hasData) {
+      _showStartBlockedMessage(context, isSinhala, hasInternet, hasData);
+      return;
+    }
     provider.responses = List<int?>.filled(21, null);
     Navigator.push(
       context,
@@ -331,5 +385,47 @@ class _DASS21QuestionnaireStartPageState
     ).then((_) {
       if (mounted) provider.loadDASS21Data(context);
     });
+  }
+
+  String? _helperText(bool isSinhala, bool hasInternet, bool hasData) {
+    if (!hasInternet) {
+      return isSinhala
+          ? 'අන්තර්ජාල සම්බන්ධතාවයක් නොමැත'
+          : 'No internet connection';
+    }
+    if (!hasData) {
+      return isSinhala
+          ? 'දත්ත ලබාගත නොහැක. කරුණාකර පසුව උත්සාහ කරන්න.'
+          : 'Data unavailable. Please try again later.';
+    }
+    return null;
+  }
+
+  void _showStartBlockedMessage(
+    BuildContext context,
+    bool isSinhala,
+    bool hasInternet,
+    bool hasData,
+  ) {
+    final now = DateTime.now();
+    if (_lastBlockedMessageAt != null &&
+        now.difference(_lastBlockedMessageAt!) < const Duration(seconds: 2)) {
+      return;
+    }
+    _lastBlockedMessageAt = now;
+
+    final message = !hasInternet
+        ? (isSinhala
+              ? 'අන්තර්ජාල සම්බන්ධතාවයක් නොමැත'
+              : 'No internet connection')
+        : (isSinhala
+              ? 'දත්ත ලබාගත නොහැක. කරුණාකර පසුව උත්සාහ කරන්න.'
+              : 'Data unavailable. Please try again later.');
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.clearSnackBars();
+    messenger.showSnackBar(
+      SnackBar(content: Text(message), backgroundColor: Colors.red.shade600),
+    );
   }
 }

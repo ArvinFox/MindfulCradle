@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:mamamind/screens/home/questionnaires.dart';
 import '../../constants/colors.dart';
 import '../../providers/language_provider.dart';
+import '../../widgets/connectivity_banner.dart';
 import 'home/home_page.dart';
 import 'achievements/achievements_page.dart';
 import 'profile/profile_page.dart';
@@ -63,7 +64,7 @@ class _MainScreenState extends State<MainScreen> {
       type: BottomNavigationBarType.fixed,
       selectedLabelStyle: selectedLabelStyle,
       unselectedLabelStyle: unselectedLabelStyle,
-      
+
       onTap: (index) {
         HapticFeedback.lightImpact();
         setState(() {
@@ -72,17 +73,14 @@ class _MainScreenState extends State<MainScreen> {
       },
       items: [
         BottomNavigationBarItem(
-          icon: const Icon(Icons.home_rounded), 
+          icon: const Icon(Icons.home_rounded),
           label: labels[0],
         ),
         BottomNavigationBarItem(
           icon: const Icon(Icons.assignment),
           label: labels[1],
         ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.chat),
-          label: labels[2],
-        ),
+        BottomNavigationBarItem(icon: const Icon(Icons.chat), label: labels[2]),
         BottomNavigationBarItem(
           icon: const Icon(Icons.star_rounded),
           label: labels[3],
@@ -118,10 +116,9 @@ class _MainScreenState extends State<MainScreen> {
         DateTime now = DateTime.now();
         if (lastBackPressTime == null ||
             now.difference(lastBackPressTime!) > const Duration(seconds: 2)) {
-          
           HapticFeedback.mediumImpact();
           lastBackPressTime = now;
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -137,9 +134,19 @@ class _MainScreenState extends State<MainScreen> {
         return true;
       },
       child: Scaffold(
-        body: AnimatedSwitcher(
-          duration: const Duration(milliseconds: 300),
-          child: _pages[_currentIndex],
+        body: Stack(
+          children: [
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 300),
+              child: _pages[_currentIndex],
+            ),
+            const Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: ConnectivityBanner(),
+            ),
+          ],
         ),
         bottomNavigationBar: _buildBottomNavigationBar(context),
       ),

@@ -179,6 +179,10 @@ class _SignupPageState extends State<SignupPage> {
             TextFormField(
               controller: _fullNameController,
               keyboardType: TextInputType.name,
+              inputFormatters: [
+                FilteringTextInputFormatter.deny(RegExp(r'[\r\n\t]')),
+                LengthLimitingTextInputFormatter(60),
+              ],
               decoration: customInputDecoration(fullNameText).copyWith(
                 prefixIcon: const Icon(
                   Icons.person_outline,

@@ -7,6 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
 import '../../constants/app_config.dart';
 import '../../utils/validators.dart';
+import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/helpers.dart';
@@ -86,16 +87,27 @@ class _LoginPageState extends State<LoginPage> {
         final userDoc = await FirebaseFirestore.instance
             .collection('users')
             .doc(uid)
-            .get();
+            .get()
+            .timeout(const Duration(seconds: 15));
 
-        final isComplete =
-            userDoc.data()?['isUserRegistrationComplete'] ?? false;
+        final data = userDoc.data();
+        if (data == null) {
+          setState(() {
+            errorMessage = langCode == 'si'
+                ? 'පරිශීලක දත්ත නොමැත. කරුණාකර නැවත උත්සාහ කරන්න.'
+                : 'User data not found. Please try again.';
+          });
+          return;
+        }
+
+        final isComplete = data['isUserRegistrationComplete'] ?? false;
 
         if (!isComplete) {
+          final localUser = authProvider.user ?? UserModel.fromMap(data, uid);
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(
-              builder: (_) => UserRegistrationPage(user: authProvider.user!),
+              builder: (_) => UserRegistrationPage(user: localUser),
             ),
           );
         } else {

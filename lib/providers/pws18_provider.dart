@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
@@ -72,7 +73,7 @@ class PWS18Provider with ChangeNotifier {
       isLocked = result.isLocked;
       lockReason = result.lockReason;
     } catch (e) {
-      print("Error loading PWS18 data: $e");
+      if (kDebugMode) debugPrint("Error loading PWS18 data.");
     } finally {
       isLoading = false;
       notifyListeners();

@@ -11,6 +11,8 @@ import '/providers/language_provider.dart';
 import '../../../utils/dass21_hints.dart';
 import '../../../providers/achievement_provider.dart';
 import '/widgets/questionnaires/questionnaire_question_card.dart';
+import '../../../widgets/connectivity_banner.dart';
+import '../../../providers/connectivity_provider.dart';
 
 class DASS21FullQuestionnairePage extends StatefulWidget {
   const DASS21FullQuestionnairePage({super.key});
@@ -85,7 +87,7 @@ class _DASS21FullQuestionnairePageState
         _options = Map<String, String>.from(data['options'] ?? {});
       });
     } catch (e) {
-      if (kDebugMode) print('DASS21 JSON load error: $e');
+      if (kDebugMode) debugPrint('DASS21 JSON load error.');
       setState(() {
         _questions = [];
         _options = {};
@@ -118,7 +120,7 @@ class _DASS21FullQuestionnairePageState
       if (!mounted) return;
       _showScoresDialog(scores);
     } catch (e) {
-      if (kDebugMode) print('Error saving questionnaire: $e');
+      if (kDebugMode) debugPrint('Error saving questionnaire.');
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -290,9 +292,12 @@ class _DASS21FullQuestionnairePageState
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<DASS21Provider>(context);
+    final hasInternet = Provider.of<ConnectivityProvider>(context).hasInternet;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final totalQuestions = _questions.length;
     final totalPages = (totalQuestions / _perPage).ceil();
+    final isLastPage = _pageIndex >= totalPages - 1;
+    final disableSubmit = isLastPage && !hasInternet;
 
     return Stack(
       children: [
@@ -392,6 +397,19 @@ class _DASS21FullQuestionnairePageState
                         ),
                       ),
                       const SizedBox(height: 16),
+                      if (disableSubmit)
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: ConnectivityBanner(
+                            useSafeArea: false,
+                            showShadow: false,
+                            borderRadius: BorderRadius.circular(12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                          ),
+                        ),
                       Row(
                         children: [
                           FloatingActionButton(
@@ -447,7 +465,7 @@ class _DASS21FullQuestionnairePageState
                           // NEXT / SUBMIT BUTTON
                           Expanded(
                             child: ElevatedButton(
-                              onPressed: _submitting
+                              onPressed: (_submitting || disableSubmit)
                                   ? null
                                   : () {
                                       if (!_pageAnswered(
@@ -537,6 +555,12 @@ class _DASS21FullQuestionnairePageState
               ),
             ),
           ),
+        const Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: ConnectivityBanner(),
+        ),
       ],
     );
   }

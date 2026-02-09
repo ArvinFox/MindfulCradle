@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -9,6 +10,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+
+  static const String _userIdKey = 'userId';
 
   UserModel? _user;
   bool _isInitializing = true;
@@ -30,14 +34,13 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final uid = prefs.getString('userId');
+      final uid = await _readUserIdFromStorage();
 
       if (uid != null) {
         _listenToUser(uid);
       }
     } catch (e) {
-      if (kDebugMode) print("Error loading user: $e");
+      if (kDebugMode) debugPrint("Error loading user.");
     } finally {
       _isInitializing = false;
       _initialized = true;
@@ -71,24 +74,27 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _authService.login(
-        email: email,
-        password: password,
-        langCode: langCode,
-      );
+      final result = await _authService
+          .login(email: email, password: password, langCode: langCode)
+          .timeout(const Duration(seconds: 20));
 
       if (result == null) {
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
           if (rememberMe) {
+            await _secureStorage.write(key: _userIdKey, value: user.uid);
             final prefs = await SharedPreferences.getInstance();
-            await prefs.setString('userId', user.uid);
+            await prefs.remove(_userIdKey);
           }
           _listenToUser(user.uid);
         }
       }
 
       return result;
+    } on TimeoutException {
+      return langCode == 'si'
+          ? 'සම්බන්ධතාවය ප්‍රමාද වී ඇත. කරුණාකර නැවත උත්සාහ කරන්න.'
+          : 'Connection timed out. Please try again.';
     } catch (e) {
       return langCode == 'si'
           ? 'සත්‍යාපනය අසාර්ථකයි. කරුණාකර නැවත උත්සාහ කරන්න.'
@@ -108,12 +114,13 @@ class AuthProvider with ChangeNotifier {
       await _authService.signOut();
       _user = null;
 
+      await _secureStorage.delete(key: _userIdKey);
       final prefs = await SharedPreferences.getInstance();
-      await prefs.remove('userId');
+      await prefs.remove(_userIdKey);
       _userSub?.cancel();
       _userSub = null;
     } catch (e) {
-      if (kDebugMode) print("Logout error: $e");
+      if (kDebugMode) debugPrint("Logout error.");
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -129,5 +136,22 @@ class AuthProvider with ChangeNotifier {
 
       notifyListeners();
     }
+  }
+
+  Future<String?> _readUserIdFromStorage() async {
+    final fromSecure = await _secureStorage.read(key: _userIdKey);
+    if (fromSecure != null && fromSecure.isNotEmpty) {
+      return fromSecure;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final fromPrefs = prefs.getString(_userIdKey);
+    if (fromPrefs != null && fromPrefs.isNotEmpty) {
+      await _secureStorage.write(key: _userIdKey, value: fromPrefs);
+      await prefs.remove(_userIdKey);
+      return fromPrefs;
+    }
+
+    return null;
   }
 }

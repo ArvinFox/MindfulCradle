@@ -346,6 +346,10 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
         TextFormField(
           controller: residenceController,
           decoration: customInputDecoration(texts['residence']!),
+          inputFormatters: [
+            FilteringTextInputFormatter.deny(RegExp(r'[\r\n\t]')),
+            LengthLimitingTextInputFormatter(80),
+          ],
           validator: (val) =>
               val == null || val.isEmpty ? texts['required'] : null,
         ),

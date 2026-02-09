@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
@@ -75,7 +76,7 @@ class DASS21Provider with ChangeNotifier {
       isLocked = result.isLocked;
       lockReason = result.lockReason;
     } catch (e) {
-      print("Error loading DASS data: $e");
+      if (kDebugMode) debugPrint("Error loading DASS data.");
     } finally {
       isLoading = false;
       notifyListeners();

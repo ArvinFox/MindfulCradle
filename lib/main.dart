@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:mamamind/providers/dass21_provider.dart';
@@ -7,6 +8,7 @@ import 'package:mamamind/providers/pws18_provider.dart';
 import 'package:provider/provider.dart';
 import 'app.dart';
 import 'providers/auth_provider.dart';
+import 'providers/connectivity_provider.dart';
 import 'providers/video_provider.dart';
 import 'providers/achievement_provider.dart';
 
@@ -14,17 +16,18 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   try {
-    print("Initializing Firebase...");
+    if (kDebugMode) debugPrint("Initializing Firebase...");
     await Firebase.initializeApp();
-    print("Firebase initialized successfully.");
+    if (kDebugMode) debugPrint("Firebase initialized successfully.");
   } catch (e) {
-    print("Firebase initialization error: $e");
+    if (kDebugMode) debugPrint("Firebase initialization error.");
   }
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => AuthProvider()),
+        ChangeNotifierProvider(create: (_) => ConnectivityProvider()),
         ChangeNotifierProvider(create: (_) => VideoProvider()),
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => DASS21Provider()),

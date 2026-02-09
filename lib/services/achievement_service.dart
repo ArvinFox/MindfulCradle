@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class AchievementService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -12,11 +14,20 @@ class AchievementService {
     'happiness_seeker',
   ];
 
+  bool _isCurrentUser(String userId) {
+    final current = FirebaseAuth.instance.currentUser?.uid;
+    return current != null && current == userId;
+  }
+
   Future<List<String>> unlockAchievement({
     required String userId,
     required List<String> currentAchievements,
     required String achievementId,
   }) async {
+    if (!_isCurrentUser(userId)) {
+      if (kDebugMode) debugPrint('Blocked unlockAchievement for non-owner.');
+      return [];
+    }
     final Set<String> existing = currentAchievements.toSet();
     final List<String> achievementsToAdd = [];
 

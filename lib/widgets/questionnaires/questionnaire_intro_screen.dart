@@ -10,6 +10,8 @@ class QuestionnaireIntroScreen extends StatelessWidget {
   final String buttonText;
   final VoidCallback onStart;
   final bool isMobile;
+  final bool isEnabled;
+  final String? helperText;
 
   const QuestionnaireIntroScreen({
     super.key,
@@ -18,6 +20,8 @@ class QuestionnaireIntroScreen extends StatelessWidget {
     required this.buttonText,
     required this.onStart,
     this.isMobile = false,
+    this.isEnabled = true,
+    this.helperText,
   });
 
   @override
@@ -47,18 +51,32 @@ class QuestionnaireIntroScreen extends StatelessWidget {
                 color: AppColors.text,
               ),
             ),
+            if (helperText != null) ...[
+              const SizedBox(height: 10),
+              Text(
+                helperText!,
+                textAlign: TextAlign.center,
+                style: GoogleFonts.roboto(
+                  fontSize: isMobile ? 13 : 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.red.shade600,
+                ),
+              ),
+            ],
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
+                  backgroundColor: isEnabled
+                      ? AppColors.primary
+                      : Colors.grey.shade400,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                onPressed: onStart,
+                onPressed: isEnabled ? onStart : null,
                 child: Text(
                   buttonText,
                   style: GoogleFonts.poppins(

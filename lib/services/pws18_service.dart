@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
 
 class PWS18LoadResult {
   final Map<int, DateTime> unlockDates;
@@ -18,6 +20,11 @@ class PWS18LoadResult {
 
 class PWS18Service {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  bool _isCurrentUser(String userId) {
+    final current = FirebaseAuth.instance.currentUser?.uid;
+    return current != null && current == userId;
+  }
 
   int _processedScore(int questionId, int value) {
     const reverseItems = [1, 2, 3, 8, 9, 11, 12, 13, 17, 18];
@@ -101,6 +108,10 @@ class PWS18Service {
     required List<int?> responses,
     required Map<String, double> subscaleScores,
   }) async {
+    if (!_isCurrentUser(userId)) {
+      if (kDebugMode) debugPrint('Blocked saveAttempt for non-owner.');
+      return;
+    }
     final responseMap = Map.fromIterables(
       List.generate(18, (i) => (i + 1).toString()),
       responses.map((e) => e ?? 0),

@@ -490,18 +490,18 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
                 const SizedBox(height: 12),
                 _buildInfoItem(
                   isSinhala
-                      ? 'DASS-21 ප්‍රශ්නාවලියේ ප්‍රතිචාර'
-                      : 'DASS-21 questionnaire responses',
+                      ? 'DASS-21 ප්‍රතිචාර'
+                      : 'DASS-21 responses',
                 ),
                 _buildInfoItem(
                   isSinhala
-                      ? 'PWS-18 ප්‍රශ්නාවලියේ ප්‍රතිචාර'
-                      : 'PWS-18 questionnaire responses',
+                      ? 'PWS-18 ප්‍රතිචාර'
+                      : 'PWS-18 responses',
                 ),
                 _buildInfoItem(
                   isSinhala
-                      ? 'MAAS ප්‍රශ්නාවලියේ ප්‍රතිචාර'
-                      : 'MAAS questionnaire responses',
+                      ? 'MAAS ප්‍රතිචාර'
+                      : 'MAAS responses',
                 ),
                 _buildInfoItem(
                   isSinhala ? 'වීඩියෝ ප්‍රගතිය' : 'Video progress',

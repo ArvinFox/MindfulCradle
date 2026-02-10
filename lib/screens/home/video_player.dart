@@ -143,12 +143,28 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     });
   }
 
+  Future<void> _flushProgress() async {
+    if (!mounted) return;
+    final videoProvider = Provider.of<VideoProvider>(context, listen: false);
+    await videoProvider.updateProgress(
+      context: context,
+      userId: widget.userId,
+      videoId: widget.video.id,
+      watchedSeconds: _watchedSeconds,
+    );
+  }
+
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
       _progressTimer?.cancel();
-    } else if (state == AppLifecycleState.resumed) {
+      _flushProgress();
+      return;
+    }
+
+    if (state == AppLifecycleState.resumed) {
       _startProgressTimer();
     }
   }
@@ -164,6 +180,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     _controller.dispose();
     _progressTimer?.cancel();
     _hintTimer?.cancel();
+    _flushProgress();
     super.dispose();
   }
 

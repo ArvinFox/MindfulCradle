@@ -57,6 +57,31 @@ class VideoService {
         'updatedAt': FieldValue.serverTimestamp(),
       });
     }
+
+    await _updateVideoWatchTime(userId);
+  }
+
+  Future<void> _updateVideoWatchTime(String userId) async {
+    if (!_isCurrentUser(userId)) {
+      if (kDebugMode) debugPrint('Blocked updateVideoWatchTime for non-owner.');
+      return;
+    }
+
+    final snapshot = await _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('videoProgress')
+        .get();
+
+    int totalSeconds = 0;
+    for (final doc in snapshot.docs) {
+      totalSeconds += (doc['watchedSeconds'] ?? 0) as int;
+    }
+
+    await _firestore.collection('users').doc(userId).update({
+      'videoWatchTime': totalSeconds,
+      'videoProgress': FieldValue.delete(),
+    });
   }
 
   /// Stream user progress

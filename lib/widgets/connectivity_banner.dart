@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../constants/colors.dart';
 import '../providers/connectivity_provider.dart';
 import '../providers/language_provider.dart';
 
@@ -32,7 +31,7 @@ class ConnectivityBanner extends StatelessWidget {
       width: double.infinity,
       padding: padding,
       decoration: BoxDecoration(
-        color: Colors.red.shade700,
+        color: const Color.fromARGB(171, 211, 47, 47),
         borderRadius: borderRadius,
         boxShadow: showShadow
             ? [

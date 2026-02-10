@@ -11,9 +11,6 @@ class AuthLanguageToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer<LanguageProvider>(
       builder: (context, langProvider, _) {
-        final isSinhala = langProvider.currentLang == 'si';
-        final toggleLabel = isSinhala ? 'EN' : 'සි';
-
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
@@ -21,22 +18,19 @@ class AuthLanguageToggle extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             border: Border.all(color: AppColors.primary.withOpacity(0.1)),
           ),
-          child: TextButton(
-            onPressed: () {
-              langProvider.setLanguage(isSinhala ? 'en' : 'si');
-            },
-            style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-            ),
-            child: Text(
-              toggleLabel,
-              style: GoogleFonts.roboto(
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.text,
-              ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: langProvider.currentLang == 'en' ? 'English' : 'සිංහල',
+              style: GoogleFonts.roboto(fontSize: 14, color: AppColors.text),
+              iconEnabledColor: AppColors.text,
+              items: const [
+                DropdownMenuItem(value: 'English', child: Text('English')),
+                DropdownMenuItem(value: 'සිංහල', child: Text('සිංහල')),
+              ],
+              onChanged: (value) {
+                if (value == null) return;
+                langProvider.setLanguage(value == 'English' ? 'en' : 'si');
+              },
             ),
           ),
         );

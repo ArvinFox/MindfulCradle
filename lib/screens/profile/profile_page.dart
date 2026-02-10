@@ -280,6 +280,53 @@ class _ProfilePageState extends State<ProfilePage> {
                     ),
                   ),
 
+                  const SizedBox(height: 16),
+
+                  // Data & Privacy Card
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.04),
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
+                      leading: Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withOpacity(0.1),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.privacy_tip,
+                          color: AppColors.primary,
+                          size: 24,
+                        ),
+                      ),
+                      title: Text(
+                        isSinhala ? "දත්ත හා පෞද්ගලිකත්වය" : "Data & Privacy",
+                        style: GoogleFonts.poppins(
+                          color: AppColors.text,
+                          fontWeight: FontWeight.w500,
+                          fontSize: 16,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () {
+                        Navigator.pushNamed(context, '/gdpr-account');
+                      },
+                    ),
+                  ),
+
                   const SizedBox(height: 30),
 
                   // Logout Button

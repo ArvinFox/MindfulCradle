@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
@@ -15,7 +16,8 @@ class AuthService {
   }) async {
     try {
       UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(email: email, password: password)
+          .timeout(const Duration(seconds: 20));
 
       String uid = userCredential.user!.uid;
 
@@ -26,12 +28,17 @@ class AuthService {
       );
 
       // Add isUserRegistrationComplete field directly here
-      await _firestore.collection('users').doc(uid).set({
-        ...user.toMap(),
-        'isUserRegistrationComplete': false,
-      });
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .set({...user.toMap(), 'isUserRegistrationComplete': false})
+          .timeout(const Duration(seconds: 20));
 
       return null; // success
+    } on TimeoutException {
+      return langCode == 'si'
+          ? 'සම්බන්ධතාවය ප්‍රමාද වී ඇත. කරුණාකර නැවත උත්සාහ කරන්න.'
+          : 'Connection timed out. Please try again.';
     } on FirebaseAuthException catch (e) {
       return _localizeAuthError(e, langCode);
     } catch (e) {

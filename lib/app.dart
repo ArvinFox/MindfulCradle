@@ -17,12 +17,13 @@ class MamaMindApp extends StatefulWidget {
   State<MamaMindApp> createState() => _MamaMindAppState();
 }
 
-class _MamaMindAppState extends State<MamaMindApp> {
+class _MamaMindAppState extends State<MamaMindApp> with WidgetsBindingObserver {
   bool _showSplash = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
 
     // Always show splash for at least 4 seconds
     Future.delayed(const Duration(seconds: 4), () {
@@ -32,6 +33,18 @@ class _MamaMindAppState extends State<MamaMindApp> {
         });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    authProvider.handleAppLifecycle(state);
   }
 
   @override

@@ -10,6 +10,7 @@ import '../../providers/language_provider.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_language_toggle.dart';
+import '../../widgets/auth/consent_dialog.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -70,6 +71,25 @@ class _SignupPageState extends State<SignupPage> {
       listen: false,
     ).currentLang;
 
+    // Show GDPR consent dialog
+    final consent = await ConsentDialog.show(context, langCode);
+
+    if (consent == null || !consent) {
+      // User declined consent - stay on signup
+      HapticFeedback.vibrate();
+      final exitMessage = langCode == 'si'
+          ? 'ඉදිරියට යාම සඳහා දත්ත කැමැත්ත අවශ්‍යයි.'
+          : 'Consent is required to continue.';
+
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(exitMessage)));
+      }
+      return;
+    }
+
+    // User accepted consent - proceed with signup
     setState(() => loading = true);
 
     try {

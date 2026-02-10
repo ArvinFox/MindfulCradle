@@ -123,7 +123,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     // Map mindfulness durations to English values
     final mindfulnessMap = {
       texts['lessThan1Month']!: 'Less than 1 month',
-      texts['1month']!: '1 Months',
+      texts['1month']!: '1 Month',
       texts['2month']!: '2 Months',
       texts['3month']!: '3 Months',
       texts['4month']!: '4 Months',
@@ -397,6 +397,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     BuildContext context,
     bool isMobile,
     Map<String, String> texts,
+    bool isSinhala,
   ) {
     final durationOptions = [
       texts['lessThan1Month']!,
@@ -429,16 +430,19 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
           DropdownButtonFormField<String>(
             value: pregnancyMonth.isEmpty ? null : pregnancyMonth,
             decoration: customInputDecoration(texts['pregnancyMonth']!),
-            items: List.generate(
-              9,
-              (index) => DropdownMenuItem(
-                value: '${index + 1}',
+            items: List.generate(9, (index) {
+              final monthValue = index + 1;
+              final monthLabel = isSinhala
+                  ? texts['month']!
+                  : (monthValue == 1 ? 'month' : 'months');
+              return DropdownMenuItem(
+                value: '$monthValue',
                 child: Text(
-                  '${index + 1} ${texts['month']}',
+                  '$monthValue $monthLabel',
                   style: GoogleFonts.roboto(color: AppColors.text),
                 ),
-              ),
-            ),
+              );
+            }),
             onChanged: (val) => setState(() => pregnancyMonth = val ?? ''),
             validator: (val) =>
                 val == null || val.isEmpty ? texts['required'] : null,
@@ -590,6 +594,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
     final langProvider = Provider.of<LanguageProvider>(context);
+    final isSinhala = langProvider.currentLang == 'si';
 
     texts = langProvider.currentLang == 'en'
         ? {
@@ -611,7 +616,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
             'practicedMindfulness': 'Have you practiced mindfulness before?',
             'mindfulnessDuration': 'Mindfulness practice duration',
             'lessThan1Month': 'Less than 1 month',
-            '1month': '1 Months',
+            '1month': '1 Month',
             '2month': '2 Months',
             '3month': '3 Months',
             '4month': '4 Months',
@@ -743,7 +748,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                       duration: const Duration(milliseconds: 300),
                       child: _currentStep == 0
                           ? _buildPage1(context, isMobile, texts)
-                          : _buildPage2(context, isMobile, texts),
+                          : _buildPage2(context, isMobile, texts, isSinhala),
                     ),
                   ),
                 ),

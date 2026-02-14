@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:mamamind/providers/dass21_provider.dart';
 import 'package:mamamind/providers/language_provider.dart';
 import 'package:mamamind/providers/maas_provider.dart';
@@ -14,6 +15,12 @@ import 'providers/achievement_provider.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  try {
+    await dotenv.load(fileName: '.env');
+  } catch (e) {
+    if (kDebugMode) debugPrint('Env load error: $e');
+  }
 
   try {
     if (kDebugMode) debugPrint("Initializing Firebase...");

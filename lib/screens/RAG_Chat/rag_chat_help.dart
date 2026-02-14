@@ -1,9 +1,15 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:mamamind/services/rag_service.dart';
+import 'package:mamamind/services/chat_history_service.dart';
 import '../../constants/colors.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/auth_provider.dart';
 
 class ChatBotPage extends StatefulWidget {
   const ChatBotPage({super.key});
@@ -15,56 +21,256 @@ class ChatBotPage extends StatefulWidget {
 class _ChatBotPageState extends State<ChatBotPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final ChatHistoryService _chatHistoryService = ChatHistoryService();
   List<Map<String, String>> messages = [];
   bool _isTyping = false;
+  bool _isInitializing = false;
+  bool _isLoadingHistory = true;
   late String _currentLang;
+  RagService? _ragService;
+  Future<void>? _ragInitFuture;
+  String? _ragInitError;
 
   @override
   void initState() {
     super.initState();
-    // Add a welcome message
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final lang = Provider.of<LanguageProvider>(
-        context,
-        listen: false,
-      ).currentLang;
-      setState(() {
-        messages.add({
+    _initializeChat();
+  }
+
+  Future<void> _initializeChat() async {
+    await _initRagService();
+    await _loadChatHistory();
+
+    // Add welcome message if no history
+    if (mounted && _ragInitError == null && messages.isEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final lang = Provider.of<LanguageProvider>(
+          context,
+          listen: false,
+        ).currentLang;
+        final welcomeMsg = {
           "role": "bot",
           "text": lang == 'en'
-              ? "Hello! I am your mindful companion. How are you feeling today?"
-              : "ආයුබෝවන්! මම ඔබේ සතිමත් මිතුරියයි. අද ඔබට කොහොමද?",
+              ? "Hello! I am your Mindful Cradle companion, here to answer your questions about pregnancy, childbirth, and newborn care. How can I help you today?"
+              : "ආයුබෝවන්! මම ඔබේ Mindful Cradle සහායකයා වෙමි. ගැබ් ගැනීම, දරු ප්‍රසූතිය සහ අලුත උපන් බිළිඳුන් රැකබලා ගැනීම පිළිබඳ ඔබේ ප්‍රශ්නවලට පිළිතුරු සැපයීමට මම මෙහි සිටිමි. අද මට ඔබට උදව් කළ හැක්කේ කෙසේද?",
+        };
+        setState(() {
+          messages.add(welcomeMsg);
         });
+        _saveMessageToHistory(welcomeMsg['role']!, welcomeMsg['text']!);
       });
+    }
+  }
+
+  Future<void> _loadChatHistory() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.id;
+
+    if (userId == null) {
+      setState(() {
+        _isLoadingHistory = false;
+      });
+      return;
+    }
+
+    final history = await _chatHistoryService.loadChatHistory(userId);
+    if (mounted) {
+      setState(() {
+        messages = history;
+        _isLoadingHistory = false;
+      });
+    }
+  }
+
+  Future<void> _saveMessageToHistory(String role, String text) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.id;
+
+    if (userId != null) {
+      await _chatHistoryService.saveMessage(
+        userId: userId,
+        role: role,
+        text: text,
+      );
+    }
+  }
+
+  Future<void> _startNewChat() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.id;
+
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(
+          _currentLang == 'en'
+              ? 'Start New Chat?'
+              : 'නව සංවාදයක් ආරම්භ කරන්නද?',
+          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+        ),
+        content: Text(
+          _currentLang == 'en'
+              ? 'This will clear your current chat history.'
+              : 'මෙය ඔබේ වත්මන් සංවාද ඉතිහාසය මකා දමයි.',
+          style: GoogleFonts.roboto(),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(_currentLang == 'en' ? 'Cancel' : 'අවලංගු කරන්න'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(
+              _currentLang == 'en' ? 'Start New' : 'නව එක ආරම්භ කරන්න',
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && userId != null) {
+      await _chatHistoryService.clearChatHistory(userId);
+      setState(() {
+        messages.clear();
+      });
+      await _initializeChat();
+    }
+  }
+
+  Future<void> _initRagService() async {
+    setState(() {
+      _isInitializing = true;
+    });
+
+    final String apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
+    if (kDebugMode) {
+      debugPrint('RAG API key loaded: ${apiKey.isNotEmpty}');
+    }
+
+    if (apiKey.isEmpty) {
+      setState(() {
+        _isInitializing = false;
+      });
+      _showKeyStatus(false);
+      return;
+    }
+
+    _showKeyStatus(true);
+
+    final RagService service = RagService(apiKey: apiKey);
+    _ragService = service;
+    _ragInitFuture ??= _safeInitialize(service);
+    await _ragInitFuture;
+
+    if (mounted) {
+      setState(() {
+        _isInitializing = false;
+      });
+    }
+  }
+
+  Future<void> _safeInitialize(RagService service) async {
+    try {
+      await service.initialize();
+      _ragInitError = null;
+    } catch (e) {
+      _ragInitError = e.toString();
+      if (kDebugMode) {
+        debugPrint('RAG init error: $e');
+      }
+    }
+  }
+
+  void _showKeyStatus(bool loaded) {
+    if (!mounted || loaded) {
+      return;
+    }
+    // Only show error if API key is missing
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            _currentLang == 'en'
+                ? 'API key missing. Please check your .env file.'
+                : 'API යතුර අස්ථානගත වී ඇත. කරුණාකර ඔබේ .env ගොනුව පරීක්ෂා කරන්න.',
+          ),
+          duration: const Duration(seconds: 4),
+          backgroundColor: Colors.red.shade600,
+        ),
+      );
     });
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
     final text = _controller.text.trim();
 
+    final userMsg = {"role": "user", "text": text};
     setState(() {
-      messages.add({"role": "user", "text": text});
+      messages.add(userMsg);
       _isTyping = true;
     });
 
     _controller.clear();
     _scrollToBottom();
 
-    // Simulate AI Response
-    Future.delayed(const Duration(milliseconds: 1500), () {
+    // Save user message
+    await _saveMessageToHistory(userMsg['role']!, userMsg['text']!);
+
+    if (_ragInitFuture != null) {
+      await _ragInitFuture;
+    }
+
+    final RagService? service = _ragService;
+    if (service == null || _ragInitError != null) {
+      if (!mounted) return;
+      final String errorDetail = _ragInitError ?? '';
+      final String fallbackMessage = _currentLang == 'en'
+          ? "The assistant is not configured yet. Please add your API key."
+          : "සහයකය තවම සකසා නැත. කරුණාකර ඔබේ API යතුර එක් කරන්න.";
+      final String message = errorDetail.isNotEmpty
+          ? (_currentLang == 'en'
+                ? "RAG init failed: $errorDetail"
+                : "RAG ආරම්භ කිරීම අසාර්ථකයි: $errorDetail")
+          : fallbackMessage;
+      setState(() {
+        messages.add({"role": "bot", "text": message});
+        _isTyping = false;
+      });
+      _scrollToBottom();
+      return;
+    }
+
+    try {
+      final String reply = await service.answer(
+        text,
+        languageHint: _currentLang == 'en' ? 'English' : 'Sinhala',
+      );
+      if (!mounted) return;
+      final botMsg = {"role": "bot", "text": reply};
+      setState(() {
+        messages.add(botMsg);
+        _isTyping = false;
+      });
+      _scrollToBottom();
+
+      // Save bot response
+      await _saveMessageToHistory(botMsg['role']!, botMsg['text']!);
+    } catch (e) {
       if (!mounted) return;
       setState(() {
         messages.add({
           "role": "bot",
           "text": _currentLang == 'en'
-              ? "That sounds important. Taking a deep breath can often help clear the mind. Would you like to try a short meditation?"
-              : "එය වැදගත් බව පෙනේ. ගැඹුරු හුස්මක් ගැනීම මනස නිරවුල් කිරීමට උපකාරී වේ. ඔබ කෙටි භාවනාවක් කිරීමට කැමතිද?",
+              ? "Sorry, I ran into a problem. Please try again."
+              : "කණගාටුයි, දෝෂයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න.",
         });
         _isTyping = false;
       });
       _scrollToBottom();
-    });
+    }
   }
 
   void _scrollToBottom() {
@@ -101,6 +307,14 @@ class _ChatBotPageState extends State<ChatBotPage> {
             fontSize: 20,
           ),
         ),
+        actions: [
+          if (messages.isNotEmpty && !_isLoadingHistory)
+            IconButton(
+              icon: const Icon(Icons.add_comment_outlined, color: Colors.white),
+              tooltip: _currentLang == 'en' ? 'New Chat' : 'නව සංවාදය',
+              onPressed: _startNewChat,
+            ),
+        ],
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
       body: Column(
@@ -145,6 +359,26 @@ class _ChatBotPageState extends State<ChatBotPage> {
   }
 
   Widget _buildEmptyState(bool isMobile) {
+    if (_isInitializing || _isLoadingHistory) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppColors.primary),
+            const SizedBox(height: 24),
+            Text(
+              _currentLang == 'en' ? "Loading..." : "පූරණය වෙමින්...",
+              style: GoogleFonts.poppins(
+                fontSize: isMobile ? 16 : 18,
+                fontWeight: FontWeight.w500,
+                color: AppColors.text,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -228,14 +462,44 @@ class _ChatBotPageState extends State<ChatBotPage> {
                   ),
                 ],
               ),
-              child: Text(
-                text,
-                style: GoogleFonts.roboto(
-                  color: isUser ? Colors.white : AppColors.text,
-                  fontSize: isMobile ? 15 : 16,
-                  height: 1.4,
-                ),
-              ),
+              child: isUser
+                  ? Text(
+                      text,
+                      style: GoogleFonts.roboto(
+                        color: Colors.white,
+                        fontSize: isMobile ? 15 : 16,
+                        height: 1.4,
+                      ),
+                    )
+                  : MarkdownBody(
+                      data: text,
+                      styleSheet: MarkdownStyleSheet(
+                        p: GoogleFonts.roboto(
+                          color: AppColors.text,
+                          fontSize: isMobile ? 15 : 16,
+                          height: 1.4,
+                        ),
+                        strong: GoogleFonts.roboto(
+                          color: AppColors.text,
+                          fontSize: isMobile ? 15 : 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        em: GoogleFonts.roboto(
+                          color: AppColors.text,
+                          fontSize: isMobile ? 15 : 16,
+                          fontStyle: FontStyle.italic,
+                        ),
+                        code: GoogleFonts.robotoMono(
+                          backgroundColor: Colors.grey.shade100,
+                          color: AppColors.primary,
+                          fontSize: isMobile ? 14 : 15,
+                        ),
+                        listBullet: GoogleFonts.roboto(
+                          color: AppColors.text,
+                          fontSize: isMobile ? 15 : 16,
+                        ),
+                      ),
+                    ),
             ),
           ),
 

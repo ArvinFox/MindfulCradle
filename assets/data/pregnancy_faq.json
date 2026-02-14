@@ -1,0 +1,237 @@
+[
+	{
+		"question": "Is it normal to feel tired during the first trimester?",
+		"answer": "Yes, fatigue is very common during the first trimester due to hormonal changes, especially rising progesterone levels, and your body's increased energy demands. Your body is working hard to support the developing baby. Getting adequate rest, staying hydrated, eating balanced meals with protein and complex carbohydrates, and taking prenatal vitamins can help manage fatigue.",
+		"category": "first_trimester"
+	},
+	{
+		"question": "What foods should I avoid during pregnancy?",
+		"answer": "Avoid raw or undercooked meat, fish, and eggs; unpasteurized dairy products and juices; high-mercury fish like shark, swordfish, king mackerel, and tilefish; deli meats unless heated until steaming; raw sprouts; and excessive caffeine (limit to 200mg per day). Always wash fruits and vegetables thoroughly. These precautions help prevent foodborne illnesses that could harm your baby.",
+		"category": "nutrition"
+	},
+	{
+		"question": "When should I contact a doctor?",
+		"answer": "Contact your doctor immediately if you experience heavy bleeding, severe abdominal pain, persistent vomiting that prevents you from keeping food or water down, sudden severe headaches, vision changes, severe swelling of hands or face, high fever (over 100.4°F), reduced fetal movement after 28 weeks, or fluid leaking from the vagina. These could be signs of serious complications.",
+		"category": "warning_signs"
+	},
+	{
+		"question": "What are common first trimester symptoms?",
+		"answer": "Common first trimester symptoms include nausea and morning sickness, breast tenderness, frequent urination, fatigue, food aversions or cravings, mood swings, mild cramping, and light spotting. These symptoms are typically caused by hormonal changes and are usually normal, but always consult your healthcare provider if you have concerns.",
+		"category": "first_trimester"
+	},
+	{
+		"question": "How can I manage morning sickness?",
+		"answer": "To manage morning sickness, try eating small, frequent meals throughout the day; keep crackers by your bedside and eat a few before getting up; avoid strong smells and greasy or spicy foods; stay hydrated with small sips of water or ginger tea; try ginger candy or acupressure wristbands; and get plenty of rest. If vomiting is severe or you can't keep fluids down, contact your doctor.",
+		"category": "first_trimester"
+	},
+	{
+		"question": "What prenatal vitamins should I take?",
+		"answer": "Take a prenatal vitamin containing at least 400-800 mcg of folic acid, iron, calcium, vitamin D, DHA (omega-3), and other essential vitamins and minerals. Folic acid is especially important in early pregnancy to prevent neural tube defects. Start prenatal vitamins before conception if possible, or as soon as you know you're pregnant. Consult your doctor for specific recommendations based on your needs.",
+		"category": "nutrition"
+	},
+	{
+		"question": "Is exercise safe during pregnancy?",
+		"answer": "Yes, moderate exercise is generally safe and beneficial during pregnancy. Recommended activities include walking, swimming, prenatal yoga, and low-impact aerobics. Exercise can help reduce back pain, improve mood, maintain healthy weight gain, and prepare your body for labor. Avoid contact sports, activities with fall risk, and exercises lying flat on your back after the first trimester. Always consult your doctor before starting any exercise program.",
+		"category": "exercise"
+	},
+	{
+		"question": "How much weight should I gain during pregnancy?",
+		"answer": "Recommended weight gain depends on your pre-pregnancy BMI. Generally: underweight women should gain 28-40 lbs, normal weight women 25-35 lbs, overweight women 15-25 lbs, and obese women 11-20 lbs. For twins, gain 37-54 lbs (normal weight). Weight gain should be gradual, with most occurring in the second and third trimesters. Your healthcare provider will monitor your weight gain and provide personalized guidance.",
+		"category": "nutrition"
+	},
+	{
+		"question": "What changes happen in the second trimester?",
+		"answer": "The second trimester (weeks 13-27) often brings increased energy, reduced nausea, visible baby bump, and feeling the baby move (quickening) around 16-25 weeks. You may experience round ligament pain, nasal congestion, skin changes, and increased appetite. This is often called the 'honeymoon phase' of pregnancy as many uncomfortable first trimester symptoms subside.",
+		"category": "second_trimester"
+	},
+	{
+		"question": "When will I feel my baby move?",
+		"answer": "First-time mothers typically feel fetal movement (quickening) between 18-25 weeks, while experienced mothers may notice it as early as 16 weeks. Initial movements feel like flutters, gas bubbles, or gentle pokes. As pregnancy progresses, movements become stronger and more frequent. By 28 weeks, you should monitor fetal movement patterns; contact your doctor if you notice significant changes.",
+		"category": "second_trimester"
+	},
+	{
+		"question": "How can I deal with pregnancy back pain?",
+		"answer": "To manage back pain: maintain good posture, wear low-heeled supportive shoes, avoid heavy lifting, sleep on your side with a pillow between your knees, use a pregnancy support belt, practice prenatal yoga or gentle stretching, apply heat or cold packs, get prenatal massages, and do pelvic tilts. If pain is severe or sudden, consult your healthcare provider.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What are Braxton Hicks contractions?",
+		"answer": "Braxton Hicks are 'practice' contractions that can start in the second trimester but are more common in the third. They feel like tightening of the uterus, are irregular, don't increase in intensity or frequency, and usually stop with change in position or activity. True labor contractions are regular, increase in intensity, get closer together, and don't stop with movement. Contact your doctor if contractions are regular before 37 weeks.",
+		"category": "third_trimester"
+	},
+	{
+		"question": "What happens during the third trimester?",
+		"answer": "The third trimester (weeks 28-40) brings rapid baby growth, increased discomfort including back pain, heartburn, shortness of breath, and frequent urination. You may experience swelling in feet and ankles, difficulty sleeping, and Braxton Hicks contractions. Your baby will move into position for birth. Regular prenatal visits become more frequent to monitor you and baby's health.",
+		"category": "third_trimester"
+	},
+	{
+		"question": "How do I know if I'm in labor?",
+		"answer": "Signs of true labor include regular contractions that get stronger, longer, and closer together (typically 5-10 minutes apart); lower back pain and cramping; water breaking (amniotic fluid release); bloody show (mucus plug discharge with blood); and strong pressure in the pelvis. If you're unsure, contact your healthcare provider. Go to the hospital if contractions are 5 minutes apart for an hour, your water breaks, or you experience severe bleeding.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "What should I pack in my hospital bag?",
+		"answer": "Pack: insurance cards and ID, birth plan, comfortable clothes including a nursing-friendly outfit for going home, toiletries, phone charger, maternity pads, nursing bras, comfortable slippers, snacks for after delivery, baby clothes (newborn and 0-3 month sizes), car seat (required to leave hospital), receiving blankets, and any comfort items like music or photos. Pack by 36 weeks in case of early labor.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "What are the stages of labor?",
+		"answer": "Labor has three stages: Stage 1 (early, active, and transition phases) involves cervical dilation from 0-10 cm and can last 12-19 hours for first babies; Stage 2 is pushing and delivery, usually 20 minutes to 2 hours; Stage 3 is placenta delivery, typically 5-30 minutes. Each woman's experience varies. Your healthcare team will guide you through each stage.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "What pain relief options are available during labor?",
+		"answer": "Pain relief options include: breathing techniques and position changes; water therapy (shower or tub); massage and counter-pressure; epidural (most common medical option); spinal block; IV pain medication; nitrous oxide (laughing gas); and local anesthesia for episiotomy or stitching. Discuss your preferences with your healthcare provider beforehand, but remain flexible as circumstances may change.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "How long does postpartum recovery take?",
+		"answer": "Physical recovery takes 6-8 weeks, sometimes longer. Vaginal delivery typically has faster recovery than C-section. You'll experience vaginal bleeding (lochia) for 2-6 weeks, uterine contractions while breastfeeding, breast engorgement, fatigue, and hormonal changes. Emotional adjustment continues for months. Attend your postpartum check-up at 6 weeks. Full recovery, especially core strength and hormone balance, can take several months to a year.",
+		"category": "postpartum"
+	},
+	{
+		"question": "What is postpartum depression?",
+		"answer": "Postpartum depression (PPD) is depression occurring after childbirth, affecting 1 in 7 women. Symptoms include persistent sadness, anxiety, irritability, guilt, loss of interest in activities, changes in appetite or sleep, difficulty bonding with baby, and thoughts of harming yourself or baby. PPD is different from 'baby blues' (mild, short-lived mood changes). It's a medical condition requiring treatment. Contact your doctor immediately if you experience these symptoms.",
+		"category": "postpartum"
+	},
+	{
+		"question": "How can I manage postpartum bleeding?",
+		"answer": "Postpartum bleeding (lochia) is normal for 2-6 weeks after delivery. Use heavy-duty pads (not tampons) for the first few weeks. Flow will be heavy and red initially, then lighten and change to pink or brown. Change pads frequently to prevent infection. Call your doctor if you soak through a pad in an hour, pass large clots, have foul-smelling discharge, or experience fever, as these may indicate complications.",
+		"category": "postpartum"
+	},
+	{
+		"question": "When can I exercise after giving birth?",
+		"answer": "For uncomplicated vaginal delivery, gentle activities like walking can start within days. Wait until your 6-week postpartum check-up before resuming regular exercise. C-section recovery requires more time - typically 6-8 weeks before exercise. Start slowly with walking and pelvic floor exercises, gradually increasing intensity. Listen to your body, and get clearance from your healthcare provider before starting any exercise program.",
+		"category": "postpartum"
+	},
+	{
+		"question": "What are the benefits of breastfeeding?",
+		"answer": "Breastfeeding provides optimal nutrition for baby, antibodies for immune protection, easier digestion, and reduced risk of infections, SIDS, obesity, and chronic diseases. For mothers, benefits include faster uterine recovery, reduced postpartum bleeding, natural child spacing, lower risk of breast and ovarian cancer, and enhanced bonding. However, fed is best - if breastfeeding isn't possible, formula feeding is a healthy alternative.",
+		"category": "breastfeeding"
+	},
+	{
+		"question": "How do I know if my baby is getting enough breast milk?",
+		"answer": "Signs baby is getting enough milk: 6-8 wet diapers per day after the first week, regular bowel movements (frequency varies), steady weight gain, baby seems satisfied after feeding, your breasts feel softer after feeding, and you can hear swallowing during feeding. Newborns typically feed 8-12 times in 24 hours. Contact a lactation consultant if you're concerned about milk supply.",
+		"category": "breastfeeding"
+	},
+	{
+		"question": "What should I do if breastfeeding is painful?",
+		"answer": "Some tenderness is normal initially, but breastfeeding shouldn't be painful. Common causes of pain include improper latch, tongue tie, engorgement, blocked ducts, or infection (mastitis). To address: ensure proper latch, try different positions, apply warm compresses before feeding and cold after, express a little milk to soften breast, and keep nipples clean and dry. Consult a lactation consultant or doctor if pain persists.",
+		"category": "breastfeeding"
+	},
+	{
+		"question": "How often should a newborn eat?",
+		"answer": "Newborns typically eat 8-12 times per day (every 2-3 hours), including at night. Some babies feed more frequently during growth spurts. Breastfed babies often eat more frequently than formula-fed babies. Feed on demand, watching for hunger cues like rooting, hand-to-mouth movements, and fussiness. Wake your baby for feedings if they sleep longer than 4 hours in the first few weeks to ensure adequate nutrition and weight gain.",
+		"category": "newborn_care"
+	},
+	{
+		"question": "What is normal newborn sleep?",
+		"answer": "Newborns sleep 14-17 hours per day but in short periods (2-4 hours) since they need frequent feeding. They don't distinguish day from night initially. Sleep cycles are shorter than adults. By 3-4 months, many babies develop more regular patterns and can sleep longer stretches at night. Always place baby on their back to sleep on a firm surface without loose bedding to reduce SIDS risk.",
+		"category": "newborn_care"
+	},
+	{
+		"question": "How do I care for the umbilical cord stump?",
+		"answer": "Keep the cord stump clean and dry. Fold diapers below the stump to prevent urine contact. Give sponge baths until the stump falls off (usually 1-3 weeks). Don't pull the stump off - let it fall naturally. A small amount of bleeding when it falls off is normal. Contact your doctor if you notice redness around the base, swelling, pus, foul odor, or if baby cries when you touch the area.",
+		"category": "newborn_care"
+	},
+	{
+		"question": "When should I call the pediatrician about my newborn?",
+		"answer": "Call if baby has: fever over 100.4°F rectally, difficulty breathing or bluish skin, persistent vomiting or diarrhea, fewer than 6 wet diapers per day after one week, yellow skin or eyes (jaundice), extreme fussiness or lethargy, not eating well, or anything that concerns you. Trust your instincts - it's better to call and be reassured than to wait when something could be wrong.",
+		"category": "newborn_care"
+	},
+	{
+		"question": "Is it safe to sleep on my back during pregnancy?",
+		"answer": "After the first trimester (around 20 weeks), it's best to avoid sleeping flat on your back for extended periods. The weight of the growing uterus can compress the vena cava (major vein), reducing blood flow to you and baby. Sleep on your left side (optimal for circulation) or right side, using pillows for support. If you wake up on your back, simply shift to your side - occasional back sleeping won't harm your baby.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "Can I travel during pregnancy?",
+		"answer": "Travel is generally safe during pregnancy, with the second trimester (14-28 weeks) being the ideal time. Avoid travel after 36 weeks or if you have complications. When traveling: stay hydrated, move around frequently, wear comfortable clothes and compression stockings, have medical records accessible, research healthcare facilities at your destination, and consult your doctor beforehand. Some airlines have restrictions for pregnant passengers after 36 weeks.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "What medications are safe during pregnancy?",
+		"answer": "Generally safe medications include: acetaminophen (Tylenol) for pain and fever, certain antihistamines for allergies, and some antacids for heartburn. Avoid ibuprofen (Advil) and aspirin unless prescribed by your doctor. Always consult your healthcare provider before taking any medication, including over-the-counter drugs, supplements, and herbal remedies. Many common medications can affect fetal development, especially in the first trimester.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "How can I reduce pregnancy heartburn?",
+		"answer": "To reduce heartburn: eat small, frequent meals; avoid trigger foods (spicy, fatty, acidic, caffeine); don't eat close to bedtime; stay upright after eating; elevate your head while sleeping; wear loose clothing; drink fluids between meals rather than with meals; and chew gum to stimulate saliva production. Safe antacids include calcium carbonate (Tums). If heartburn is severe, consult your doctor about prescription medications safe for pregnancy.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes pregnancy leg cramps and how can I prevent them?",
+		"answer": "Leg cramps, especially at night, are common due to weight changes, circulation changes, and mineral imbalances. To prevent: stretch calf muscles before bed, stay hydrated, maintain adequate calcium and magnesium intake, avoid sitting or standing for long periods, wear supportive shoes, and apply heat to cramped muscles. When a cramp occurs, flex your foot upward and massage the muscle. If cramps are severe or frequent, consult your doctor.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "Is it normal to have mood swings during pregnancy?",
+		"answer": "Yes, mood swings are very common during pregnancy due to hormonal changes, physical discomfort, and the emotional aspects of impending parenthood. You may feel excited one moment and anxious or tearful the next. These are normal. However, if you experience persistent sadness, anxiety that interferes with daily life, or thoughts of harming yourself, contact your healthcare provider immediately as these may indicate prenatal depression or anxiety disorders requiring treatment.",
+		"category": "mental_health"
+	},
+	{
+		"question": "How can I manage pregnancy anxiety?",
+		"answer": "To manage anxiety: practice relaxation techniques like deep breathing and meditation, exercise regularly, maintain a healthy sleep routine, talk about your concerns with your partner or friends, join a pregnancy support group, limit caffeine, stay informed but avoid excessive googling of symptoms, and focus on what you can control. If anxiety is overwhelming or interferes with daily life, seek help from a mental health professional experienced in perinatal mental health.",
+		"category": "mental_health"
+	},
+	{
+		"question": "What prenatal tests are typically recommended?",
+		"answer": "Common prenatal tests include: blood tests for blood type, Rh factor, anemia, and infections; ultrasounds (dating scan at 8-12 weeks, anatomy scan at 18-22 weeks); glucose screening for gestational diabetes (24-28 weeks); Group B strep screening (35-37 weeks); and optional genetic screening tests like NIPT, first trimester screening, or amniocentesis if indicated. Your healthcare provider will recommend tests based on your health history and risk factors.",
+		"category": "prenatal_care"
+	},
+	{
+		"question": "What is a high-risk pregnancy?",
+		"answer": "A high-risk pregnancy has increased potential for complications due to factors like: maternal age (under 17 or over 35), pre-existing conditions (diabetes, high blood pressure, autoimmune disorders), pregnancy complications (preeclampsia, placenta previa, multiples), lifestyle factors (smoking, alcohol), or previous pregnancy complications. High-risk doesn't mean problems will occur, but requires closer monitoring by specialists (maternal-fetal medicine doctors) and more frequent appointments.",
+		"category": "prenatal_care"
+	},
+	{
+		"question": "What is gestational diabetes?",
+		"answer": "Gestational diabetes is diabetes that develops during pregnancy, usually around 24-28 weeks. It occurs when your body can't produce enough insulin to meet increased needs during pregnancy, causing high blood sugar. Most women manage it through diet, exercise, and blood sugar monitoring; some need insulin. It usually resolves after delivery but increases risk for type 2 diabetes later. Uncontrolled gestational diabetes can cause large babies, early delivery, and low blood sugar in newborns.",
+		"category": "pregnancy_complications"
+	},
+	{
+		"question": "What is preeclampsia?",
+		"answer": "Preeclampsia is a serious pregnancy complication characterized by high blood pressure and protein in urine after 20 weeks. Warning signs include: severe headaches, vision changes, upper abdominal pain, sudden weight gain, and severe swelling. Risk factors include first pregnancy, previous preeclampsia, chronic hypertension, obesity, diabetes, and multiples. It requires immediate medical attention as it can progress to seizures (eclampsia). Treatment may include blood pressure medication, bed rest, or early delivery depending on severity.",
+		"category": "pregnancy_complications"
+	},
+	{
+		"question": "What is a C-section and when is it necessary?",
+		"answer": "A cesarean section (C-section) is surgical delivery through incisions in the abdomen and uterus. It may be planned (for breech baby, placenta previa, multiples, previous C-section) or emergency (for fetal distress, labor not progressing, cord prolapse). Recovery takes longer than vaginal delivery (6-8 weeks), with restrictions on lifting and driving. While major surgery, C-sections are safe and sometimes necessary. Discuss risks and benefits with your healthcare provider.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "Can I have a vaginal birth after cesarean (VBAC)?",
+		"answer": "Many women can safely have a vaginal birth after cesarean (VBAC), with 60-80% success rate. Factors affecting VBAC candidacy include: reason for previous C-section, type of uterine incision, number of previous C-sections, and current pregnancy conditions. Benefits include shorter recovery, lower infection risk, and avoiding repeated surgery. Risks include uterine rupture (rare but serious). Discuss with your healthcare provider to determine if VBAC is right for you.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "How do I create a birth plan?",
+		"answer": "A birth plan outlines your preferences for labor and delivery, including: pain management options, labor positions, who will be present, interventions you prefer to avoid if possible, newborn care preferences (skin-to-skin, delayed cord clamping, breastfeeding), and cultural or religious practices. Keep it brief and flexible. Discuss with your healthcare provider beforehand. Remember, plans may change based on circumstances, and the priority is a safe delivery for you and baby.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "What is the difference between baby blues and postpartum depression?",
+		"answer": "Baby blues affect 70-80% of new mothers, starting 2-3 days postpartum and lasting up to 2 weeks. Symptoms include mood swings, crying, anxiety, and difficulty sleeping, but don't interfere significantly with daily functioning. Postpartum depression (PPD) affects 10-15% of mothers, can start anytime in the first year, lasts weeks to months without treatment, and includes severe sadness, hopelessness, difficulty bonding with baby, and impacts daily functioning. PPD requires professional treatment.",
+		"category": "postpartum"
+	},
+	{
+		"question": "How can my partner support me during pregnancy?",
+		"answer": "Partners can support by: attending prenatal appointments, learning about pregnancy and childbirth together, helping with household tasks, being patient with mood swings and discomforts, preparing for baby's arrival together, being emotionally supportive and listening without judgment, taking over tasks that are difficult or risky during pregnancy, attending childbirth and parenting classes, and being involved in decision-making. Communication about needs and expectations is essential.",
+		"category": "partner_support"
+	},
+	{
+		"question": "When should I start preparing the nursery?",
+		"answer": "Most parents start preparing the nursery in the second trimester (around 20-28 weeks) after hearing good news from anatomy scans and having more energy. This gives time to purchase items, assemble furniture, and organize without rushing. Essential items include: safe sleep space (crib/bassinet), changing area, clothes storage, and basic supplies (diapers, wipes, clothes). Have the basics ready by 36 weeks in case of early delivery.",
+		"category": "preparation"
+	},
+	{
+		"question": "What are the signs of premature labor?",
+		"answer": "Signs of premature labor (before 37 weeks) include: regular contractions (6+ per hour), menstrual-like cramps, low back pressure or pain, pelvic pressure, abdominal cramping with or without diarrhea, increase in vaginal discharge, or leaking fluid. Contact your healthcare provider immediately if you experience these symptoms before 37 weeks. Early recognition and treatment can sometimes delay delivery, giving baby more time to develop.",
+		"category": "warning_signs"
+	},
+	{
+		"question": "What is the mucus plug and bloody show?",
+		"answer": "The mucus plug seals the cervical opening during pregnancy. As your cervix begins to dilate and soften before labor, this plug is expelled - this is 'bloody show' when mixed with blood. It can appear as thick mucus that's clear, pink, or blood-tinged. You may lose it all at once or gradually over days. Bloody show can occur weeks before labor or just hours before. Contact your doctor if you have heavy bleeding (more than a tablespoon) which could indicate a problem.",
+		"category": "labor_delivery"
+	}
+]

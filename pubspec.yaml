@@ -25,6 +25,9 @@ dependencies:
   marquee: ^2.3.0
   intl: ^0.19.0
   path_provider: ^2.1.4
+  http: ^1.2.0
+  flutter_dotenv: ^5.1.0
+  flutter_markdown: ^0.7.4+1
 
 dev_dependencies:
   flutter_test:
@@ -34,8 +37,10 @@ dev_dependencies:
 
 flutter:
   assets:
+    - .env
     - assets/login/
     - assets/video_player/
+    - assets/data/
     - languages/
 
   uses-material-design: true

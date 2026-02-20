@@ -318,7 +318,7 @@ class AuthProvider with ChangeNotifier {
     return rowsToCsv(rows);
   }
 
-  /// Export user data as rows for preview
+  /// Export user data as rows for preview - Secure version with custom field names
   Future<List<List<String>>?> exportUserDataRows({
     String langCode = 'en',
   }) async {
@@ -331,42 +331,24 @@ class AuthProvider with ChangeNotifier {
       final userDoc = _firestore.collection('users').doc(userId);
 
       final rows = <List<String>>[];
-      rows.add(['Section', 'Record', 'Field', 'Value']);
 
-      // Export metadata
-      rows.add([
-        'Meta',
-        'export',
-        'export_date',
-        DateTime.now().toIso8601String(),
-      ]);
+      // Use user-friendly headers instead of database structure
+      final header = langCode == 'si'
+          ? ['දත්ත වර්ගය', 'අගය']
+          : ['Data Type', 'Value'];
+      rows.add(header);
 
-      // User profile
-      _addMapToRows(rows, 'Profile', 'user', _user!.toMap());
+      final exportLabel = langCode == 'si' ? 'අපනයනය කළ දිනය' : 'Export Date';
+      rows.add([exportLabel, DateTime.now().toIso8601String().split('T')[0]]);
 
-      // dass21 responses
-      final dass21Snapshot = await userDoc.collection('dass21_responses').get();
-      for (final doc in dass21Snapshot.docs) {
-        _addMapToRows(rows, 'DASS21', doc.id, doc.data());
-      }
+      // Export only safe, user-friendly profile data
+      _addSafeProfileData(rows, langCode);
 
-      // pws18 responses
-      final pws18Snapshot = await userDoc.collection('pws18_responses').get();
-      for (final doc in pws18Snapshot.docs) {
-        _addMapToRows(rows, 'PWS18', doc.id, doc.data());
-      }
+      // Export questionnaire summaries (NOT raw responses)
+      await _addQuestionnaireSummaries(rows, userDoc, langCode);
 
-      // maas responses
-      final maasSnapshot = await userDoc.collection('maas_responses').get();
-      for (final doc in maasSnapshot.docs) {
-        _addMapToRows(rows, 'MAAS', doc.id, doc.data());
-      }
-
-      // video progress
-      final videoSnapshot = await userDoc.collection('videoProgress').get();
-      for (final doc in videoSnapshot.docs) {
-        _addMapToRows(rows, 'VideoProgress', doc.id, doc.data());
-      }
+      // Export wellness activity count (NOT detailed video progress)
+      await _addActivitySummary(rows, userDoc, langCode);
 
       return rows;
     } catch (e) {
@@ -375,23 +357,125 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Add only safe profile fields with custom names
+  void _addSafeProfileData(List<List<String>> rows, String langCode) {
+    // Map of database field -> user-friendly name
+    final fieldMap = {
+      'name': langCode == 'si' ? 'නම' : 'Name',
+      'email': langCode == 'si' ? 'විද්‍යුත් තැපෑල' : 'Email',
+      'age': langCode == 'si' ? 'වයස' : 'Age',
+      'pregnancyWeek': langCode == 'si' ? 'ගැබ් සති' : 'Pregnancy Week',
+      'language': langCode == 'si' ? 'භාෂාව' : 'Language Preference',
+      'createdAt': langCode == 'si' ? 'ගිණුම සාදන ලද දිනය' : 'Account Created',
+    };
+
+    // Only export whitelisted fields
+    final userData = _user!.toMap();
+    for (final entry in fieldMap.entries) {
+      if (userData.containsKey(entry.key)) {
+        var value = userData[entry.key];
+
+        // Format dates nicely
+        if (value is Timestamp) {
+          value = value.toDate().toIso8601String().split('T')[0];
+        } else if (entry.key == 'language') {
+          value = value == 'si' ? 'Sinhala (සිංහල)' : 'English';
+        }
+
+        rows.add([entry.value, value.toString()]);
+      }
+    }
+
+    // Add achievements count
+    final achievementsLabel = langCode == 'si'
+        ? 'අගුළු හැරූ ජයග්‍රහණ'
+        : 'Unlocked Achievements';
+    rows.add([achievementsLabel, '${_user!.achievements.length}']);
+
+    // Add total app usage time in minutes
+    final totalMinutes = (_user!.totalSessionTime / 60).round();
+    final appTimeLabel = langCode == 'si'
+        ? 'මුළු යෙදුම භාවිතා කාලය (මිනිත්තු)'
+        : 'Total App Usage Time (minutes)';
+    rows.add([appTimeLabel, '$totalMinutes']);
+  }
+
+  /// Add questionnaire summaries instead of raw responses
+  Future<void> _addQuestionnaireSummaries(
+    List<List<String>> rows,
+    DocumentReference userDoc,
+    String langCode,
+  ) async {
+    // DASS-21 Summary
+    final dass21Snapshot = await userDoc.collection('dass21_responses').get();
+    if (dass21Snapshot.docs.isNotEmpty) {
+      final label = langCode == 'si'
+          ? 'DASS-21 මනෝ සෞඛ්‍ය මිනුම් සංඛ්‍යාව'
+          : 'DASS-21 Mental Health Assessments';
+      rows.add([label, '${dass21Snapshot.docs.length}']);
+
+      final lastLabel = langCode == 'si' ? 'අවසන් ඇගයීම' : 'Last Assessment';
+      final lastDoc = dass21Snapshot.docs.last;
+      final timestamp = lastDoc.data()['timestamp'] as Timestamp?;
+      if (timestamp != null) {
+        rows.add([
+          lastLabel,
+          timestamp.toDate().toIso8601String().split('T')[0],
+        ]);
+      }
+    }
+
+    // PWS-18 Summary
+    final pws18Snapshot = await userDoc.collection('pws18_responses').get();
+    if (pws18Snapshot.docs.isNotEmpty) {
+      final label = langCode == 'si'
+          ? 'PWS-18 ගැබ් සතුට මිනුම් සංඛ්‍යාව'
+          : 'PWS-18 Pregnancy Wellbeing Assessments';
+      rows.add([label, '${pws18Snapshot.docs.length}']);
+    }
+
+    // MAAS Summary
+    final maasSnapshot = await userDoc.collection('maas_responses').get();
+    if (maasSnapshot.docs.isNotEmpty) {
+      final label = langCode == 'si'
+          ? 'MAAS සතිය මිනුම් සංඛ්‍යාව'
+          : 'MAAS Mindfulness Assessments';
+      rows.add([label, '${maasSnapshot.docs.length}']);
+    }
+  }
+
+  /// Add video watch summary
+  Future<void> _addActivitySummary(
+    List<List<String>> rows,
+    DocumentReference userDoc,
+    String langCode,
+  ) async {
+    final videoSnapshot = await userDoc.collection('videoProgress').get();
+
+    if (videoSnapshot.docs.isNotEmpty) {
+      // Number of meditation videos watched
+      final videosLabel = langCode == 'si'
+          ? 'නරඹන ලද භාවනා වීඩියෝ'
+          : 'Meditation Videos Watched';
+      rows.add([videosLabel, '${videoSnapshot.docs.length}']);
+
+      // Calculate total video watch time in minutes
+      int totalSeconds = 0;
+      for (final doc in videoSnapshot.docs) {
+        totalSeconds += (doc.data()['watchedSeconds'] ?? 0) as int;
+      }
+      final totalMinutes = (totalSeconds / 60).round();
+
+      final timeLabel = langCode == 'si'
+          ? 'වීඩියෝ නැරඹීමේ කාලය (මිනිත්තු)'
+          : 'Video Watch Time (minutes)';
+      rows.add([timeLabel, '$totalMinutes']);
+    }
+  }
+
   String rowsToCsv(List<List<String>> rows) {
     final lines = rows.map((row) => row.map(_csvEscape).join(',')).toList();
     return lines.join('\n');
-  }
-
-  void _addMapToRows(
-    List<List<String>> rows,
-    String section,
-    String recordId,
-    Map<String, dynamic> data,
-  ) {
-    for (final entry in data.entries) {
-      final value = entry.value is Map || entry.value is List
-          ? entry.value.toString()
-          : entry.value;
-      rows.add([section, recordId, entry.key, value.toString()]);
-    }
   }
 
   String _csvEscape(Object? value) {

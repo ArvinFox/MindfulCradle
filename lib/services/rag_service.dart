@@ -83,6 +83,90 @@ class RagService {
     }
   }
 
+  /// Streams the answer in real-time chunks for a more responsive UI
+  Stream<String> answerStream(String query, {String? languageHint}) async* {
+    if (!_initialized) {
+      await initialize();
+    }
+
+    if (_faqs.isEmpty) {
+      yield 'Sorry, I do not have enough information to answer that.';
+      return;
+    }
+
+    // Build context from all FAQs
+    final String context = _faqs
+        .map(
+          (doc) =>
+              'Q: ${doc.question}\nA: ${doc.answer}\nCategory: ${doc.category}',
+        )
+        .join('\n\n');
+
+    final String prompt = _buildPrompt(
+      query: query,
+      context: context,
+      languageHint: languageHint,
+    );
+
+    try {
+      final request = http.Request(
+        'POST',
+        Uri.parse(
+          '$_baseUrl/gemini-3-flash-preview:streamGenerateContent?alt=sse&key=$apiKey',
+        ),
+      );
+      request.headers['Content-Type'] = 'application/json';
+      request.body = jsonEncode({
+        'contents': [
+          {
+            'parts': [
+              {'text': prompt},
+            ],
+          },
+        ],
+      });
+
+      final streamedResponse = await request.send();
+
+      if (streamedResponse.statusCode == 200) {
+        await for (final chunk in streamedResponse.stream.transform(
+          utf8.decoder,
+        )) {
+          // Parse Server-Sent Events (SSE) format
+          final lines = chunk.split('\n');
+          for (final line in lines) {
+            if (line.startsWith('data: ')) {
+              final jsonData = line.substring(6); // Remove 'data: ' prefix
+              try {
+                final data = jsonDecode(jsonData);
+                final text =
+                    data['candidates']?[0]?['content']?['parts']?[0]?['text'];
+                if (text != null && text.isNotEmpty) {
+                  yield text;
+                }
+              } catch (e) {
+                // Skip malformed JSON chunks
+                continue;
+              }
+            }
+          }
+        }
+      } else {
+        final errorBody = await streamedResponse.stream.bytesToString();
+        try {
+          final error = jsonDecode(errorBody);
+          final errorMessage = error['error']?['message'] ?? 'Unknown error';
+          yield 'API Error: $errorMessage';
+        } catch (_) {
+          yield 'API Error: ${streamedResponse.statusCode}';
+        }
+      }
+    } catch (e) {
+      print('RAG Streaming Error: $e');
+      yield 'Connection error. Please check your internet and try again.';
+    }
+  }
+
   List<RagDocument> _parseFaq(String jsonText) {
     final List<dynamic> data = jsonDecode(jsonText) as List<dynamic>;
     return data

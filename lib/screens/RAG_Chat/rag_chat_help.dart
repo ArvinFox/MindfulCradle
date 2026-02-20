@@ -31,6 +31,11 @@ class _ChatBotPageState extends State<ChatBotPage> {
   Future<void>? _ragInitFuture;
   String? _ragInitError;
 
+  // Streaming state
+  bool _isStreaming = false;
+  String _streamingText = '';
+  int _streamingMessageIndex = -1;
+
   @override
   void initState() {
     super.initState();
@@ -211,6 +216,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
     setState(() {
       messages.add(userMsg);
       _isTyping = true;
+      _isStreaming = false;
+      _streamingText = '';
     });
 
     _controller.clear();
@@ -244,20 +251,58 @@ class _ChatBotPageState extends State<ChatBotPage> {
     }
 
     try {
-      final String reply = await service.answer(
+      // Use streaming for a responsive live experience
+      bool isFirstChunk = true;
+      final fullResponseBuffer = StringBuffer();
+
+      await for (final chunk in service.answerStream(
         text,
         languageHint: _currentLang == 'en' ? 'English' : 'Sinhala',
-      );
+      )) {
+        if (!mounted) return;
+
+        fullResponseBuffer.write(chunk);
+        final currentText = fullResponseBuffer.toString();
+
+        if (isFirstChunk) {
+          // First chunk received - switch from "thinking" to "streaming"
+          isFirstChunk = false;
+          setState(() {
+            _isTyping = false;
+            _isStreaming = true;
+            _streamingText = currentText;
+            _streamingMessageIndex = messages.length;
+            // Add initial message
+            messages = List.from(messages)
+              ..add({"role": "bot", "text": currentText});
+          });
+        } else {
+          // Update the streaming message - create new list to trigger rebuild
+          setState(() {
+            _streamingText = currentText;
+            messages = List.from(messages)
+              ..[_streamingMessageIndex] = {"role": "bot", "text": currentText};
+          });
+        }
+
+        _scrollToBottom();
+      }
+
+      // Stream complete - finalize the message
       if (!mounted) return;
-      final botMsg = {"role": "bot", "text": reply};
+      final finalText = fullResponseBuffer.toString();
       setState(() {
-        messages.add(botMsg);
-        _isTyping = false;
+        _isStreaming = false;
+        _streamingText = '';
+        messages = List.from(messages)
+          ..[_streamingMessageIndex] = {"role": "bot", "text": finalText};
+        _streamingMessageIndex = -1;
       });
+
       _scrollToBottom();
 
       // Save bot response
-      await _saveMessageToHistory(botMsg['role']!, botMsg['text']!);
+      await _saveMessageToHistory("bot", finalText);
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -268,6 +313,9 @@ class _ChatBotPageState extends State<ChatBotPage> {
               : "කණගාටුයි, දෝෂයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න.",
         });
         _isTyping = false;
+        _isStreaming = false;
+        _streamingText = '';
+        _streamingMessageIndex = -1;
       });
       _scrollToBottom();
     }
@@ -278,8 +326,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 400),
-          curve: Curves.easeOutQuad,
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOut,
         );
       }
     });
@@ -346,7 +394,15 @@ class _ChatBotPageState extends State<ChatBotPage> {
                       }
                       final msg = messages[index];
                       final isUser = msg["role"] == "user";
-                      return _buildChatBubble(msg["text"]!, isUser, isMobile);
+                      // Show cursor animation for streaming message
+                      final isStreamingMsg =
+                          _isStreaming && index == _streamingMessageIndex;
+                      return _buildChatBubble(
+                        msg["text"]!,
+                        isUser,
+                        isMobile,
+                        isStreaming: isStreamingMsg,
+                      );
                     },
                   ),
           ),
@@ -386,7 +442,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
+              color: AppColors.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -421,7 +477,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
     );
   }
 
-  Widget _buildChatBubble(String text, bool isUser, bool isMobile) {
+  Widget _buildChatBubble(
+    String text,
+    bool isUser,
+    bool isMobile, {
+    bool isStreaming = false,
+  }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -432,7 +493,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
         children: [
           if (!isUser) ...[
             CircleAvatar(
-              backgroundColor: AppColors.primary.withOpacity(0.1),
+              backgroundColor: AppColors.primary.withValues(alpha: 0.1),
               radius: 16,
               child: Icon(
                 Icons.smart_toy_outlined,
@@ -456,7 +517,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
                 ),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 5,
                     offset: const Offset(0, 2),
                   ),
@@ -471,34 +532,47 @@ class _ChatBotPageState extends State<ChatBotPage> {
                         height: 1.4,
                       ),
                     )
-                  : MarkdownBody(
-                      data: text,
-                      styleSheet: MarkdownStyleSheet(
-                        p: GoogleFonts.roboto(
-                          color: AppColors.text,
-                          fontSize: isMobile ? 15 : 16,
-                          height: 1.4,
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Flexible(
+                          child: MarkdownBody(
+                            data: text,
+                            styleSheet: MarkdownStyleSheet(
+                              p: GoogleFonts.roboto(
+                                color: AppColors.text,
+                                fontSize: isMobile ? 15 : 16,
+                                height: 1.4,
+                              ),
+                              strong: GoogleFonts.roboto(
+                                color: AppColors.text,
+                                fontSize: isMobile ? 15 : 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              em: GoogleFonts.roboto(
+                                color: AppColors.text,
+                                fontSize: isMobile ? 15 : 16,
+                                fontStyle: FontStyle.italic,
+                              ),
+                              code: GoogleFonts.robotoMono(
+                                backgroundColor: Colors.grey.shade100,
+                                color: AppColors.primary,
+                                fontSize: isMobile ? 14 : 15,
+                              ),
+                              listBullet: GoogleFonts.roboto(
+                                color: AppColors.text,
+                                fontSize: isMobile ? 15 : 16,
+                              ),
+                            ),
+                          ),
                         ),
-                        strong: GoogleFonts.roboto(
-                          color: AppColors.text,
-                          fontSize: isMobile ? 15 : 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                        em: GoogleFonts.roboto(
-                          color: AppColors.text,
-                          fontSize: isMobile ? 15 : 16,
-                          fontStyle: FontStyle.italic,
-                        ),
-                        code: GoogleFonts.robotoMono(
-                          backgroundColor: Colors.grey.shade100,
-                          color: AppColors.primary,
-                          fontSize: isMobile ? 14 : 15,
-                        ),
-                        listBullet: GoogleFonts.roboto(
-                          color: AppColors.text,
-                          fontSize: isMobile ? 15 : 16,
-                        ),
-                      ),
+                        // Show cursor animation while streaming
+                        if (isStreaming) ...[
+                          const SizedBox(width: 4),
+                          const _StreamingCursor(),
+                        ],
+                      ],
                     ),
             ),
           ),
@@ -523,7 +597,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           CircleAvatar(
-            backgroundColor: AppColors.primary.withOpacity(0.1),
+            backgroundColor: AppColors.primary.withValues(alpha: 0.1),
             radius: 16,
             child: Icon(
               Icons.smart_toy_outlined,
@@ -544,7 +618,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 5,
                   offset: const Offset(0, 2),
                 ),
@@ -586,7 +660,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.08),
+            color: Colors.black.withValues(alpha: 0.08),
             blurRadius: 10,
             offset: const Offset(0, -5),
           ),
@@ -639,6 +713,49 @@ class _ChatBotPageState extends State<ChatBotPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Animated cursor widget shown while text is streaming
+class _StreamingCursor extends StatefulWidget {
+  const _StreamingCursor();
+
+  @override
+  State<_StreamingCursor> createState() => _StreamingCursorState();
+}
+
+class _StreamingCursorState extends State<_StreamingCursor>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      duration: const Duration(milliseconds: 530),
+      vsync: this,
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: _controller,
+      child: Container(
+        width: 2,
+        height: 16,
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(1),
+        ),
       ),
     );
   }

@@ -13,6 +13,7 @@ import 'providers/connectivity_provider.dart';
 import 'providers/video_provider.dart';
 import 'providers/achievement_provider.dart';
 import 'services/localization_service.dart';
+import 'services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,6 +39,15 @@ void main() async {
     if (kDebugMode) debugPrint("Translations loaded successfully.");
   } catch (e) {
     if (kDebugMode) debugPrint("Translations loading error: $e");
+  }
+
+  // Initialize notification service
+  try {
+    if (kDebugMode) debugPrint("Initializing notifications...");
+    await NotificationService().initialize();
+    if (kDebugMode) debugPrint("Notifications initialized successfully.");
+  } catch (e) {
+    if (kDebugMode) debugPrint("Notifications initialization error: $e");
   }
 
   runApp(

@@ -281,14 +281,14 @@ class _ChatBotPageState extends State<ChatBotPage> {
     if (_currentSessionId == null) {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.user?.id;
-      
+
       if (userId != null) {
         try {
           _currentSessionId = await _chatHistoryService.createChatSession(
             userId: userId,
           );
           _isNewSession = true;
-          
+
           // Save welcome message first (if exists)
           if (messages.length > 1 && messages[0]['role'] == 'bot') {
             await _chatHistoryService.saveMessage(

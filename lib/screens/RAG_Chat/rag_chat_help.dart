@@ -10,6 +10,8 @@ import 'package:mamamind/services/chat_history_service.dart';
 import '../../constants/colors.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../utils/translate.dart';
+import 'chat_history_screen.dart';
 
 class ChatBotPage extends StatefulWidget {
   const ChatBotPage({super.key});
@@ -31,9 +33,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
   Future<void>? _ragInitFuture;
   String? _ragInitError;
 
+  // Chat session management
+  String? _currentSessionId;
+  bool _isNewSession = true;
+
   // Streaming state
   bool _isStreaming = false;
-  String _streamingText = '';
   int _streamingMessageIndex = -1;
 
   @override
@@ -44,11 +49,11 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
   Future<void> _initializeChat() async {
     await _initRagService();
-    await _loadChatHistory();
 
-    // Add welcome message if no history
+    // Add welcome message in-memory only (no Firebase save yet)
     if (mounted && _ragInitError == null && messages.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
         final lang = Provider.of<LanguageProvider>(
           context,
           listen: false,
@@ -61,13 +66,17 @@ class _ChatBotPageState extends State<ChatBotPage> {
         };
         setState(() {
           messages.add(welcomeMsg);
+          _isLoadingHistory = false;
         });
-        _saveMessageToHistory(welcomeMsg['role']!, welcomeMsg['text']!);
+      });
+    } else {
+      setState(() {
+        _isLoadingHistory = false;
       });
     }
   }
 
-  Future<void> _loadChatHistory() async {
+  Future<void> _loadOrCreateSession({String? sessionId}) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.id;
 
@@ -78,12 +87,37 @@ class _ChatBotPageState extends State<ChatBotPage> {
       return;
     }
 
-    final history = await _chatHistoryService.loadChatHistory(userId);
-    if (mounted) {
-      setState(() {
-        messages = history;
-        _isLoadingHistory = false;
-      });
+    if (sessionId != null) {
+      // Load existing session
+      _currentSessionId = sessionId;
+      _isNewSession = false;
+      final history = await _chatHistoryService.loadChatSession(
+        userId: userId,
+        sessionId: sessionId,
+      );
+      if (mounted) {
+        setState(() {
+          messages = history;
+          _isLoadingHistory = false;
+        });
+      }
+    } else {
+      // Create new session
+      try {
+        _currentSessionId = await _chatHistoryService.createChatSession(
+          userId: userId,
+        );
+        _isNewSession = true;
+        setState(() {
+          messages = [];
+          _isLoadingHistory = false;
+        });
+      } catch (e) {
+        print('Error creating session: $e');
+        setState(() {
+          _isLoadingHistory = false;
+        });
+      }
     }
   }
 
@@ -91,19 +125,28 @@ class _ChatBotPageState extends State<ChatBotPage> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.id;
 
-    if (userId != null) {
+    if (userId != null && _currentSessionId != null) {
       await _chatHistoryService.saveMessage(
         userId: userId,
+        sessionId: _currentSessionId!,
         role: role,
         text: text,
       );
+
+      // Update session title with first user message
+      if (_isNewSession && role == 'user') {
+        final title = _chatHistoryService.generateTitleFromMessage(text);
+        await _chatHistoryService.updateSessionTitle(
+          userId: userId,
+          sessionId: _currentSessionId!,
+          title: title,
+        );
+        _isNewSession = false;
+      }
     }
   }
 
   Future<void> _startNewChat() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userId = authProvider.user?.id;
-
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -115,8 +158,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
         ),
         content: Text(
           _currentLang == 'en'
-              ? 'This will clear your current chat history.'
-              : 'මෙය ඔබේ වත්මන් සංවාද ඉතිහාසය මකා දමයි.',
+              ? 'This will start a fresh conversation. Your current chat will be saved.'
+              : 'මෙය නව සංවාදයක් ආරම්භ කරයි. ඔබේ වත්මන් චැට් එක සුරකිනු ලැබේ.',
           style: GoogleFonts.roboto(),
         ),
         actions: [
@@ -134,12 +177,28 @@ class _ChatBotPageState extends State<ChatBotPage> {
       ),
     );
 
-    if (confirmed == true && userId != null) {
-      await _chatHistoryService.clearChatHistory(userId);
+    if (confirmed == true) {
       setState(() {
         messages.clear();
+        _currentSessionId = null;
+        _isNewSession = true;
+        _isLoadingHistory = true;
       });
-      await _initializeChat();
+      await _initializeChat(); // Adds welcome message (in-memory only)
+    }
+  }
+
+  Future<void> _viewChatHistory() async {
+    final selectedSessionId = await Navigator.push<String>(
+      context,
+      MaterialPageRoute(builder: (_) => const ChatHistoryScreen()),
+    );
+
+    if (selectedSessionId != null && selectedSessionId != _currentSessionId) {
+      setState(() {
+        _isLoadingHistory = true;
+      });
+      await _loadOrCreateSession(sessionId: selectedSessionId);
     }
   }
 
@@ -196,11 +255,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            _currentLang == 'en'
-                ? 'API key missing. Please check your .env file.'
-                : 'API යතුර අස්ථානගත වී ඇත. කරුණාකර ඔබේ .env ගොනුව පරීක්ෂා කරන්න.',
-          ),
+          content: Text(context.t.chat('apiKeyMissing')),
           duration: const Duration(seconds: 4),
           backgroundColor: Colors.red.shade600,
         ),
@@ -217,11 +272,37 @@ class _ChatBotPageState extends State<ChatBotPage> {
       messages.add(userMsg);
       _isTyping = true;
       _isStreaming = false;
-      _streamingText = '';
     });
 
     _controller.clear();
     _scrollToBottom();
+
+    // Create session on first message if needed
+    if (_currentSessionId == null) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.user?.id;
+      
+      if (userId != null) {
+        try {
+          _currentSessionId = await _chatHistoryService.createChatSession(
+            userId: userId,
+          );
+          _isNewSession = true;
+          
+          // Save welcome message first (if exists)
+          if (messages.length > 1 && messages[0]['role'] == 'bot') {
+            await _chatHistoryService.saveMessage(
+              userId: userId,
+              sessionId: _currentSessionId!,
+              role: messages[0]['role']!,
+              text: messages[0]['text']!,
+            );
+          }
+        } catch (e) {
+          print('Error creating session on first message: $e');
+        }
+      }
+    }
 
     // Save user message
     await _saveMessageToHistory(userMsg['role']!, userMsg['text']!);
@@ -234,13 +315,9 @@ class _ChatBotPageState extends State<ChatBotPage> {
     if (service == null || _ragInitError != null) {
       if (!mounted) return;
       final String errorDetail = _ragInitError ?? '';
-      final String fallbackMessage = _currentLang == 'en'
-          ? "The assistant is not configured yet. Please add your API key."
-          : "සහයකය තවම සකසා නැත. කරුණාකර ඔබේ API යතුර එක් කරන්න.";
+      final String fallbackMessage = context.t.chat('assistantNotConfigured');
       final String message = errorDetail.isNotEmpty
-          ? (_currentLang == 'en'
-                ? "RAG init failed: $errorDetail"
-                : "RAG ආරම්භ කිරීම අසාර්ථකයි: $errorDetail")
+          ? context.t.chat('ragInitFailed') + errorDetail
           : fallbackMessage;
       setState(() {
         messages.add({"role": "bot", "text": message});
@@ -255,9 +332,17 @@ class _ChatBotPageState extends State<ChatBotPage> {
       bool isFirstChunk = true;
       final fullResponseBuffer = StringBuffer();
 
+      // Get conversation history (excluding current user message)
+      final conversationHistory = messages.length > 1
+          ? messages.sublist(0, messages.length - 1)
+          : <Map<String, String>>[];
+
       await for (final chunk in service.answerStream(
         text,
-        languageHint: _currentLang == 'en' ? 'English' : 'Sinhala',
+        languageHint: context.t.chat(
+          'languageHint${_currentLang == 'en' ? 'English' : 'Sinhala'}',
+        ),
+        conversationHistory: conversationHistory,
       )) {
         if (!mounted) return;
 
@@ -270,7 +355,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
           setState(() {
             _isTyping = false;
             _isStreaming = true;
-            _streamingText = currentText;
             _streamingMessageIndex = messages.length;
             // Add initial message
             messages = List.from(messages)
@@ -279,7 +363,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
         } else {
           // Update the streaming message - create new list to trigger rebuild
           setState(() {
-            _streamingText = currentText;
             messages = List.from(messages)
               ..[_streamingMessageIndex] = {"role": "bot", "text": currentText};
           });
@@ -293,7 +376,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
       final finalText = fullResponseBuffer.toString();
       setState(() {
         _isStreaming = false;
-        _streamingText = '';
         messages = List.from(messages)
           ..[_streamingMessageIndex] = {"role": "bot", "text": finalText};
         _streamingMessageIndex = -1;
@@ -306,15 +388,9 @@ class _ChatBotPageState extends State<ChatBotPage> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        messages.add({
-          "role": "bot",
-          "text": _currentLang == 'en'
-              ? "Sorry, I ran into a problem. Please try again."
-              : "කණගාටුයි, දෝෂයක් ඇති විය. කරුණාකර නැවත උත්සාහ කරන්න.",
-        });
+        messages.add({"role": "bot", "text": context.t.chat('errorRetry')});
         _isTyping = false;
         _isStreaming = false;
-        _streamingText = '';
         _streamingMessageIndex = -1;
       });
       _scrollToBottom();
@@ -348,7 +424,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
         centerTitle: true,
         automaticallyImplyLeading: false, // Removes the back button
         title: Text(
-          _currentLang == 'en' ? "Mindful Chat" : "සතිමත් සංවාදය",
+          context.t.chat('mindfulChat'),
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.w600,
@@ -358,8 +434,14 @@ class _ChatBotPageState extends State<ChatBotPage> {
         actions: [
           if (messages.isNotEmpty && !_isLoadingHistory)
             IconButton(
+              icon: const Icon(Icons.history, color: Colors.white),
+              tooltip: context.t.chat('chatHistory'),
+              onPressed: _viewChatHistory,
+            ),
+          if (messages.isNotEmpty && !_isLoadingHistory)
+            IconButton(
               icon: const Icon(Icons.add_comment_outlined, color: Colors.white),
-              tooltip: _currentLang == 'en' ? 'New Chat' : 'නව සංවාදය',
+              tooltip: context.t.chat('newChat'),
               onPressed: _startNewChat,
             ),
         ],
@@ -423,7 +505,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
             CircularProgressIndicator(color: AppColors.primary),
             const SizedBox(height: 24),
             Text(
-              _currentLang == 'en' ? "Loading..." : "පූරණය වෙමින්...",
+              context.t.common('loading'),
               style: GoogleFonts.poppins(
                 fontSize: isMobile ? 16 : 18,
                 fontWeight: FontWeight.w500,
@@ -453,9 +535,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
           ),
           const SizedBox(height: 16),
           Text(
-            _currentLang == 'en'
-                ? "Start the conversation"
-                : "සංවාදය ආරම්භ කරන්න",
+            context.t.chat('startConversation'),
             style: GoogleFonts.poppins(
               fontSize: isMobile ? 18 : 20,
               fontWeight: FontWeight.w600,
@@ -464,9 +544,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
           ),
           const SizedBox(height: 8),
           Text(
-            _currentLang == 'en'
-                ? "I'm here to listen and help."
-                : "මම සවන් දීමට සහ උදව් කිරීමට මෙහි සිටිමි.",
+            context.t.chat('hereToHelp'),
             style: GoogleFonts.roboto(
               fontSize: 14,
               color: Colors.grey.shade500,
@@ -637,7 +715,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  _currentLang == 'en' ? "Thinking..." : "සිතමින්...",
+                  context.t.chat('thinking'),
                   style: GoogleFonts.roboto(
                     fontSize: 12,
                     color: Colors.grey.shade500,
@@ -681,9 +759,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
                 textCapitalization: TextCapitalization.sentences,
                 style: GoogleFonts.roboto(fontSize: 16),
                 decoration: InputDecoration(
-                  hintText: _currentLang == 'en'
-                      ? "Type your message..."
-                      : "පණිවුඩය ටයිප් කරන්න...",
+                  hintText: context.t.chat('typeMessage'),
                   hintStyle: GoogleFonts.roboto(
                     color: Colors.grey.shade400,
                     fontSize: isMobile ? 14 : 16,

@@ -7,6 +7,7 @@ import '../../providers/language_provider.dart';
 import '../../models/achievement_data.dart';
 import '../../widgets/achievements/achievement_progress_header.dart';
 import '../../widgets/achievements/achievement_card.dart';
+import '../../utils/translate.dart';
 
 class AchievementsPage extends StatelessWidget {
   const AchievementsPage({super.key});
@@ -30,7 +31,7 @@ class AchievementsPage extends StatelessWidget {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          isSinhala ? "ජයග්‍රහණ" : "Achievements",
+          context.t.achievements('achievements'),
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.w600,

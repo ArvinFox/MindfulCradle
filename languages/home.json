@@ -1,0 +1,40 @@
+{
+  "en": {
+    "welcome": "Welcome",
+    "welcomeMessage": "Take a moment to step back and find your inner peace.",
+    "noSessionsAvailable": "No sessions available.",
+    "userDataLoadingFailed": "User data loading failed",
+    "mindfulnessSessions": "Mindfulness Sessions",
+    "sessionProgress": "Session Progress",
+    "continueWatching": "Continue Watching",
+    "startSession": "Start Session",
+    "completed": "Completed",
+    "inProgress": "In Progress",
+    "locked": "Locked",
+    "unlockCondition": "Complete previous session to unlock",
+    "watchTime": "Watch Time",
+    "completion": "Completion",
+    "selectSession": "Select a session to begin your mindfulness journey",
+    "meditationSessions": "Meditation Sessions",
+    "completePreviousSession": "Complete previous session."
+  },
+  "si": {
+    "welcome": "ආයුබෝවන්",
+    "welcomeMessage": "කාර්යබහුල දවසින් මදකට මිදී, සිත නිවාගන්නට සොඳුරු මොහොතක්.",
+    "noSessionsAvailable": "සැසි නොමැත.",
+    "userDataLoadingFailed": "පරිශීලක දත්ත පූරණය අසාර්ථක විය",
+    "mindfulnessSessions": "සතිමත් කිරීමේ සැසි",
+    "sessionProgress": "සැසි ප්‍රගතිය",
+    "continueWatching": "දිගටම නරඹන්න",
+    "startSession": "සැසිය අරඹන්න",
+    "completed": "සම්පූර්ණයි",
+    "inProgress": "සිදුවෙමින්",
+    "locked": "අගුළු දමා ඇත",
+    "unlockCondition": "විවෘත කිරීමට පෙර සැසිය සම්පූර්ණ කරන්න",
+    "watchTime": "නැරඹූ කාලය",
+    "completion": "සම්පූර්ණත්වය",
+    "selectSession": "ඔබේ සතිමත් කිරීමේ ගමන ආරම්භ කිරීමට සැසියක් තෝරන්න",
+    "meditationSessions": "ධ්‍යානය සැසි",
+    "completePreviousSession": "පෙර සැසිය සම්පූර්ණ කරන්න."
+  }
+}

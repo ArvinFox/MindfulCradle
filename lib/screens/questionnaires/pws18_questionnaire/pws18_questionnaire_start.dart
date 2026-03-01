@@ -13,6 +13,7 @@ import '/widgets/questionnaires/questionnaire_attempt_card.dart';
 import '/widgets/questionnaires/questionnaire_intro_screen.dart';
 import '/widgets/questionnaires/questionnaire_marquee_title.dart';
 import '/widgets/questionnaires/questionnaire_result_tiles.dart';
+import '../../../utils/translate.dart';
 
 class PWS18QuestionnaireStartPage extends StatefulWidget {
   const PWS18QuestionnaireStartPage({super.key});
@@ -43,21 +44,21 @@ class _PWS18QuestionnaireStartPageState
     }
   }
 
-  // Translation Helper
-  String _getSinhalaLabel(String key) {
+  // Get subscale translation
+  String _getSubscaleLabel(BuildContext context, String key) {
     switch (key) {
       case 'Autonomy':
-        return 'ස්වයං පාලනය';
+        return context.t.questionnaires('autonomy');
       case 'Environmental Mastery':
-        return 'පරිසරය කළමනාකරණය';
+        return context.t.questionnaires('environmentalMastery');
       case 'Personal Growth':
-        return 'පුද්ගලික වර්ධනය';
+        return context.t.questionnaires('personalGrowth');
       case 'Positive Relations with Others':
-        return 'යහපත් අන්තර් පුද්ගල සබඳතා';
+        return context.t.questionnaires('positiveRelations');
       case 'Purpose in Life':
-        return 'ජීවිතයේ අරමුණ';
+        return context.t.questionnaires('purposeInLife');
       case 'Self-Acceptance':
-        return 'ස්වයං පිළිගැනීම';
+        return context.t.questionnaires('selfAcceptance');
       default:
         return key;
     }
@@ -83,7 +84,7 @@ class _PWS18QuestionnaireStartPageState
     final hasData =
         provider.unlockDates.isNotEmpty || provider.userAttempts.isNotEmpty;
     final canStart = hasInternet && hasData && !provider.isLoading;
-    final helperText = _helperText(isSinhala, hasInternet, hasData);
+    final helperText = _helperText(context, hasInternet, hasData);
     bool showIntro = !provider.isLoading && provider.userAttempts.isEmpty;
 
     return Stack(
@@ -92,9 +93,7 @@ class _PWS18QuestionnaireStartPageState
           backgroundColor: AppColors.background,
           appBar: AppBar(
             title: QuestionnaireMarqueeTitle(
-              text: isSinhala
-                  ? 'මානසික සොඛ්‍ය සහ සතුට සොඛ්‍ය පරීක්ෂාව'
-                  : 'Mental Health & Happiness Checker',
+              text: context.t.questionnaires('happinessChecker'),
               style: titleTextStyle,
             ),
             centerTitle: true,
@@ -120,25 +119,16 @@ class _PWS18QuestionnaireStartPageState
                 )
               : showIntro
               ? QuestionnaireIntroScreen(
-                  title: isSinhala
-                      ? 'මානසික සොඛ්‍ය සහ සතුට සොඛ්‍ය පරීක්ෂාව (PWS-18) වෙත සාදරයෙන් පිළිගනිමු!'
-                      : 'Welcome to Psychological Well-Being Scale (PWS-18)',
-                  subtitle: isSinhala
-                      ? 'මෙම ප්‍රශ්නාවලිය ඔබේ සතුට, සොඛ්‍යය සහ මනෝවිද්‍යාත්මක ස්වභාවය පිළිබඳ විශ්ලේෂණයක් ලබා දේ.'
-                      : 'This questionnaire provides insights into your psychological well-being and personal growth.',
-                  buttonText: isSinhala
-                      ? 'ප්‍රතිචාර ආරම්භ කරන්න'
-                      : 'Start Feedback',
+                  title: context.t.questionnaires('welcomeHappiness'),
+                  subtitle: context.t.questionnaires(
+                    'welcomeHappinessDescription',
+                  ),
+                  buttonText: context.t.questionnaires('startFeedback'),
                   isEnabled: canStart,
                   helperText: helperText,
                   onStart: () {
                     if (!canStart) {
-                      _showStartBlockedMessage(
-                        context,
-                        isSinhala,
-                        hasInternet,
-                        hasData,
-                      );
+                      _showStartBlockedMessage(context, hasInternet, hasData);
                       return;
                     }
                     setState(() {
@@ -159,7 +149,7 @@ class _PWS18QuestionnaireStartPageState
                       children: [
                         Center(
                           child: Text(
-                            isSinhala ? 'ඔබේ ප්‍රගතිය' : 'Your Progress',
+                            context.t.questionnaires('yourProgress'),
                             style: GoogleFonts.poppins(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -170,9 +160,7 @@ class _PWS18QuestionnaireStartPageState
                         const SizedBox(height: 8),
                         Center(
                           child: Text(
-                            isSinhala
-                                ? 'මෙම පරීක්ෂණය අදියර 3 කින් සිදු කෙරේ. කරුණාකර නියමිත කාලයේදී පිළිතුරු ලබා දෙන්න.'
-                                : 'This assessment consists of 3 timed attempts. Please complete them when they unlock.',
+                            context.t.questionnaires('assessmentProgress'),
                             textAlign: TextAlign.center,
                             style: GoogleFonts.roboto(
                               fontSize: 14,
@@ -204,13 +192,7 @@ class _PWS18QuestionnaireStartPageState
             if (_navigateAfterHint) {
               _navigateAfterHint = false;
               await Future.delayed(const Duration(milliseconds: 250));
-              _startQuestionnaire(
-                context,
-                provider,
-                hasInternet,
-                hasData,
-                isSinhala,
-              );
+              _startQuestionnaire(context, provider, hasInternet, hasData);
             }
           },
         ),
@@ -238,7 +220,7 @@ class _PWS18QuestionnaireStartPageState
       }
     }
 
-    String dateStr = isSinhala ? 'නොදනී' : 'TBD';
+    String dateStr = context.t.questionnaires('tbd');
     if (unlockDate != null) {
       dateStr = DateFormat('MMM d, yyyy').format(unlockDate);
     }
@@ -254,17 +236,15 @@ class _PWS18QuestionnaireStartPageState
     bool isExpanded = _expandedAttempts.contains(attemptNum);
 
     final statusText = isCompleted
-        ? (isSinhala
-              ? (isExpanded ? 'ප්‍රතිඵල සඟවන්න' : 'ප්‍රතිඵල පෙන්වන්න')
-              : (isExpanded ? 'Hide Results' : 'View Results'))
+        ? (isExpanded
+              ? context.t.questionnaires('hideResults')
+              : context.t.questionnaires('viewResults'))
         : isLocked
-        ? (isSinhala ? 'විවෘත වන දිනය: $dateStr' : 'Unlocks on: $dateStr')
-        : (isSinhala ? 'දැන් විවෘතයි' : 'Available Now');
+        ? '${context.t.questionnaires('unlocksOn')} $dateStr'
+        : context.t.questionnaires('availableNow');
 
     final completedDateText = completedDateStr.isNotEmpty
-        ? (isSinhala
-              ? 'සම්පූර්ණ කළ දිනය: $completedDateStr'
-              : 'Completed on: $completedDateStr')
+        ? '${context.t.questionnaires('completedOn')} $completedDateStr'
         : null;
 
     return QuestionnaireAttemptCard(
@@ -296,12 +276,7 @@ class _PWS18QuestionnaireStartPageState
                   provider.unlockDates.isNotEmpty ||
                   provider.userAttempts.isNotEmpty;
               if (!hasInternet || !hasData) {
-                _showStartBlockedMessage(
-                  context,
-                  isSinhala,
-                  hasInternet,
-                  hasData,
-                );
+                _showStartBlockedMessage(context, hasInternet, hasData);
                 return;
               }
               setState(() {
@@ -331,7 +306,7 @@ class _PWS18QuestionnaireStartPageState
       childAspectRatio: 3 / 2,
       children: provider.subscales.keys.map((key) {
         final score = scores[key];
-        final displayTitle = isSinhala ? _getSinhalaLabel(key) : key;
+        final displayTitle = _getSubscaleLabel(context, key);
 
         return QuestionnaireCategoryTile(
           title: displayTitle,
@@ -349,10 +324,9 @@ class _PWS18QuestionnaireStartPageState
     PWS18Provider provider,
     bool hasInternet,
     bool hasData,
-    bool isSinhala,
   ) {
     if (!hasInternet || !hasData) {
-      _showStartBlockedMessage(context, isSinhala, hasInternet, hasData);
+      _showStartBlockedMessage(context, hasInternet, hasData);
       return;
     }
     provider.responses = List<int?>.filled(18, null);
@@ -364,23 +338,18 @@ class _PWS18QuestionnaireStartPageState
     });
   }
 
-  String? _helperText(bool isSinhala, bool hasInternet, bool hasData) {
+  String? _helperText(BuildContext context, bool hasInternet, bool hasData) {
     if (!hasInternet) {
-      return isSinhala
-          ? 'අන්තර්ජාල සම්බන්ධතාවයක් නොමැත'
-          : 'No internet connection';
+      return context.t.questionnaires('noInternet');
     }
     if (!hasData) {
-      return isSinhala
-          ? 'දත්ත ලබාගත නොහැක. කරුණාකර පසුව උත්සාහ කරන්න.'
-          : 'Data unavailable. Please try again later.';
+      return context.t.questionnaires('dataUnavailable');
     }
     return null;
   }
 
   void _showStartBlockedMessage(
     BuildContext context,
-    bool isSinhala,
     bool hasInternet,
     bool hasData,
   ) {
@@ -392,12 +361,8 @@ class _PWS18QuestionnaireStartPageState
     _lastBlockedMessageAt = now;
 
     final message = !hasInternet
-        ? (isSinhala
-              ? 'අන්තර්ජාල සම්බන්ධතාවයක් නොමැත'
-              : 'No internet connection')
-        : (isSinhala
-              ? 'දත්ත ලබාගත නොහැක. කරුණාකර පසුව උත්සාහ කරන්න.'
-              : 'Data unavailable. Please try again later.');
+        ? context.t.questionnaires('noInternet')
+        : context.t.questionnaires('dataUnavailable');
 
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();

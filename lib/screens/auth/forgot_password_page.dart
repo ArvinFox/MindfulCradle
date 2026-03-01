@@ -10,6 +10,7 @@ import '../../providers/language_provider.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_language_toggle.dart';
+import '../../utils/translate.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -61,9 +62,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     // Translations for feedback
     final langProvider = Provider.of<LanguageProvider>(context, listen: false);
     final langCode = langProvider.currentLang;
-    final passwordSentText = langProvider.currentLang == 'en'
-        ? "Password reset link sent! Check your email."
-        : "මුරපදය යළි පිහිටුම් සබැඳිය යවන්න. ඔබේ ඊමේල් පරීක්ෂා කරන්න.";
 
     try {
       final result = await _authService.resetPassword(
@@ -75,9 +73,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
       if (result == null) {
         HapticFeedback.mediumImpact();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(passwordSentText)));
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(context.t.auth('resetLinkSent'))),
+        );
         // Navigate back to login page after success
         Navigator.pushReplacementNamed(context, '/login');
       } else {
@@ -89,12 +87,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     } catch (e) {
       if (!mounted) return;
       HapticFeedback.vibrate();
-      final fallbackText = langCode == 'si'
-          ? 'නොසිතු දෝෂයක් සිදු විය.'
-          : 'An unexpected error occurred.';
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(fallbackText)));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.t.auth('unexpectedError'))),
+      );
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -106,23 +101,6 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     final isMobile = size.width < 600;
     final langProvider = Provider.of<LanguageProvider>(context);
     final isSinhala = langProvider.currentLang == 'si';
-
-    // Translations
-    final String resetPasswordText = langProvider.currentLang == 'en'
-        ? "Reset Password"
-        : "මුරපදය යළි පිහිටුවන්න";
-    final String enterEmailText = langProvider.currentLang == 'en'
-        ? "Enter your email"
-        : "ඔබේ ඊමේල් ඇතුළත් කරන්න";
-    final String sendLinkText = langProvider.currentLang == 'en'
-        ? "Send Reset Link"
-        : "යළි පිහිටුම් සබැඳිය යවන්න";
-    final String rememberPasswordText = langProvider.currentLang == 'en'
-        ? "Remember your password? "
-        : "මුරපදය මතක්ද? ";
-    final String loginText = langProvider.currentLang == 'en'
-        ? "Login"
-        : "ඇතුළු වන්න";
 
     return AuthScaffold(
       child: Form(
@@ -138,7 +116,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             const SizedBox(height: 15),
             // Title
             Text(
-              resetPasswordText,
+              context.t.auth('resetPasswordTitle'),
               style: GoogleFonts.poppins(
                 fontSize: isMobile ? 36 : 42,
                 fontWeight: FontWeight.w700,
@@ -151,7 +129,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: customInputDecoration(enterEmailText),
+              decoration: customInputDecoration(context.t.auth('email')),
               validator: (val) =>
                   Validators.validateEmailLocalized(val, isSinhala: isSinhala),
             ),
@@ -160,7 +138,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
             // Submit Button
             AuthPrimaryButton(
-              text: sendLinkText,
+              text: context.t.auth('sendResetLink'),
               isLoading: loading,
               onPressed: loading ? null : _handlePasswordReset,
               fontSize: isMobile ? 18 : 20,
@@ -171,7 +149,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  rememberPasswordText,
+                  context.t.auth('rememberPassword'),
                   style: GoogleFonts.roboto(color: AppColors.text),
                 ),
                 GestureDetector(
@@ -179,7 +157,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     Navigator.pop(context, '/login');
                   },
                   child: Text(
-                    loginText,
+                    context.t.auth('login'),
                     style: GoogleFonts.roboto(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,

@@ -13,6 +13,7 @@ import '../../../providers/achievement_provider.dart';
 import '/widgets/questionnaires/questionnaire_question_card.dart';
 import '../../../widgets/connectivity_banner.dart';
 import '../../../providers/connectivity_provider.dart';
+import '../../../utils/translate.dart';
 
 class DASS21FullQuestionnairePage extends StatefulWidget {
   const DASS21FullQuestionnairePage({super.key});
@@ -148,14 +149,13 @@ class _DASS21FullQuestionnairePageState
   }
 
   void _showScoresDialog(Map<String, int> scores) {
-    final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
     final labelMap = {
-      'depression': isSinhala ? 'මානසික අවපීඩනය' : 'Depression',
-      'anxiety': isSinhala ? 'කාංසාව' : 'Anxiety',
-      'stress': isSinhala ? 'පීඩනය' : 'Stress',
+      'depression': context.t.questionnaires('depression'),
+      'anxiety': context.t.questionnaires('anxiety'),
+      'stress': context.t.questionnaires('stress'),
     };
 
     showDialog(
@@ -186,7 +186,7 @@ class _DASS21FullQuestionnairePageState
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isSinhala ? "අවසාන ලකුණු" : "Final Scores",
+                      context.t.questionnaires('finalScores'),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: isSmallScreen ? 20 : 22,
@@ -270,7 +270,7 @@ class _DASS21FullQuestionnairePageState
                           achProvider.showPendingAchievements(context);
                         },
                         child: Text(
-                          isSinhala ? "හරි" : "OK",
+                          context.t.questionnaires('ok'),
                           style: GoogleFonts.poppins(
                             color: AppColors.buttonText,
                             fontWeight: FontWeight.w600,
@@ -310,7 +310,7 @@ class _DASS21FullQuestionnairePageState
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _currentLang == 'si' ? 'හැඟීම් පරික්ෂාව' : 'Feelings Checker',
+              context.t.questionnaires('feelingsChecker'),
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -338,9 +338,7 @@ class _DASS21FullQuestionnairePageState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _currentLang == 'si'
-                                  ? 'ප්‍රශ්න: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} න් $totalQuestions'
-                                  : 'Questions: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} of $totalQuestions',
+                              '${context.t.questionnaires('questions')}: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} ${context.t.questionnaires('questionsOf')} $totalQuestions',
                               style: GoogleFonts.poppins(
                                 color: AppColors.text.withOpacity(0.7),
                                 fontWeight: FontWeight.w500,
@@ -389,9 +387,8 @@ class _DASS21FullQuestionnairePageState
                               },
                               isMissing: isMissing,
                               isMobile: isMobile,
-                              missingText: _currentLang == 'si'
-                                  ? '* අනිවාර්යයි'
-                                  : '* Required',
+                              missingText:
+                                  '* ${context.t.questionnaires('required')}',
                             );
                           },
                         ),
@@ -449,7 +446,7 @@ class _DASS21FullQuestionnairePageState
                                   elevation: 0,
                                 ),
                                 child: Text(
-                                  _currentLang == 'si' ? 'පෙරට' : 'Previous',
+                                  context.t.questionnaires('previous'),
                                   style: GoogleFonts.poppins(
                                     color: AppColors.text,
                                     fontWeight: FontWeight.w600,
@@ -478,9 +475,9 @@ class _DASS21FullQuestionnairePageState
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              _currentLang == 'si'
-                                                  ? "කරුණාකර සියලුම ප්‍රශ්නවලට පිළිතුරු ලබා දෙන්න."
-                                                  : "Please answer all questions before proceeding.",
+                                              context.t.questionnaires(
+                                                'pleaseAnswerAll',
+                                              ),
                                             ),
                                             backgroundColor:
                                                 Colors.orangeAccent,
@@ -507,10 +504,8 @@ class _DASS21FullQuestionnairePageState
                               ),
                               child: Text(
                                 _pageIndex < totalPages - 1
-                                    ? (_currentLang == 'si' ? 'මීළඟට' : 'Next')
-                                    : (_currentLang == 'si'
-                                          ? 'ඉදිරිපත් කරන්න'
-                                          : 'Submit'),
+                                    ? context.t.questionnaires('next')
+                                    : context.t.questionnaires('submit'),
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -541,9 +536,7 @@ class _DASS21FullQuestionnairePageState
                   CircularProgressIndicator(color: AppColors.primary),
                   const SizedBox(height: 16),
                   Text(
-                    _currentLang == 'si'
-                        ? "ඉදිරිපත් කරනවා..."
-                        : "Submitting...",
+                    context.t.questionnaires('submitting'),
                     style: GoogleFonts.poppins(
                       color: AppColors.primary,
                       fontSize: 16,

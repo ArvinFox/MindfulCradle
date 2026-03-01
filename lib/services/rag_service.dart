@@ -84,7 +84,12 @@ class RagService {
   }
 
   /// Streams the answer in real-time chunks for a more responsive UI
-  Stream<String> answerStream(String query, {String? languageHint}) async* {
+  /// with conversation context
+  Stream<String> answerStream(
+    String query, {
+    String? languageHint,
+    List<Map<String, String>>? conversationHistory,
+  }) async* {
     if (!_initialized) {
       await initialize();
     }
@@ -106,6 +111,7 @@ class RagService {
       query: query,
       context: context,
       languageHint: languageHint,
+      conversationHistory: conversationHistory,
     );
 
     try {
@@ -180,6 +186,7 @@ class RagService {
     required String query,
     required String context,
     String? languageHint,
+    List<Map<String, String>>? conversationHistory,
   }) {
     final StringBuffer buffer = StringBuffer();
     buffer.writeln(
@@ -194,6 +201,27 @@ class RagService {
     }
     buffer.writeln('\nKnowledge Base:');
     buffer.writeln(context);
+
+    // Add conversation history for context
+    if (conversationHistory != null && conversationHistory.isNotEmpty) {
+      buffer.writeln('\n--- Previous Conversation ---');
+      // Include last 5 messages for context (optimized to save tokens)
+      final recentMessages = conversationHistory.length > 5
+          ? conversationHistory.sublist(conversationHistory.length - 5)
+          : conversationHistory;
+
+      for (final msg in recentMessages) {
+        final role = msg['role'] == 'user' ? 'User' : 'Assistant';
+        final text = msg['text'] ?? '';
+        // Truncate very long messages to save tokens
+        final truncated = text.length > 200
+            ? '${text.substring(0, 200)}...'
+            : text;
+        buffer.writeln('$role: $truncated');
+      }
+      buffer.writeln('--- End of Previous Conversation ---\n');
+    }
+
     buffer.writeln('\nUser Question: $query');
     buffer.writeln('\nYour Response:');
     return buffer.toString();

@@ -13,6 +13,7 @@ import '/widgets/questionnaires/questionnaire_attempt_card.dart';
 import '/widgets/questionnaires/questionnaire_intro_screen.dart';
 import '/widgets/questionnaires/questionnaire_marquee_title.dart';
 import '/widgets/questionnaires/questionnaire_result_tiles.dart';
+import '../../../utils/translate.dart';
 
 class MAASQuestionnaireStartPage extends StatefulWidget {
   const MAASQuestionnaireStartPage({super.key});
@@ -72,7 +73,7 @@ class _MAASQuestionnaireStartPageState
           backgroundColor: AppColors.background,
           appBar: AppBar(
             title: QuestionnaireMarqueeTitle(
-              text: isSinhala ? 'සතිමත් බව පරීක්ෂාව' : 'Mindfulness Checker',
+              text: context.t.questionnaires('mindfulnessChecker'),
               style: titleTextStyle,
             ),
             centerTitle: true,
@@ -98,15 +99,11 @@ class _MAASQuestionnaireStartPageState
                 )
               : showIntro
               ? QuestionnaireIntroScreen(
-                  title: isSinhala
-                      ? 'සතිමත්බව පරීක්ෂාව (MAAS) වෙත සාදරයෙන් පිළිගනිමු!'
-                      : 'Welcome to the Mindfulness Checker (MAAS)',
-                  subtitle: isSinhala
-                      ? 'මෙම ප්‍රශ්නාවලිය ඔබේ අවධානය සහ වත්මන් අවස්ථාවේ හැඟීම් පිළිබඳ අවබෝධය මැනේ.'
-                      : 'This questionnaire measures your awareness and mindfulness level in daily life.',
-                  buttonText: isSinhala
-                      ? 'ප්‍රතිචාර ආරම්භ කරන්න'
-                      : 'Start Feedback',
+                  title: context.t.questionnaires('welcomeMindfulness'),
+                  subtitle: context.t.questionnaires(
+                    'welcomeMindfulnessDescription',
+                  ),
+                  buttonText: context.t.questionnaires('startFeedback'),
                   isEnabled: canStart,
                   helperText: helperText,
                   onStart: () {
@@ -137,7 +134,7 @@ class _MAASQuestionnaireStartPageState
                       children: [
                         Center(
                           child: Text(
-                            isSinhala ? 'ඔබේ ප්‍රගතිය' : 'Your Progress',
+                            context.t.questionnaires('yourProgress'),
                             style: GoogleFonts.poppins(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -148,9 +145,7 @@ class _MAASQuestionnaireStartPageState
                         const SizedBox(height: 8),
                         Center(
                           child: Text(
-                            isSinhala
-                                ? 'මෙම පරීක්ෂණය අදියර 3 කින් සිදු කෙරේ. කරුණාකර නියමිත කාලයේදී පිළිතුරු ලබා දෙන්න.'
-                                : 'This assessment consists of 3 timed attempts. Please complete them when they unlock.',
+                            context.t.questionnaires('assessmentProgress'),
                             textAlign: TextAlign.center,
                             style: GoogleFonts.roboto(
                               fontSize: 14,
@@ -216,7 +211,7 @@ class _MAASQuestionnaireStartPageState
       }
     }
 
-    String dateStr = isSinhala ? 'නොදනී' : 'TBD';
+    String dateStr = context.t.questionnaires('tbd');
     if (unlockDate != null) {
       dateStr = DateFormat('MMM d, yyyy').format(unlockDate);
     }
@@ -232,17 +227,15 @@ class _MAASQuestionnaireStartPageState
     bool isExpanded = _expandedAttempts.contains(attemptNum);
 
     final statusText = isCompleted
-        ? (isSinhala
-              ? (isExpanded ? 'ප්‍රතිඵල සඟවන්න' : 'ප්‍රතිඵල පෙන්වන්න')
-              : (isExpanded ? 'Hide Results' : 'View Results'))
+        ? (isExpanded
+              ? context.t.questionnaires('hideResults')
+              : context.t.questionnaires('viewResults'))
         : isLocked
-        ? (isSinhala ? 'විවෘත වන දිනය: $dateStr' : 'Unlocks on: $dateStr')
-        : (isSinhala ? 'දැන් විවෘතයි' : 'Available Now');
+        ? '${context.t.questionnaires('unlocksOn')} $dateStr'
+        : context.t.questionnaires('availableNow');
 
     final completedDateText = completedDateStr.isNotEmpty
-        ? (isSinhala
-              ? 'සම්පූර්ණ කළ දිනය: $completedDateStr'
-              : 'Completed on: $completedDateStr')
+        ? '${context.t.questionnaires('completedOn')} $completedDateStr'
         : null;
 
     return QuestionnaireAttemptCard(
@@ -289,7 +282,7 @@ class _MAASQuestionnaireStartPageState
             }
           : null,
       results: QuestionnaireResultTile(
-        title: isSinhala ? "සතිමත් බ‌වේ වර්ගීකරණය" : "Mindfulness Level",
+        title: context.t.questionnaires('mindfulnessLevel'),
         scoreText:
             (provider.getAttemptData(attemptNum)?['maasScore'] as num?)
                 ?.toDouble()
@@ -351,14 +344,10 @@ class _MAASQuestionnaireStartPageState
 
   String? _helperText(bool isSinhala, bool hasInternet, bool hasData) {
     if (!hasInternet) {
-      return isSinhala
-          ? 'අන්තර්ජාල සම්බන්ධතාවයක් නොමැත'
-          : 'No internet connection';
+      return context.t.questionnaires('noInternet');
     }
     if (!hasData) {
-      return isSinhala
-          ? 'දත්ත ලබාගත නොහැක. කරුණාකර පසුව උත්සාහ කරන්න.'
-          : 'Data unavailable. Please try again later.';
+      return context.t.questionnaires('dataUnavailable');
     }
     return null;
   }
@@ -377,12 +366,8 @@ class _MAASQuestionnaireStartPageState
     _lastBlockedMessageAt = now;
 
     final message = !hasInternet
-        ? (isSinhala
-              ? 'අන්තර්ජාල සම්බන්ධතාවයක් නොමැත'
-              : 'No internet connection')
-        : (isSinhala
-              ? 'දත්ත ලබාගත නොහැක. කරුණාකර පසුව උත්සාහ කරන්න.'
-              : 'Data unavailable. Please try again later.');
+        ? context.t.questionnaires('noInternet')
+        : context.t.questionnaires('dataUnavailable');
 
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();

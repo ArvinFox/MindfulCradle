@@ -11,6 +11,7 @@ import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_language_toggle.dart';
 import '../../widgets/auth/consent_dialog.dart';
+import '../../utils/translate.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -107,17 +108,7 @@ class _SignupPageState extends State<SignupPage> {
         HapticFeedback.mediumImpact();
 
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              Provider.of<LanguageProvider>(
-                        context,
-                        listen: false,
-                      ).currentLang ==
-                      'en'
-                  ? "Account created successfully! Please login."
-                  : "ගිණුම සාර්ථකව සෑදන ලදි! කරුණාකර ඇතුළු වන්න.",
-            ),
-          ),
+          SnackBar(content: Text(context.t.auth('accountCreated'))),
         );
 
         _fullNameController.clear();
@@ -135,9 +126,7 @@ class _SignupPageState extends State<SignupPage> {
       }
     } catch (e) {
       if (!mounted) return;
-      final fallbackText = langCode == 'si'
-          ? 'නොසිතු දෝෂයක් සිදු විය.'
-          : 'An unexpected error occurred.';
+      final fallbackText = context.t.auth('unexpectedError');
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text(fallbackText)));
@@ -154,25 +143,6 @@ class _SignupPageState extends State<SignupPage> {
     final langProvider = Provider.of<LanguageProvider>(context);
     final isSinhala = langProvider.currentLang == 'si';
 
-    // Translations
-    final signUpText = langProvider.currentLang == 'en'
-        ? "Sign Up"
-        : "ලියාපදිංචි වන්න";
-    final fullNameText = langProvider.currentLang == 'en'
-        ? "Full Name"
-        : "සම්පූර්ණ නම";
-    final emailText = langProvider.currentLang == 'en' ? "Email" : "ඊමේල්";
-    final passwordText = langProvider.currentLang == 'en'
-        ? "Password"
-        : "මුරපදය";
-    final confirmPasswordText = langProvider.currentLang == 'en'
-        ? "Confirm Password"
-        : "මුරපදය තහවුරු කරන්න";
-    final alreadyHaveAccountText = langProvider.currentLang == 'en'
-        ? "Already have an account? "
-        : "දැනටම ගිණුමක් තිබේද? ";
-    final loginText = langProvider.currentLang == 'en' ? "Login" : "ඇතුළු වන්න";
-
     return AuthScaffold(
       child: Form(
         key: _formKey,
@@ -186,7 +156,7 @@ class _SignupPageState extends State<SignupPage> {
             ),
             const SizedBox(height: 15),
             Text(
-              signUpText,
+              context.t.auth('signUp'),
               style: GoogleFonts.poppins(
                 fontSize: isMobile ? 36 : 42,
                 fontWeight: FontWeight.w700,
@@ -203,12 +173,13 @@ class _SignupPageState extends State<SignupPage> {
                 FilteringTextInputFormatter.deny(RegExp(r'[\r\n\t]')),
                 LengthLimitingTextInputFormatter(60),
               ],
-              decoration: customInputDecoration(fullNameText).copyWith(
-                prefixIcon: const Icon(
-                  Icons.person_outline,
-                  color: AppColors.primary,
-                ),
-              ),
+              decoration: customInputDecoration(context.t.auth('fullName'))
+                  .copyWith(
+                    prefixIcon: const Icon(
+                      Icons.person_outline,
+                      color: AppColors.primary,
+                    ),
+                  ),
               validator: (val) =>
                   Validators.validateNameLocalized(val, isSinhala: isSinhala),
             ),
@@ -218,12 +189,13 @@ class _SignupPageState extends State<SignupPage> {
             TextFormField(
               controller: _emailController,
               keyboardType: TextInputType.emailAddress,
-              decoration: customInputDecoration(emailText).copyWith(
-                prefixIcon: const Icon(
-                  Icons.email_outlined,
-                  color: AppColors.primary,
-                ),
-              ),
+              decoration: customInputDecoration(context.t.auth('email'))
+                  .copyWith(
+                    prefixIcon: const Icon(
+                      Icons.email_outlined,
+                      color: AppColors.primary,
+                    ),
+                  ),
               validator: (val) =>
                   Validators.validateEmailLocalized(val, isSinhala: isSinhala),
             ),
@@ -233,25 +205,26 @@ class _SignupPageState extends State<SignupPage> {
             TextFormField(
               controller: _passwordController,
               obscureText: !isPasswordVisible,
-              decoration: customInputDecoration(passwordText).copyWith(
-                prefixIcon: const Icon(
-                  Icons.lock_outline,
-                  color: AppColors.primary,
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    isPasswordVisible
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: AppColors.text.withOpacity(0.6),
+              decoration: customInputDecoration(context.t.auth('password'))
+                  .copyWith(
+                    prefixIcon: const Icon(
+                      Icons.lock_outline,
+                      color: AppColors.primary,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        isPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppColors.text.withOpacity(0.6),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isPasswordVisible = !isPasswordVisible;
+                        });
+                      },
+                    ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      isPasswordVisible = !isPasswordVisible;
-                    });
-                  },
-                ),
-              ),
               validator: (val) => Validators.validatePasswordLocalized(
                 val,
                 isSinhala: isSinhala,
@@ -263,25 +236,28 @@ class _SignupPageState extends State<SignupPage> {
             TextFormField(
               controller: _confirmController,
               obscureText: !isConfirmPasswordVisible,
-              decoration: customInputDecoration(confirmPasswordText).copyWith(
-                prefixIcon: const Icon(
-                  Icons.lock_reset,
-                  color: AppColors.primary,
-                ),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    isConfirmPasswordVisible
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: AppColors.text.withOpacity(0.6),
+              decoration:
+                  customInputDecoration(
+                    context.t.auth('confirmPassword'),
+                  ).copyWith(
+                    prefixIcon: const Icon(
+                      Icons.lock_reset,
+                      color: AppColors.primary,
+                    ),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        isConfirmPasswordVisible
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppColors.text.withOpacity(0.6),
+                      ),
+                      onPressed: () {
+                        setState(() {
+                          isConfirmPasswordVisible = !isConfirmPasswordVisible;
+                        });
+                      },
+                    ),
                   ),
-                  onPressed: () {
-                    setState(() {
-                      isConfirmPasswordVisible = !isConfirmPasswordVisible;
-                    });
-                  },
-                ),
-              ),
               validator: (val) => Validators.validateConfirmPasswordLocalized(
                 _passwordController.text,
                 val,
@@ -292,7 +268,7 @@ class _SignupPageState extends State<SignupPage> {
 
             // Signup Button
             AuthPrimaryButton(
-              text: signUpText,
+              text: context.t.auth('signUp'),
               isLoading: loading,
               onPressed: loading ? null : _handleSignup,
               fontSize: isMobile ? 18 : 20,
@@ -303,7 +279,7 @@ class _SignupPageState extends State<SignupPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  alreadyHaveAccountText,
+                  context.t.auth('alreadyHaveAccount'),
                   style: GoogleFonts.roboto(
                     color: AppColors.text,
                   ), // Using Roboto font
@@ -313,7 +289,7 @@ class _SignupPageState extends State<SignupPage> {
                     Navigator.pop(context, '/login');
                   },
                   child: Text(
-                    loginText,
+                    context.t.auth('login'),
                     style: GoogleFonts.roboto(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,

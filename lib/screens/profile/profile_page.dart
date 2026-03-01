@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../utils/translate.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -38,7 +39,7 @@ class _ProfilePageState extends State<ProfilePage> {
         backgroundColor: AppColors.background,
         body: Center(
           child: Text(
-            isSinhala ? "පරිශීලක දත්ත නොමැත" : "User data not available",
+            context.t.profile('userDataNotAvailable'),
             style: GoogleFonts.poppins(
               color: AppColors.text,
               fontWeight: FontWeight.w500,
@@ -57,7 +58,7 @@ class _ProfilePageState extends State<ProfilePage> {
         elevation: 0,
         centerTitle: true,
         title: Text(
-          isSinhala ? "ප්‍රොෆයිල්" : "Profile",
+          context.t.profile('profile'),
           style: GoogleFonts.poppins(
             color: Colors.white,
             fontWeight: FontWeight.w600,
@@ -68,7 +69,7 @@ class _ProfilePageState extends State<ProfilePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
+            tooltip: context.t.common('logout'),
             onPressed: () {
               LogoutUtils.showLogoutDialog(
                 context: context,
@@ -192,7 +193,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   Padding(
                     padding: const EdgeInsets.only(left: 8.0, bottom: 12),
                     child: Text(
-                      isSinhala ? "සැකසුම්" : "Settings",
+                      context.t.profile('settings'),
                       style: GoogleFonts.poppins(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -232,7 +233,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         ),
                       ),
                       title: Text(
-                        isSinhala ? "භාෂාව" : "Language",
+                        context.t.profile('languageSettings'),
                         style: GoogleFonts.poppins(
                           color: AppColors.text,
                           fontWeight: FontWeight.w500,
@@ -259,14 +260,14 @@ class _ProfilePageState extends State<ProfilePage> {
                               size: 20,
                             ),
                             dropdownColor: Colors.white,
-                            items: const [
+                            items: [
                               DropdownMenuItem(
                                 value: "en",
-                                child: Text("English"),
+                                child: Text(context.t.common('english')),
                               ),
                               DropdownMenuItem(
                                 value: "si",
-                                child: Text("සිංහල"),
+                                child: Text(context.t.common('sinhala')),
                               ),
                             ],
                             onChanged: (val) {

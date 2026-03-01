@@ -12,6 +12,7 @@ import '/widgets/questionnaires/questionnaire_attempt_card.dart';
 import '/widgets/questionnaires/questionnaire_intro_screen.dart';
 import '/widgets/questionnaires/questionnaire_marquee_title.dart';
 import '/widgets/questionnaires/questionnaire_result_tiles.dart';
+import '../../../utils/translate.dart';
 
 class DASS21QuestionnaireStartPage extends StatefulWidget {
   const DASS21QuestionnaireStartPage({super.key});
@@ -92,7 +93,7 @@ class _DASS21QuestionnaireStartPageState
           backgroundColor: AppColors.background,
           appBar: AppBar(
             title: QuestionnaireMarqueeTitle(
-              text: isSinhala ? 'හැඟීම් පරික්ෂාව' : 'Feelings Checker',
+              text: context.t.questionnaires('feelingsChecker'),
               style: titleTextStyle,
             ),
             centerTitle: true,
@@ -118,15 +119,11 @@ class _DASS21QuestionnaireStartPageState
                 )
               : showIntro
               ? QuestionnaireIntroScreen(
-                  title: isSinhala
-                      ? 'හැඟීම් පරීක්ෂාව (DASS-21) වෙත සාදරයෙන් පිළිගනිමු!'
-                      : 'Welcome to Feelings Checker (DASS-21)',
-                  subtitle: isSinhala
-                      ? 'මෙම ප්‍රශ්නාවලිය ඔබේ මානසික අවපීඩන, කාංසාව, පීඩනය මට්ටම් පිළිබඳ විශ්ලේෂණයක් ලබා දේ.'
-                      : 'This questionnaire provides insights into your Depression, Anxiety, and Stress levels.',
-                  buttonText: isSinhala
-                      ? 'ප්‍රතිචාර ආරම්භ කරන්න'
-                      : 'Start Feedback',
+                  title: context.t.questionnaires('welcomeDASS21'),
+                  subtitle: context.t.questionnaires(
+                    'welcomeDASS21Description',
+                  ),
+                  buttonText: context.t.questionnaires('startFeedback'),
                   isEnabled: canStart,
                   helperText: helperText,
                   onStart: () {
@@ -157,7 +154,7 @@ class _DASS21QuestionnaireStartPageState
                       children: [
                         Center(
                           child: Text(
-                            isSinhala ? 'ඔබේ ප්‍රගතිය' : 'Your Progress',
+                            context.t.questionnaires('yourProgress'),
                             style: GoogleFonts.poppins(
                               fontSize: 22,
                               fontWeight: FontWeight.bold,
@@ -168,9 +165,7 @@ class _DASS21QuestionnaireStartPageState
                         const SizedBox(height: 8),
                         Center(
                           child: Text(
-                            isSinhala
-                                ? 'මෙම පරීක්ෂණය අදියර 3 කින් සිදු කෙරේ. කරුණාකර නියමිත කාලයේදී පිළිතුරු ලබා දෙන්න.'
-                                : 'This assessment consists of 3 timed attempts. Please complete them when they unlock.',
+                            context.t.questionnaires('assessmentProgress'),
                             textAlign: TextAlign.center,
                             style: GoogleFonts.roboto(
                               fontSize: 14,
@@ -239,7 +234,7 @@ class _DASS21QuestionnaireStartPageState
       }
     }
 
-    String dateStr = isSinhala ? 'නොදනී' : 'TBD';
+    String dateStr = context.t.questionnaires('tbd');
     if (unlockDate != null) {
       dateStr = DateFormat('MMM d, yyyy').format(unlockDate);
     }
@@ -256,17 +251,15 @@ class _DASS21QuestionnaireStartPageState
     bool isExpanded = _expandedAttempts.contains(attemptNum);
 
     final statusText = isCompleted
-        ? (isSinhala
-              ? (isExpanded ? 'ප්‍රතිඵල සඟවන්න' : 'ප්‍රතිඵල පෙන්වන්න')
-              : (isExpanded ? 'Hide Results' : 'View Results'))
+        ? (isExpanded
+              ? context.t.questionnaires('hideResults')
+              : context.t.questionnaires('viewResults'))
         : isLocked
-        ? (isSinhala ? 'විවෘත වන දිනය: $dateStr' : 'Unlocks on: $dateStr')
-        : (isSinhala ? 'දැන් විවෘතයි' : 'Available Now');
+        ? '${context.t.questionnaires('unlocksOn')} $dateStr'
+        : context.t.questionnaires('availableNow');
 
     final completedDateText = completedDateStr.isNotEmpty
-        ? (isSinhala
-              ? 'සම්පූර්ණ කළ දිනය: $completedDateStr'
-              : 'Completed on: $completedDateStr')
+        ? '${context.t.questionnaires('completedOn')} $completedDateStr'
         : null;
 
     return QuestionnaireAttemptCard(
@@ -315,7 +308,7 @@ class _DASS21QuestionnaireStartPageState
       results: Column(
         children: [
           QuestionnaireResultTile(
-            title: isSinhala ? 'මානසික අවපීඩනය' : 'Depression',
+            title: context.t.questionnaires('depression'),
             scoreText:
                 '${provider.getPastScore(attemptNum, 'depression') ?? 0}',
             classification: provider.classifyDepression(
@@ -332,7 +325,7 @@ class _DASS21QuestionnaireStartPageState
           ),
           const SizedBox(height: 12),
           QuestionnaireResultTile(
-            title: isSinhala ? 'කාංසාව' : 'Anxiety',
+            title: context.t.questionnaires('anxiety'),
             scoreText: '${provider.getPastScore(attemptNum, 'anxiety') ?? 0}',
             classification: provider.classifyAnxiety(
               provider.getPastScore(attemptNum, 'anxiety') ?? 0,
@@ -348,7 +341,7 @@ class _DASS21QuestionnaireStartPageState
           ),
           const SizedBox(height: 12),
           QuestionnaireResultTile(
-            title: isSinhala ? 'පීඩනය' : 'Stress',
+            title: context.t.questionnaires('stress'),
             scoreText: '${provider.getPastScore(attemptNum, 'stress') ?? 0}',
             classification: provider.classifyStress(
               provider.getPastScore(attemptNum, 'stress') ?? 0,
@@ -389,14 +382,10 @@ class _DASS21QuestionnaireStartPageState
 
   String? _helperText(bool isSinhala, bool hasInternet, bool hasData) {
     if (!hasInternet) {
-      return isSinhala
-          ? 'අන්තර්ජාල සම්බන්ධතාවයක් නොමැත'
-          : 'No internet connection';
+      return context.t.questionnaires('noInternet');
     }
     if (!hasData) {
-      return isSinhala
-          ? 'දත්ත ලබාගත නොහැක. කරුණාකර පසුව උත්සාහ කරන්න.'
-          : 'Data unavailable. Please try again later.';
+      return context.t.questionnaires('dataUnavailable');
     }
     return null;
   }
@@ -415,12 +404,8 @@ class _DASS21QuestionnaireStartPageState
     _lastBlockedMessageAt = now;
 
     final message = !hasInternet
-        ? (isSinhala
-              ? 'අන්තර්ජාල සම්බන්ධතාවයක් නොමැත'
-              : 'No internet connection')
-        : (isSinhala
-              ? 'දත්ත ලබාගත නොහැක. කරුණාකර පසුව උත්සාහ කරන්න.'
-              : 'Data unavailable. Please try again later.');
+        ? context.t.questionnaires('noInternet')
+        : context.t.questionnaires('dataUnavailable');
 
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();

@@ -50,6 +50,9 @@ class Translate {
   /// Validator translations
   String validators(String key) => _service.validators(key, _lang);
 
+  /// Notifications translations
+  String notifications(String key) => _service.notifications(key, _lang);
+
   /// Get current language
   String get lang => _lang;
 

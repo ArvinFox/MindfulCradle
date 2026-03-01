@@ -12,6 +12,7 @@ import 'providers/auth_provider.dart';
 import 'providers/connectivity_provider.dart';
 import 'providers/video_provider.dart';
 import 'providers/achievement_provider.dart';
+import 'services/localization_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,6 +29,15 @@ void main() async {
     if (kDebugMode) debugPrint("Firebase initialized successfully.");
   } catch (e) {
     if (kDebugMode) debugPrint("Firebase initialization error.");
+  }
+
+  // Initialize localization service
+  try {
+    if (kDebugMode) debugPrint("Loading translations...");
+    await LocalizationService.instance.loadTranslations();
+    if (kDebugMode) debugPrint("Translations loaded successfully.");
+  } catch (e) {
+    if (kDebugMode) debugPrint("Translations loading error: $e");
   }
 
   runApp(
@@ -52,6 +62,6 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MamaMindApp();
+    return const MindfulCradleApp();
   }
 }

@@ -48,10 +48,8 @@ class _QuestionnaireMainPageState extends State<QuestionnaireMainPage>
       appBar: AppBar(
         backgroundColor: AppColors.primary,
         title: Text(
-          lang.currentLang == 'en'
-              ? "Feedbacks"
-              : "ප්‍රතිචාර",
-          style:appBarTextStyle,
+          lang.currentLang == 'en' ? "Feedbacks" : "ප්‍රතිචාර",
+          style: appBarTextStyle,
         ),
         centerTitle: true,
         bottom: TabBar(
@@ -92,7 +90,11 @@ class _QuestionnaireMainPageState extends State<QuestionnaireMainPage>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [DASS21QuestionnaireStartPage(), MAASQuestionnaireStartPage(), PWS18QuestionnaireStartPage()],
+        children: const [
+          DASS21QuestionnaireStartPage(),
+          MAASQuestionnaireStartPage(),
+          PWS18QuestionnaireStartPage(),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'localization_service.dart';
 
 class MAASLoadResult {
   final Map<int, DateTime> unlockDates;
@@ -20,6 +21,7 @@ class MAASLoadResult {
 
 class MAASService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final LocalizationService _loc = LocalizationService.instance;
 
   bool _isCurrentUser(String userId) {
     final current = FirebaseAuth.instance.currentUser?.uid;
@@ -32,14 +34,11 @@ class MAASService {
   }
 
   String classifyScore(double score, {bool isSinhala = false}) {
+    final lang = isSinhala ? 'si' : 'en';
     if (score >= 4.0) {
-      return isSinhala ? 'සතිමත් බව ඉහළයි' : 'High Level of Mindfulness';
-    } else if (score >= 3.0) {
-      return isSinhala
-          ? 'සතිමත් බව සාමාන්‍යයි'
-          : 'Average Level of Mindfulness';
+      return _loc.questionnaires('highLevelMindfulness', lang);
     } else {
-      return isSinhala ? 'සතිමත් බව අඩුයි' : 'Low Level of Mindfulness';
+      return _loc.questionnaires('lowLevelMindfulness', lang);
     }
   }
 

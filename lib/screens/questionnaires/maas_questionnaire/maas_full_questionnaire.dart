@@ -13,6 +13,7 @@ import '../../../providers/achievement_provider.dart';
 import '/widgets/questionnaires/questionnaire_question_card.dart';
 import '../../../widgets/connectivity_banner.dart';
 import '../../../providers/connectivity_provider.dart';
+import '../../../utils/translate.dart';
 
 class MAASFullQuestionnairePage extends StatefulWidget {
   const MAASFullQuestionnairePage({super.key});
@@ -156,7 +157,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
 
   // DIALOG LOGIC
   void _showResultDialog(double score, String classification) {
-    final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
@@ -188,9 +188,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isSinhala
-                          ? "අවසාන සතිමත් බවේ ලකුණ"
-                          : "Final Mindfulness Score",
+                      context.t.questionnaires('finalMindfulnessScore'),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: isSmallScreen ? 20 : 22,
@@ -215,7 +213,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSinhala ? 'ලකුණ' : 'Score',
+                            context.t.questionnaires('score'),
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -251,9 +249,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSinhala
-                                ? 'සතිමත් බවේ වර්ගීකරණය'
-                                : 'Level of Mindfulness',
+                            context.t.questionnaires('mindfulnessLevel'),
                             style: GoogleFonts.poppins(
                               fontSize: 16,
                               fontWeight: FontWeight.w600,
@@ -301,7 +297,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           achProvider.showPendingAchievements(context);
                         },
                         child: Text(
-                          isSinhala ? "හරි" : "OK",
+                          context.t.questionnaires('ok'),
                           style: GoogleFonts.poppins(
                             color: AppColors.buttonText,
                             fontWeight: FontWeight.w600,
@@ -341,9 +337,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _currentLang == 'si'
-                  ? 'සතිමත් බව පරීක්ෂාව'
-                  : 'Mindfulness Checker',
+              context.t.questionnaires('mindfulnessChecker'),
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -371,9 +365,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _currentLang == 'si'
-                                  ? 'ප්‍රශ්න: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} න් $totalQuestions'
-                                  : 'Questions: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} of $totalQuestions',
+                              '${context.t.questionnaires('questions')}: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} ${context.t.questionnaires('questionsOf')} $totalQuestions',
                               style: GoogleFonts.poppins(
                                 color: AppColors.text.withOpacity(0.7),
                                 fontWeight: FontWeight.w500,
@@ -422,9 +414,8 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                               },
                               isMissing: isMissing,
                               isMobile: isMobile,
-                              missingText: _currentLang == 'si'
-                                  ? '* අනිවාර්යයි'
-                                  : '* Required',
+                              missingText:
+                                  '* ${context.t.questionnaires('required')}',
                             );
                           },
                         ),
@@ -484,7 +475,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                   elevation: 0,
                                 ),
                                 child: Text(
-                                  _currentLang == 'si' ? 'පෙරට' : 'Previous',
+                                  context.t.questionnaires('previous'),
                                   style: GoogleFonts.poppins(
                                     color: AppColors.text,
                                     fontWeight: FontWeight.w600,
@@ -515,9 +506,9 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              _currentLang == 'si'
-                                                  ? "කරුණාකර සියලුම ප්‍රශ්නවලට පිළිතුරු ලබා දෙන්න."
-                                                  : "Please answer all questions before proceeding.",
+                                              context.t.questionnaires(
+                                                'pleaseAnswerAll',
+                                              ),
                                             ),
                                             backgroundColor:
                                                 Colors.orangeAccent,
@@ -544,10 +535,8 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                               ),
                               child: Text(
                                 _pageIndex < totalPages - 1
-                                    ? (_currentLang == 'si' ? 'මීළඟට' : 'Next')
-                                    : (_currentLang == 'si'
-                                          ? 'ඉදිරිපත් කරන්න'
-                                          : 'Submit'),
+                                    ? context.t.questionnaires('next')
+                                    : context.t.questionnaires('submit'),
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -578,9 +567,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                   CircularProgressIndicator(color: AppColors.primary),
                   const SizedBox(height: 16),
                   Text(
-                    _currentLang == 'si'
-                        ? "ඉදිරිපත් කරනවා..."
-                        : "Submitting...",
+                    context.t.questionnaires('submitting'),
                     style: GoogleFonts.poppins(
                       color: AppColors.primary,
                       fontSize: 16,

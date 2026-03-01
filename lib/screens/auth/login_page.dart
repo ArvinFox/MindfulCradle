@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
-import '../../constants/app_config.dart';
+
 import '../../utils/validators.dart';
 import '../../models/user_model.dart';
 import '../../providers/auth_provider.dart';
@@ -14,6 +14,7 @@ import '../../utils/helpers.dart';
 import 'user_registration_page.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
+import '../../utils/translate.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -93,9 +94,7 @@ class _LoginPageState extends State<LoginPage> {
         final data = userDoc.data();
         if (data == null) {
           setState(() {
-            errorMessage = langCode == 'si'
-                ? 'පරිශීලක දත්ත නොමැත. කරුණාකර නැවත උත්සාහ කරන්න.'
-                : 'User data not found. Please try again.';
+            errorMessage = context.t.auth('userDataNotFound');
           });
           return;
         }
@@ -115,9 +114,7 @@ class _LoginPageState extends State<LoginPage> {
         }
       } catch (e) {
         setState(() {
-          errorMessage = langCode == 'si'
-              ? 'පරිශීලක දත්ත පූරණය කිරීමේ දෝෂයක්. කරුණාකර නැවත උත්සාහ කරන්න.'
-              : 'Error loading user data. Please try again.';
+          errorMessage = context.t.auth('errorLoadingUserData');
         });
       }
     } else {
@@ -133,25 +130,6 @@ class _LoginPageState extends State<LoginPage> {
     final isMobile = size.width < 600;
     final langProvider = Provider.of<LanguageProvider>(context);
     final isSinhala = langProvider.currentLang == 'si';
-
-    // Translations
-    final loginText = langProvider.currentLang == 'en' ? "Login" : "ඇතුළු වන්න";
-    final emailText = langProvider.currentLang == 'en' ? "Email" : "ඊමේල්";
-    final passwordText = langProvider.currentLang == 'en'
-        ? "Password"
-        : "මුරපදය";
-    final rememberMeText = langProvider.currentLang == 'en'
-        ? "Remember Me"
-        : "මතක තබාගන්න";
-    final forgotPasswordText = langProvider.currentLang == 'en'
-        ? "Forgot Password?"
-        : "මුරපදය අමතකද?";
-    final dontHaveAccountText = langProvider.currentLang == 'en'
-        ? "Don't have an account? "
-        : "ගිණුමක් නැද්ද? ";
-    final signUpText = langProvider.currentLang == 'en'
-        ? "Sign Up"
-        : "ලියාපදිංචි වන්න";
 
     return Consumer<AuthProvider>(
       builder: (context, authProvider, _) {
@@ -184,9 +162,9 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
-                        value: langProvider.currentLang == 'en'
-                            ? "English"
-                            : "සිංහල",
+                        value: context.t.common(
+                          context.isEnglish ? 'english' : 'sinhala',
+                        ),
                         style: GoogleFonts.roboto(
                           fontSize: 14,
                           color: AppColors.text,
@@ -194,16 +172,16 @@ class _LoginPageState extends State<LoginPage> {
                         iconEnabledColor: AppColors.text,
                         items: [
                           DropdownMenuItem(
-                            value: "English",
+                            value: context.t.common('english'),
                             child: Text(
-                              "English",
+                              context.t.common('english'),
                               style: TextStyle(color: AppColors.text),
                             ),
                           ),
                           DropdownMenuItem(
-                            value: "සිංහල",
+                            value: context.t.common('sinhala'),
                             child: Text(
-                              "සිංහල",
+                              context.t.common('sinhala'),
                               style: TextStyle(color: AppColors.text),
                             ),
                           ),
@@ -211,7 +189,7 @@ class _LoginPageState extends State<LoginPage> {
                         onChanged: (val) {
                           if (val == null) return;
                           langProvider.setLanguage(
-                            val == "English" ? "en" : "si",
+                            val == context.t.common('english') ? "en" : "si",
                           );
                         },
                       ),
@@ -221,7 +199,7 @@ class _LoginPageState extends State<LoginPage> {
                 const SizedBox(height: 15),
 
                 Text(
-                  AppConfig.appName,
+                  context.t.auth('login'),
                   style: GoogleFonts.poppins(
                     fontSize: isMobile ? 36 : 42,
                     fontWeight: FontWeight.w700,
@@ -253,12 +231,13 @@ class _LoginPageState extends State<LoginPage> {
                 // Email Field
                 TextFormField(
                   keyboardType: TextInputType.emailAddress,
-                  decoration: customInputDecoration(emailText).copyWith(
-                    prefixIcon: const Icon(
-                      Icons.email_outlined,
-                      color: AppColors.primary,
-                    ),
-                  ),
+                  decoration: customInputDecoration(context.t.auth('email'))
+                      .copyWith(
+                        prefixIcon: const Icon(
+                          Icons.email_outlined,
+                          color: AppColors.primary,
+                        ),
+                      ),
                   validator: (val) => Validators.validateEmailLocalized(
                     val,
                     isSinhala: isSinhala,
@@ -270,25 +249,26 @@ class _LoginPageState extends State<LoginPage> {
                 // Password Field
                 TextFormField(
                   obscureText: !isPasswordVisible,
-                  decoration: customInputDecoration(passwordText).copyWith(
-                    prefixIcon: const Icon(
-                      Icons.lock_outline,
-                      color: AppColors.primary,
-                    ),
-                    suffixIcon: IconButton(
-                      icon: Icon(
-                        isPasswordVisible
-                            ? Icons.visibility_off_outlined
-                            : Icons.visibility_outlined,
-                        color: AppColors.text.withOpacity(0.6),
+                  decoration: customInputDecoration(context.t.auth('password'))
+                      .copyWith(
+                        prefixIcon: const Icon(
+                          Icons.lock_outline,
+                          color: AppColors.primary,
+                        ),
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            isPasswordVisible
+                                ? Icons.visibility_off_outlined
+                                : Icons.visibility_outlined,
+                            color: AppColors.text.withOpacity(0.6),
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              isPasswordVisible = !isPasswordVisible;
+                            });
+                          },
+                        ),
                       ),
-                      onPressed: () {
-                        setState(() {
-                          isPasswordVisible = !isPasswordVisible;
-                        });
-                      },
-                    ),
-                  ),
                   validator: (val) => Validators.validatePasswordLocalized(
                     val,
                     isSinhala: isSinhala,
@@ -311,7 +291,10 @@ class _LoginPageState extends State<LoginPage> {
                                 setState(() => rememberMe = val ?? false),
                             activeColor: AppColors.primary,
                           ),
-                          Text(rememberMeText, style: GoogleFonts.roboto()),
+                          Text(
+                            context.t.auth('rememberMe'),
+                            style: GoogleFonts.roboto(),
+                          ),
                         ],
                       ),
                     ),
@@ -319,7 +302,7 @@ class _LoginPageState extends State<LoginPage> {
                       onTap: () =>
                           Navigator.pushNamed(context, '/forgot-password'),
                       child: Text(
-                        forgotPasswordText,
+                        context.t.auth('forgotPassword'),
                         style: GoogleFonts.roboto(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,
@@ -333,7 +316,7 @@ class _LoginPageState extends State<LoginPage> {
 
                 // Login Button
                 AuthPrimaryButton(
-                  text: loginText,
+                  text: context.t.auth('login'),
                   isLoading: authProvider.isLoading,
                   onPressed: authProvider.isLoading
                       ? null
@@ -351,13 +334,13 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      dontHaveAccountText,
+                      context.t.auth('dontHaveAccount'),
                       style: GoogleFonts.roboto(color: AppColors.text),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.pushNamed(context, '/signup'),
                       child: Text(
-                        signUpText,
+                        context.t.auth('signUp'),
                         style: GoogleFonts.roboto(
                           color: AppColors.primary,
                           fontWeight: FontWeight.bold,

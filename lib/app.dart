@@ -10,14 +10,15 @@ import 'package:mamamind/screens/main_screen.dart';
 import 'package:mamamind/screens/splashScreen/splash_screen.dart';
 import 'package:mamamind/utils/globals.dart';
 
-class MamaMindApp extends StatefulWidget {
-  const MamaMindApp({super.key});
+class MindfulCradleApp extends StatefulWidget {
+  const MindfulCradleApp({super.key});
 
   @override
-  State<MamaMindApp> createState() => _MamaMindAppState();
+  State<MindfulCradleApp> createState() => _MindfulCradleAppState();
 }
 
-class _MamaMindAppState extends State<MamaMindApp> with WidgetsBindingObserver {
+class _MindfulCradleAppState extends State<MindfulCradleApp>
+    with WidgetsBindingObserver {
   bool _showSplash = true;
 
   @override

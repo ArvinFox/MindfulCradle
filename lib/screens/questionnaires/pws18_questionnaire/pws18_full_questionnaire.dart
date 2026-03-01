@@ -13,6 +13,7 @@ import '../../../providers/achievement_provider.dart';
 import '/widgets/questionnaires/questionnaire_question_card.dart';
 import '../../../widgets/connectivity_banner.dart';
 import '../../../providers/connectivity_provider.dart';
+import '../../../utils/translate.dart';
 
 class PWS18FullQuestionnairePage extends StatefulWidget {
   const PWS18FullQuestionnairePage({super.key});
@@ -148,20 +149,21 @@ class _PWS18FullQuestionnairePageState
   }
 
   // --- Helper to translate PWS Categories ---
-  String _getSinhalaLabel(String key) {
+  // Get subscale translation
+  String _getSubscaleLabel(BuildContext context, String key) {
     switch (key) {
       case 'Autonomy':
-        return 'ස්වයං පාලනය';
+        return context.t.questionnaires('autonomy');
       case 'Environmental Mastery':
-        return 'පරිසරය කළමනාකරණය';
+        return context.t.questionnaires('environmentalMastery');
       case 'Personal Growth':
-        return 'පුද්ගලික වර්ධනය';
+        return context.t.questionnaires('personalGrowth');
       case 'Positive Relations with Others':
-        return 'යහපත් අන්තර් පුද්ගල සබඳතා';
+        return context.t.questionnaires('positiveRelations');
       case 'Purpose in Life':
-        return 'ජීවිතයේ අරමුණ';
+        return context.t.questionnaires('purposeInLife');
       case 'Self-Acceptance':
-        return 'ස්වයං පිළිගැනීම';
+        return context.t.questionnaires('selfAcceptance');
       default:
         return key;
     }
@@ -169,7 +171,6 @@ class _PWS18FullQuestionnairePageState
 
   // DIALOG LOGIC
   void _showScoresDialog(Map<String, double> scores) {
-    final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
@@ -201,7 +202,7 @@ class _PWS18FullQuestionnairePageState
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      isSinhala ? "අවසාන ලකුණු" : "Final Scores",
+                      context.t.questionnaires('finalScores'),
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: isSmallScreen ? 20 : 22,
@@ -211,9 +212,7 @@ class _PWS18FullQuestionnairePageState
                     ),
                     const SizedBox(height: 20),
                     ...scores.entries.map((e) {
-                      final displayKey = isSinhala
-                          ? _getSinhalaLabel(e.key)
-                          : e.key;
+                      final displayKey = _getSubscaleLabel(context, e.key);
 
                       return Container(
                         width: double.infinity,
@@ -295,7 +294,7 @@ class _PWS18FullQuestionnairePageState
                           achProvider.showPendingAchievements(context);
                         },
                         child: Text(
-                          isSinhala ? "හරි" : "OK",
+                          context.t.questionnaires('ok'),
                           style: GoogleFonts.poppins(
                             color: AppColors.buttonText,
                             fontWeight: FontWeight.w600,
@@ -335,7 +334,7 @@ class _PWS18FullQuestionnairePageState
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _currentLang == 'si' ? 'සතුට පරීක්ෂාව' : 'Happiness Checker',
+              context.t.questionnaires('happinessChecker'),
               style: GoogleFonts.poppins(
                 color: Colors.white,
                 fontWeight: FontWeight.w600,
@@ -363,9 +362,7 @@ class _PWS18FullQuestionnairePageState
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              _currentLang == 'si'
-                                  ? 'ප්‍රශ්න: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} න් $totalQuestions'
-                                  : 'Questions: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} of $totalQuestions',
+                              '${context.t.questionnaires('questions')}: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} ${context.t.questionnaires('questionsOf')} $totalQuestions',
                               style: GoogleFonts.poppins(
                                 color: AppColors.text.withOpacity(0.7),
                                 fontWeight: FontWeight.w500,
@@ -414,9 +411,8 @@ class _PWS18FullQuestionnairePageState
                               },
                               isMissing: isMissing,
                               isMobile: isMobile,
-                              missingText: _currentLang == 'si'
-                                  ? '* අනිවාර්යයි'
-                                  : '* Required',
+                              missingText:
+                                  '* ${context.t.questionnaires('required')}',
                             );
                           },
                         ),
@@ -476,7 +472,7 @@ class _PWS18FullQuestionnairePageState
                                   elevation: 0,
                                 ),
                                 child: Text(
-                                  _currentLang == 'si' ? 'පෙරට' : 'Previous',
+                                  context.t.questionnaires('previous'),
                                   style: GoogleFonts.poppins(
                                     color: AppColors.text,
                                     fontWeight: FontWeight.w600,
@@ -507,9 +503,9 @@ class _PWS18FullQuestionnairePageState
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              _currentLang == 'si'
-                                                  ? "කරුණාකර සියලුම ප්‍රශ්නවලට පිළිතුරු ලබා දෙන්න."
-                                                  : "Please answer all questions before proceeding.",
+                                              context.t.questionnaires(
+                                                'pleaseAnswerAll',
+                                              ),
                                             ),
                                             backgroundColor:
                                                 Colors.orangeAccent,
@@ -536,10 +532,8 @@ class _PWS18FullQuestionnairePageState
                               ),
                               child: Text(
                                 _pageIndex < totalPages - 1
-                                    ? (_currentLang == 'si' ? 'මීළඟට' : 'Next')
-                                    : (_currentLang == 'si'
-                                          ? 'ඉදිරිපත් කරන්න'
-                                          : 'Submit'),
+                                    ? context.t.questionnaires('next')
+                                    : context.t.questionnaires('submit'),
                                 style: GoogleFonts.poppins(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
@@ -570,9 +564,7 @@ class _PWS18FullQuestionnairePageState
                   CircularProgressIndicator(color: AppColors.primary),
                   const SizedBox(height: 16),
                   Text(
-                    _currentLang == 'si'
-                        ? "ඉදිරිපත් කරනවා..."
-                        : "Submitting...",
+                    context.t.questionnaires('submitting'),
                     style: GoogleFonts.poppins(
                       color: AppColors.primary,
                       fontSize: 16,

@@ -10,6 +10,7 @@ import '../../providers/video_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../widgets/video_tile.dart';
 import '../../routes/home_routes.dart';
+import '../../utils/translate.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -93,9 +94,7 @@ class _HomePageState extends State<HomePage> {
         backgroundColor: AppColors.background,
         body: Center(
           child: Text(
-            currentLang == 'en'
-                ? "User data loading failed"
-                : "පරිශීලක දත්ත පූරණය අසාර්ථක විය",
+            context.t.home('userDataLoadingFailed'),
             style: GoogleFonts.roboto(color: Colors.grey),
           ),
         ),
@@ -122,7 +121,7 @@ class _HomePageState extends State<HomePage> {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            tooltip: currentLang == 'en' ? 'Logout' : 'පිටවීම',
+            tooltip: context.t.common('logout'),
             onPressed: () {
               HapticFeedback.lightImpact();
               LogoutUtils.showLogoutDialog(
@@ -138,7 +137,7 @@ class _HomePageState extends State<HomePage> {
       body: videos.isEmpty
           ? Center(
               child: Text(
-                currentLang == 'en' ? "No sessions available." : "සැසි නොමැත.",
+                context.t.home('noSessionsAvailable'),
                 style: GoogleFonts.poppins(color: Colors.grey.shade600),
               ),
             )
@@ -165,9 +164,7 @@ class _HomePageState extends State<HomePage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        currentLang == 'en'
-                            ? "Welcome, ${user.fullName.split(' ').first}!"
-                            : "ආයුබෝවන්, ${user.fullName.split(' ').first}!",
+                        "${context.t.home('welcome')}, ${user.fullName.split(' ').first}!",
                         style: GoogleFonts.poppins(
                           fontSize: isMobile ? 24 : 28,
                           fontWeight: FontWeight.bold,
@@ -176,9 +173,7 @@ class _HomePageState extends State<HomePage> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        currentLang == 'en'
-                            ? "Take a moment to step back and find your inner peace." 
-                            : "කාර්යබහුල දවසින් මදකට මිදී, සිත නිවාගන්නට සොඳුරු මොහොතක්.",
+                        context.t.home('welcomeMessage'),
                         style: GoogleFonts.roboto(
                           fontSize: 15,
                           fontWeight: FontWeight.w400,
@@ -210,9 +205,7 @@ class _HomePageState extends State<HomePage> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              currentLang == 'en'
-                                  ? "Meditation Sessions"
-                                  : "ධ්‍යානය සැසි",
+                              context.t.home('meditationSessions'),
                               style: GoogleFonts.poppins(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w600,
@@ -268,9 +261,9 @@ class _HomePageState extends State<HomePage> {
                                       ).showSnackBar(
                                         SnackBar(
                                           content: Text(
-                                            currentLang == 'en'
-                                                ? "Complete previous session."
-                                                : "පෙර සැසිය සම්පූර්ණ කරන්න.",
+                                            context.t.home(
+                                              'completePreviousSession',
+                                            ),
                                             style: GoogleFonts.roboto(),
                                           ),
                                           backgroundColor:

@@ -17,9 +17,7 @@ class AuthRoutes {
   static void goToUserRegistrationForm(BuildContext context, UserModel user) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => UserRegistrationPage(user: user),
-      ),
+      MaterialPageRoute(builder: (_) => UserRegistrationPage(user: user)),
     );
   }
 }

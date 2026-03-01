@@ -21,6 +21,7 @@ class LocalizationService {
   Map<String, dynamic> _questionnaires = {};
   Map<String, dynamic> _achievements = {};
   Map<String, dynamic> _validators = {};
+  Map<String, dynamic> _notifications = {};
 
   bool _isLoaded = false;
 
@@ -39,6 +40,7 @@ class LocalizationService {
         rootBundle.loadString('languages/questionnaires.json'),
         rootBundle.loadString('languages/achievements.json'),
         rootBundle.loadString('languages/validators.json'),
+        rootBundle.loadString('languages/notifications.json'),
       ]);
 
       _common = json.decode(results[0]);
@@ -49,6 +51,7 @@ class LocalizationService {
       _questionnaires = json.decode(results[5]);
       _achievements = json.decode(results[6]);
       _validators = json.decode(results[7]);
+      _notifications = json.decode(results[8]);
 
       _isLoaded = true;
     } catch (e) {
@@ -97,6 +100,11 @@ class LocalizationService {
     return _getText(_validators, key, lang);
   }
 
+  /// Get translation from notifications module
+  String notifications(String key, String lang) {
+    return _getText(_notifications, key, lang);
+  }
+
   /// Internal method to get text from a translation map
   String _getText(Map<String, dynamic> translations, String key, String lang) {
     final langData = translations[lang] as Map<String, dynamic>?;
@@ -118,6 +126,7 @@ class LocalizationService {
     _questionnaires = {};
     _achievements = {};
     _validators = {};
+    _notifications = {};
   }
 }
 
@@ -145,6 +154,8 @@ extension LocalizedString on String {
         return service.achievements(this, lang);
       case 'validators':
         return service.validators(this, lang);
+      case 'notifications':
+        return service.notifications(this, lang);
       default:
         return this;
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mamamind/screens/RAG_Chat/rag_chat_help.dart';
+import 'package:mamamind/services/notification_service.dart';
 import 'package:mamamind/utils/helpers.dart';
 import 'package:provider/provider.dart';
 import 'package:mamamind/screens/home/questionnaires.dart';
@@ -38,6 +39,10 @@ class _MainScreenState extends State<MainScreen> {
       DeviceOrientation.portraitUp,
       DeviceOrientation.portraitDown,
     ]);
+    // Ask the OS for notification permission as soon as the screen is visible.
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await NotificationService().requestPermissions();
+    });
   }
 
   @override

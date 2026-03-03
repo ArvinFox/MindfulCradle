@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
 import 'package:timezone/data/latest_all.dart' as tz;
@@ -49,43 +51,36 @@ class NotificationService {
       // Initialize timezone database
       tz.initializeTimeZones();
 
-      // Set timezone to device's local timezone
-      // This automatically uses the device's timezone setting
-      final String timeZoneName = DateTime.now().timeZoneName;
+      // flutter_timezone calls the native OS API (Android: TimeZone.getDefault(),
+      // iOS: TimeZone.current) and returns a proper IANA timezone name such as
+      // "Asia/Colombo" or "America/New_York". This is what tz.getLocation()
+      // requires. Using DateTime.now().timeZoneName is WRONG because it gives
+      // display abbreviations like "IST" or "GMT+05:30" which are not IANA names
+      // and cause getLocation() to throw, silently falling back to UTC.
       try {
-        final location = tz.getLocation(timeZoneName);
-        tz.setLocalLocation(location);
-      } catch (e) {
-        // If device timezone not found in database, try common alternatives
-        try {
-          // Get UTC offset and try to find appropriate timezone
-          final offset = DateTime.now().timeZoneOffset;
-          if (kDebugMode) {
-            debugPrint(
-              'Device timezone "$timeZoneName" not found. Using UTC offset: $offset',
-            );
-          }
-          // Default to UTC as fallback
-          tz.setLocalLocation(tz.getLocation('UTC'));
-        } catch (e2) {
-          tz.setLocalLocation(tz.getLocation('UTC'));
+        final String ianaName =
+            (await FlutterTimezone.getLocalTimezone()).identifier;
+        tz.setLocalLocation(tz.getLocation(ianaName));
+        if (kDebugMode) {
+          debugPrint('Timezone set from device: $ianaName');
         }
-      }
-
-      if (kDebugMode) {
-        debugPrint('Timezone initialized: ${tz.local.name}');
-        debugPrint('Device timezone: ${DateTime.now().timeZoneName}');
-        debugPrint('UTC offset: ${DateTime.now().timeZoneOffset}');
+      } catch (e) {
+        // Genuine fallback — keep UTC if something truly goes wrong.
+        tz.setLocalLocation(tz.getLocation('UTC'));
+        if (kDebugMode) {
+          debugPrint('Could not read device timezone, falling back to UTC: $e');
+        }
       }
 
       // Initialize local notifications first (must be before permissions)
       await _initializeLocalNotifications();
 
-      // Request permissions (both FCM and local notifications)
-      await _requestPermissions();
-
       // Initialize Firebase Messaging
       await _initializeFirebaseMessaging();
+
+      // NOTE: Permissions are NOT requested here because this runs before
+      // runApp() and Android requires an active Activity to show permission
+      // dialogs. Call requestPermissions() from the first visible screen instead.
 
       _initialized = true;
       if (kDebugMode) {
@@ -99,9 +94,40 @@ class NotificationService {
     }
   }
 
-  /// Request notification permissions
+  /// Request notification permissions.
+  /// Must be called AFTER the app has launched (from a visible screen),
+  /// because Android needs an active Activity to show the permission dialog.
+  Future<void> requestPermissions() async {
+    await _requestPermissions();
+  }
+
+  /// Internal permission request implementation
   Future<void> _requestPermissions() async {
-    // Request FCM permissions
+    // ── Android + iOS: request notification permission ──
+    // On Android 13+ (API 33+) this triggers the native OS permission dialog.
+    // On Android 12 and below there is no POST_NOTIFICATIONS runtime permission
+    // (it was introduced in API 33), so permission_handler returns
+    // PermissionStatus.granted immediately without showing any UI — which is
+    // correct behaviour since notifications are auto-granted on those versions.
+    // The in-app rationale dialog shown from MainScreen handles the UX for
+    // Android 12 users before this call is ever made.
+    final result = await Permission.notification.request();
+    if (kDebugMode) {
+      debugPrint('Notification permission result: $result');
+    }
+
+    // If the user had previously tapped "Don't allow" twice on Android 13+,
+    // the OS will not show the dialog again; send them to app settings instead.
+    if (result.isPermanentlyDenied) {
+      if (kDebugMode) {
+        debugPrint(
+          'Notification permission permanently denied — opening app settings.',
+        );
+      }
+      await openAppSettings();
+    }
+
+    // ── iOS / macOS: FCM also configures its own alert/badge/sound ──
     final NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
       announcement: false,
@@ -111,25 +137,16 @@ class NotificationService {
       provisional: false,
       sound: true,
     );
-
     if (kDebugMode) {
       debugPrint('FCM permission status: ${settings.authorizationStatus}');
     }
 
-    // Request Android 13+ notification permissions through local notifications
+    // ── Android: also request exact-alarm permission (API 31+) ──
     final androidImplementation = _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
         >();
-
     if (androidImplementation != null) {
-      final granted = await androidImplementation
-          .requestNotificationsPermission();
-      if (kDebugMode) {
-        debugPrint('Android notifications permission granted: $granted');
-      }
-
-      // Request exact alarm permission for Android 12+
       final exactAlarmGranted = await androidImplementation
           .requestExactAlarmsPermission();
       if (kDebugMode) {
@@ -444,13 +461,22 @@ class NotificationService {
         iOS: iosDetails,
       );
 
+      // Use exact alarms when the permission is available (Android 12+
+      // requires SCHEDULE_EXACT_ALARM to be granted by the user in Settings
+      // → Alarms & Reminders). Fall back to inexact scheduling so the call
+      // never throws a PlatformException on devices where it hasn't been
+      // granted yet — reminders will still fire, just potentially a few
+      // minutes late due to battery-optimisation batching.
+      final canExact = await _canScheduleExactAlarms();
       await _localNotifications.zonedSchedule(
         id,
         title,
         body,
         scheduledDate,
         details,
-        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        androidScheduleMode: canExact
+            ? AndroidScheduleMode.exactAllowWhileIdle
+            : AndroidScheduleMode.inexact,
         uiLocalNotificationDateInterpretation:
             UILocalNotificationDateInterpretation.absoluteTime,
         matchDateTimeComponents: DateTimeComponents.time,
@@ -466,6 +492,19 @@ class NotificationService {
       }
       rethrow;
     }
+  }
+
+  /// Returns true if the app can schedule exact alarms on this device.
+  /// On Android < 12 this is always true. On Android 12+ it requires the
+  /// SCHEDULE_EXACT_ALARM special permission to be granted by the user.
+  Future<bool> _canScheduleExactAlarms() async {
+    final androidImpl = _localNotifications
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (androidImpl == null) return true; // iOS — always ok
+    final result = await androidImpl.canScheduleExactNotifications();
+    return result ?? true;
   }
 
   /// Cancel a specific reminder

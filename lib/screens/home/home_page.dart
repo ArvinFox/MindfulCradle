@@ -33,29 +33,36 @@ class _HomePageState extends State<HomePage> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final videoProvider = Provider.of<VideoProvider>(context, listen: false);
 
-    // Wait for auth to be ready
+    // Wait for auth to be ready (covers remembered-session startup path)
     while (authProvider.isInitializing) {
       await Future.delayed(const Duration(milliseconds: 50));
     }
 
-    // Listener for future auth changes
-    _authListener = () async {
+    // Listener for future auth changes.
+    // Kept synchronous on purpose: awaiting waitForInitialProgress() here
+    // caused a permanent hang because the listener could call reset() while
+    // _initHome() was still awaiting the same Completer that reset() cancels.
+    _authListener = () {
+      if (!mounted) return;
       final user = authProvider.user;
-      if (user != null && mounted) {
+      // Only re-initialise the video provider when the user actually changes
+      // (prevents a double-init race when Firestore fires while streams are
+      // still being set up for the current user).
+      if (user != null && videoProvider.user?.id != user.id) {
         videoProvider.reset();
         videoProvider.setUser(user, context);
-        await videoProvider.waitForInitialProgress();
-        if (mounted) setState(() => _loading = false);
       }
     };
     authProvider.addListener(_authListener);
 
-    // Immediate check
+    // Immediate check – set up video streams right away if user is ready.
+    // We do NOT await waitForInitialProgress() here; VideoProvider calls
+    // notifyListeners() when the first Firestore snapshot arrives, which
+    // rebuilds the Consumer<VideoProvider> portion of the tree automatically.
     final user = authProvider.user;
-    if (user != null && mounted) {
+    if (user != null && mounted && videoProvider.user?.id != user.id) {
       videoProvider.reset();
       videoProvider.setUser(user, context);
-      await videoProvider.waitForInitialProgress();
     }
 
     if (mounted) setState(() => _loading = false);

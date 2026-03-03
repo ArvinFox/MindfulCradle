@@ -53,6 +53,10 @@ class _NotificationSettingsScreenState
         SnackBar(
           content: Text(context.t.notifications('defaultRemindersSet')),
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -62,6 +66,10 @@ class _NotificationSettingsScreenState
         SnackBar(
           content: Text('Error: $e'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -136,6 +144,10 @@ class _NotificationSettingsScreenState
         SnackBar(
           content: Text(context.t.notifications('reminderScheduled')),
           backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -145,6 +157,10 @@ class _NotificationSettingsScreenState
         SnackBar(
           content: Text('Error: $e'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -161,6 +177,10 @@ class _NotificationSettingsScreenState
         SnackBar(
           content: Text(context.t.notifications('reminderCancelled')),
           backgroundColor: Colors.orange,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -170,6 +190,10 @@ class _NotificationSettingsScreenState
         SnackBar(
           content: Text('Error: $e'),
           backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
           duration: const Duration(seconds: 3),
         ),
       );

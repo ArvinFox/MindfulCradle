@@ -31,6 +31,8 @@ dependencies:
   flutter_dotenv: ^5.1.0
   flutter_markdown: ^0.7.4+1
   timezone: ^0.10.1
+  permission_handler: ^11.3.1
+  flutter_timezone: ^5.0.1
 
 dev_dependencies:
   flutter_test:

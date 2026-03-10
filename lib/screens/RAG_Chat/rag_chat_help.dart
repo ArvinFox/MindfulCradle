@@ -209,11 +209,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
     final String backendUrl = dotenv.env['BACKEND_URL'] ?? '';
 
-    // Use backend proxy when BACKEND_URL is set; fall back to direct Gemini.
-    final String apiKey =
-        backendUrl.isEmpty ? (dotenv.env['GEMINI_API_KEY'] ?? '') : '';
-
-    if (backendUrl.isEmpty && apiKey.isEmpty) {
+    if (backendUrl.isEmpty) {
       setState(() {
         _isInitializing = false;
       });
@@ -223,8 +219,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
     _showKeyStatus(true);
 
-    final RagService service =
-        RagService(apiKey: apiKey, backendUrl: backendUrl);
+    final RagService service = RagService(backendUrl: backendUrl);
     _ragService = service;
     _ragInitFuture ??= _safeInitialize(service);
     await _ragInitFuture;

@@ -7,6 +7,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/user_service.dart';
+import '../services/backend_api_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -74,19 +75,16 @@ class AuthProvider with ChangeNotifier {
     });
   }
 
-  /// Saves the current device FCM token to the user's Firestore document.
-  /// This allows the backend to send targeted push notifications.
+  /// Saves the current device FCM token to the backend, which then writes it
+  /// to Firestore via the Admin SDK. This enables targeted server-side pushes.
   Future<void> _syncFcmToken(String uid) async {
     try {
       final token = await FirebaseMessaging.instance.getToken();
       if (token != null) {
-        await _firestore
-            .collection('users')
-            .doc(uid)
-            .update({'fcmToken': token});
+        await BackendApiService.registerFcmToken(token);
       }
     } catch (_) {
-      // Non-critical — silently ignore
+      // Non-critical — silently ignore if backend is unreachable
     }
   }
 

@@ -207,12 +207,13 @@ class _ChatBotPageState extends State<ChatBotPage> {
       _isInitializing = true;
     });
 
-    final String apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
-    if (kDebugMode) {
-      debugPrint('RAG API key loaded: ${apiKey.isNotEmpty}');
-    }
+    final String backendUrl = dotenv.env['BACKEND_URL'] ?? '';
 
-    if (apiKey.isEmpty) {
+    // Use backend proxy when BACKEND_URL is set; fall back to direct Gemini.
+    final String apiKey =
+        backendUrl.isEmpty ? (dotenv.env['GEMINI_API_KEY'] ?? '') : '';
+
+    if (backendUrl.isEmpty && apiKey.isEmpty) {
       setState(() {
         _isInitializing = false;
       });
@@ -222,7 +223,8 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
     _showKeyStatus(true);
 
-    final RagService service = RagService(apiKey: apiKey);
+    final RagService service =
+        RagService(apiKey: apiKey, backendUrl: backendUrl);
     _ragService = service;
     _ragInitFuture ??= _safeInitialize(service);
     await _ragInitFuture;
@@ -343,6 +345,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
           'languageHint${_currentLang == 'en' ? 'English' : 'Sinhala'}',
         ),
         conversationHistory: conversationHistory,
+        sessionId: _currentSessionId,
       )) {
         if (!mounted) return;
 

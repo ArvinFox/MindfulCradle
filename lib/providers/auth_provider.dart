@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user_model.dart';
@@ -64,12 +65,29 @@ class AuthProvider with ChangeNotifier {
       if (doc.exists) {
         _user = UserModel.fromMap(doc.data()!, doc.id);
         _startSessionTracking(doc.id);
+        _syncFcmToken(uid);
       } else {
         _user = null;
         _stopSessionTracking(flush: false);
       }
       notifyListeners();
     });
+  }
+
+  /// Saves the current device FCM token to the user's Firestore document.
+  /// This allows the backend to send targeted push notifications.
+  Future<void> _syncFcmToken(String uid) async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+      if (token != null) {
+        await _firestore
+            .collection('users')
+            .doc(uid)
+            .update({'fcmToken': token});
+      }
+    } catch (_) {
+      // Non-critical — silently ignore
+    }
   }
 
   /// Login user

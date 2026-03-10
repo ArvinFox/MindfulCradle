@@ -106,7 +106,7 @@ class RagService {
     try {
       final response = await http.post(
         Uri.parse(
-          '$_geminiBaseUrl/gemini-2.0-flash-preview:generateContent?key=$apiKey',
+          '$_geminiBaseUrl/gemini-3-flash-preview:generateContent?key=$apiKey',
         ),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
@@ -220,7 +220,7 @@ class RagService {
       final request = http.Request(
         'POST',
         Uri.parse(
-          '$_geminiBaseUrl/gemini-2.0-flash-preview:streamGenerateContent?alt=sse&key=$apiKey',
+          '$_geminiBaseUrl/gemini-3-flash-preview:streamGenerateContent?alt=sse&key=$apiKey',
         ),
       );
       request.headers['Content-Type'] = 'application/json';
@@ -270,6 +270,8 @@ class RagService {
       yield 'Connection error. Please check your internet and try again.';
     }
   }
+
+  List<RagDocument> _parseFaq(String jsonText) {
     final List<dynamic> data = jsonDecode(jsonText) as List<dynamic>;
     return data
         .map(

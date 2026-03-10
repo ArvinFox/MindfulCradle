@@ -62,7 +62,7 @@ ${userMessage}`;
  */
 async function generateAnswer(userMessage, history = [], languageHint = 'en') {
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash-preview';
+  const model = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 
   const prompt = buildPrompt(userMessage, history, languageHint);
 
@@ -94,7 +94,7 @@ async function generateAnswer(userMessage, history = [], languageHint = 'en') {
  */
 async function streamAnswer(userMessage, history = [], languageHint = 'en', res) {
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || 'gemini-2.0-flash-preview';
+  const model = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 
   const prompt = buildPrompt(userMessage, history, languageHint);
 

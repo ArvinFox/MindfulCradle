@@ -1,11 +1,16 @@
-const router = require('express').Router();
-const { getUserStats, getQuestionnaireStats, getVideoStats, getAchievementStats } = require('../../services/analyticsService');
-const logger = require('../../config/logger');
+const router = require("express").Router();
+const {
+  getUserStats,
+  getQuestionnaireStats,
+  getVideoStats,
+  getAchievementStats,
+} = require("../../services/analyticsService");
+const logger = require("../../config/logger");
 
 /**
  * GET /api/admin/analytics/users
  */
-router.get('/users', async (req, res) => {
+router.get("/users", async (req, res) => {
   const stats = await getUserStats();
   res.json(stats);
 });
@@ -13,7 +18,7 @@ router.get('/users', async (req, res) => {
 /**
  * GET /api/admin/analytics/questionnaires
  */
-router.get('/questionnaires', async (req, res) => {
+router.get("/questionnaires", async (req, res) => {
   const stats = await getQuestionnaireStats();
   res.json(stats);
 });
@@ -21,7 +26,7 @@ router.get('/questionnaires', async (req, res) => {
 /**
  * GET /api/admin/analytics/videos
  */
-router.get('/videos', async (req, res) => {
+router.get("/videos", async (req, res) => {
   const stats = await getVideoStats();
   res.json(stats);
 });
@@ -29,7 +34,7 @@ router.get('/videos', async (req, res) => {
 /**
  * GET /api/admin/analytics/achievements
  */
-router.get('/achievements', async (req, res) => {
+router.get("/achievements", async (req, res) => {
   const stats = await getAchievementStats();
   res.json(stats);
 });
@@ -38,7 +43,7 @@ router.get('/achievements', async (req, res) => {
  * GET /api/admin/analytics/summary
  * All stats in one call.
  */
-router.get('/summary', async (req, res) => {
+router.get("/summary", async (req, res) => {
   const [users, questionnaires, videos, achievements] = await Promise.all([
     getUserStats(),
     getQuestionnaireStats(),

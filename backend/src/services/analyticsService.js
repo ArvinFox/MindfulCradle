@@ -1,4 +1,4 @@
-const { db } = require('../config/firebase');
+const { db } = require("../config/firebase");
 
 /**
  * Returns aggregate analytics data for the admin dashboard.
@@ -6,31 +6,43 @@ const { db } = require('../config/firebase');
  */
 
 async function getUserStats() {
-  const usersSnap = await db.collection('users').get();
+  const usersSnap = await db.collection("users").get();
   const users = usersSnap.docs.map((d) => d.data());
 
   const total = users.length;
   const registered = users.filter((u) => u.isUserRegistrationComplete).length;
-  const totalSessionSeconds = users.reduce((sum, u) => sum + (u.totalSessionTime || 0), 0);
-  const avgSessionMinutes = total > 0 ? Math.round(totalSessionSeconds / total / 60) : 0;
+  const totalSessionSeconds = users.reduce(
+    (sum, u) => sum + (u.totalSessionTime || 0),
+    0,
+  );
+  const avgSessionMinutes =
+    total > 0 ? Math.round(totalSessionSeconds / total / 60) : 0;
 
   const byResidence = {};
   users.forEach((u) => {
-    if (u.residence) byResidence[u.residence] = (byResidence[u.residence] || 0) + 1;
+    if (u.residence)
+      byResidence[u.residence] = (byResidence[u.residence] || 0) + 1;
   });
 
   const byPregnancyMonth = {};
   users.forEach((u) => {
     if (u.pregnancyMonth) {
-      byPregnancyMonth[u.pregnancyMonth] = (byPregnancyMonth[u.pregnancyMonth] || 0) + 1;
+      byPregnancyMonth[u.pregnancyMonth] =
+        (byPregnancyMonth[u.pregnancyMonth] || 0) + 1;
     }
   });
 
-  return { total, registered, avgSessionMinutes, byResidence, byPregnancyMonth };
+  return {
+    total,
+    registered,
+    avgSessionMinutes,
+    byResidence,
+    byPregnancyMonth,
+  };
 }
 
 async function getQuestionnaireStats() {
-  const tools = ['dass21', 'maas', 'pws18'];
+  const tools = ["dass21", "maas", "pws18"];
   const result = {};
 
   for (const tool of tools) {
@@ -43,19 +55,20 @@ async function getQuestionnaireStats() {
       totalAttempts: attempts.length,
     };
 
-    if (tool === 'dass21' && attempts.length > 0) {
+    if (tool === "dass21" && attempts.length > 0) {
       const avg = (field) =>
         Math.round(
-          attempts.reduce((s, a) => s + (a.scores?.[field] || 0), 0) / attempts.length
+          attempts.reduce((s, a) => s + (a.scores?.[field] || 0), 0) /
+            attempts.length,
         );
       result[tool].avgScores = {
-        depression: avg('depression'),
-        anxiety: avg('anxiety'),
-        stress: avg('stress'),
+        depression: avg("depression"),
+        anxiety: avg("anxiety"),
+        stress: avg("stress"),
       };
     }
 
-    if (tool === 'maas' && attempts.length > 0) {
+    if (tool === "maas" && attempts.length > 0) {
       const avgScore =
         attempts.reduce((s, a) => s + (a.maasScore || 0), 0) / attempts.length;
       result[tool].avgScore = Math.round(avgScore * 10) / 10;
@@ -66,8 +79,8 @@ async function getQuestionnaireStats() {
 }
 
 async function getVideoStats() {
-  const videosSnap = await db.collection('videos').get();
-  const progressSnap = await db.collectionGroup('videoProgress').get();
+  const videosSnap = await db.collection("videos").get();
+  const progressSnap = await db.collectionGroup("videoProgress").get();
 
   const watchMap = {};
   progressSnap.docs.forEach((d) => {
@@ -86,7 +99,8 @@ async function getVideoStats() {
       title: data.title,
       sessionNumber: data.sessionNumber,
       viewers: stats.viewers,
-      avgWatchSeconds: stats.viewers > 0 ? Math.round(stats.totalSeconds / stats.viewers) : 0,
+      avgWatchSeconds:
+        stats.viewers > 0 ? Math.round(stats.totalSeconds / stats.viewers) : 0,
     };
   });
 
@@ -94,7 +108,7 @@ async function getVideoStats() {
 }
 
 async function getAchievementStats() {
-  const usersSnap = await db.collection('users').get();
+  const usersSnap = await db.collection("users").get();
   const counts = {};
 
   usersSnap.docs.forEach((d) => {
@@ -107,4 +121,9 @@ async function getAchievementStats() {
   return counts;
 }
 
-module.exports = { getUserStats, getQuestionnaireStats, getVideoStats, getAchievementStats };
+module.exports = {
+  getUserStats,
+  getQuestionnaireStats,
+  getVideoStats,
+  getAchievementStats,
+};

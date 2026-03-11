@@ -1,9 +1,9 @@
-const router = require('express').Router();
-const { body } = require('express-validator');
-const { validateRequest } = require('../middleware/validate');
-const { verifyToken } = require('../middleware/auth');
-const { db, auth } = require('../config/firebase');
-const logger = require('../config/logger');
+const router = require("express").Router();
+const { body } = require("express-validator");
+const { validateRequest } = require("../middleware/validate");
+const { verifyToken } = require("../middleware/auth");
+const { db, auth } = require("../config/firebase");
+const logger = require("../config/logger");
 
 router.use(verifyToken);
 
@@ -11,11 +11,11 @@ router.use(verifyToken);
  * GET /api/user/profile
  * Returns the authenticated user's profile from Firestore.
  */
-router.get('/profile', async (req, res) => {
+router.get("/profile", async (req, res) => {
   const uid = req.user.uid;
 
-  const doc = await db.collection('users').doc(uid).get();
-  if (!doc.exists) return res.status(404).json({ error: 'User not found.' });
+  const doc = await db.collection("users").doc(uid).get();
+  if (!doc.exists) return res.status(404).json({ error: "User not found." });
 
   res.json({ id: doc.id, ...doc.data() });
 });
@@ -27,15 +27,29 @@ router.get('/profile', async (req, res) => {
  * Body: { fullName?, age?, residence?, pregnancyMonth?, ... }
  */
 const ALLOWED_PROFILE_FIELDS = [
-  'fullName', 'age', 'residence', 'pregnancyMonth', 'firstTimeMother',
-  'employed', 'obstetricComplication', 'psychologicalSupport',
-  'distressingEvents', 'practicedMindfulness', 'mindfulnessDuration',
-  'isUserRegistrationComplete',
+  "fullName",
+  "age",
+  "residence",
+  "pregnancyMonth",
+  "firstTimeMother",
+  "employed",
+  "obstetricComplication",
+  "psychologicalSupport",
+  "distressingEvents",
+  "practicedMindfulness",
+  "mindfulnessDuration",
+  "isUserRegistrationComplete",
 ];
 
 router.put(
-  '/profile',
-  [body('fullName').optional().isString().trim().isLength({ min: 1, max: 100 })],
+  "/profile",
+  [
+    body("fullName")
+      .optional()
+      .isString()
+      .trim()
+      .isLength({ min: 1, max: 100 }),
+  ],
   validateRequest,
   async (req, res) => {
     const uid = req.user.uid;
@@ -46,12 +60,12 @@ router.put(
     });
 
     if (!Object.keys(updates).length) {
-      return res.status(422).json({ error: 'No valid fields to update.' });
+      return res.status(422).json({ error: "No valid fields to update." });
     }
 
-    await db.collection('users').doc(uid).update(updates);
+    await db.collection("users").doc(uid).update(updates);
     res.json({ success: true });
-  }
+  },
 );
 
 /**
@@ -61,14 +75,14 @@ router.put(
  * Body: { token: string }
  */
 router.put(
-  '/fcm-token',
-  [body('token').isString().trim().notEmpty()],
+  "/fcm-token",
+  [body("token").isString().trim().notEmpty()],
   validateRequest,
   async (req, res) => {
     const uid = req.user.uid;
-    await db.collection('users').doc(uid).update({ fcmToken: req.body.token });
+    await db.collection("users").doc(uid).update({ fcmToken: req.body.token });
     res.json({ success: true });
-  }
+  },
 );
 
 /**
@@ -76,16 +90,17 @@ router.put(
  * Server-side GDPR data export. Returns all user data as JSON.
  * (The Flutter app can trigger this and display/save the result.)
  */
-router.get('/export', async (req, res) => {
+router.get("/export", async (req, res) => {
   const uid = req.user.uid;
 
-  const [userDoc, dass21Snap, maasSnap, pws18Snap, chatSnap] = await Promise.all([
-    db.collection('users').doc(uid).get(),
-    db.collection('users').doc(uid).collection('dass21_responses').get(),
-    db.collection('users').doc(uid).collection('maas_responses').get(),
-    db.collection('users').doc(uid).collection('pws18_responses').get(),
-    db.collection('users').doc(uid).collection('chat_sessions').get(),
-  ]);
+  const [userDoc, dass21Snap, maasSnap, pws18Snap, chatSnap] =
+    await Promise.all([
+      db.collection("users").doc(uid).get(),
+      db.collection("users").doc(uid).collection("dass21_responses").get(),
+      db.collection("users").doc(uid).collection("maas_responses").get(),
+      db.collection("users").doc(uid).collection("pws18_responses").get(),
+      db.collection("users").doc(uid).collection("chat_sessions").get(),
+    ]);
 
   const exportData = {
     profile: userDoc.data(),
@@ -96,7 +111,10 @@ router.get('/export', async (req, res) => {
     exportedAt: new Date().toISOString(),
   };
 
-  res.setHeader('Content-Disposition', 'attachment; filename="mindfulcradle_data_export.json"');
+  res.setHeader(
+    "Content-Disposition",
+    'attachment; filename="mindfulcradle_data_export.json"',
+  );
   res.json(exportData);
 });
 
@@ -105,16 +123,19 @@ router.get('/export', async (req, res) => {
  * Permanently deletes all user data from Firestore and the Auth record.
  * Uses the Admin SDK — safe and atomic from the server.
  */
-router.delete('/account', async (req, res) => {
+router.delete("/account", async (req, res) => {
   const uid = req.user.uid;
 
   try {
-    const userRef = db.collection('users').doc(uid);
+    const userRef = db.collection("users").doc(uid);
 
     // Delete all sub-collections
     const subCollections = [
-      'dass21_responses', 'maas_responses', 'pws18_responses',
-      'videoProgress', 'chat_sessions',
+      "dass21_responses",
+      "maas_responses",
+      "pws18_responses",
+      "videoProgress",
+      "chat_sessions",
     ];
 
     for (const col of subCollections) {
@@ -124,9 +145,9 @@ router.delete('/account', async (req, res) => {
       await batch.commit();
 
       // For chat_sessions, also delete nested messages
-      if (col === 'chat_sessions') {
+      if (col === "chat_sessions") {
         for (const session of snap.docs) {
-          const msgSnap = await session.ref.collection('messages').get();
+          const msgSnap = await session.ref.collection("messages").get();
           const msgBatch = db.batch();
           msgSnap.docs.forEach((m) => msgBatch.delete(m.ref));
           await msgBatch.commit();
@@ -138,11 +159,11 @@ router.delete('/account', async (req, res) => {
     await userRef.delete();
     await auth.deleteUser(uid);
 
-    logger.info('Account deleted', { uid });
+    logger.info("Account deleted", { uid });
     res.json({ success: true });
   } catch (err) {
-    logger.error('Account deletion error', { uid, error: err.message });
-    res.status(500).json({ error: 'Account deletion failed.' });
+    logger.error("Account deletion error", { uid, error: err.message });
+    res.status(500).json({ error: "Account deletion failed." });
   }
 });
 

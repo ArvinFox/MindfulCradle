@@ -1,4 +1,4 @@
-const rateLimit = require('express-rate-limit');
+const rateLimit = require("express-rate-limit");
 
 /**
  * General API rate limiter — 100 requests per 15 minutes per IP.
@@ -8,7 +8,7 @@ const apiLimiter = rateLimit({
   max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Too many requests, please try again later.' },
+  message: { error: "Too many requests, please try again later." },
 });
 
 /**
@@ -20,7 +20,10 @@ const chatLimiter = rateLimit({
   max: parseInt(process.env.CHAT_RATE_LIMIT_MAX) || 30,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { error: 'Chat rate limit exceeded. Please wait before sending more messages.' },
+  message: {
+    error:
+      "Chat rate limit exceeded. Please wait before sending more messages.",
+  },
 });
 
 module.exports = { apiLimiter, chatLimiter };

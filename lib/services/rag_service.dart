@@ -86,16 +86,17 @@ class RagService {
       final streamedResponse = await request.send();
 
       if (streamedResponse.statusCode == 200) {
-        await for (final chunk
-            in streamedResponse.stream.transform(utf8.decoder)) {
+        await for (final chunk in streamedResponse.stream.transform(
+          utf8.decoder,
+        )) {
           final lines = chunk.split('\n');
           for (final line in lines) {
             if (line.startsWith('data: ')) {
               final jsonData = line.substring(6);
               try {
                 final data = jsonDecode(jsonData);
-                final text = data['candidates']?[0]?['content']?['parts']
-                    ?[0]?['text'];
+                final text =
+                    data['candidates']?[0]?['content']?['parts']?[0]?['text'];
                 if (text != null && (text as String).isNotEmpty) {
                   yield text;
                 }

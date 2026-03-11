@@ -1,6 +1,9 @@
-const cron = require('node-cron');
-const { sendMulticast, getAllActiveTokens } = require('../services/notificationService');
-const logger = require('../config/logger');
+const cron = require("node-cron");
+const {
+  sendMulticast,
+  getAllActiveTokens,
+} = require("../services/notificationService");
+const logger = require("../config/logger");
 
 /**
  * Server-side global push notification schedule.
@@ -17,54 +20,60 @@ const logger = require('../config/logger');
 
 function startScheduler() {
   // Every Monday at 8:00 AM — Weekly wellness reminder
-  cron.schedule('0 8 * * 1', async () => {
-    logger.info('Running weekly wellness notification job');
+  cron.schedule("0 8 * * 1", async () => {
+    logger.info("Running weekly wellness notification job");
     try {
       const tokens = await getAllActiveTokens();
       await sendMulticast(
         tokens,
-        '🌸 Weekly Wellness Check',
-        'Start your week with a mindfulness session. Your baby feels what you feel!',
-        { type: 'weekly_wellness' }
+        "🌸 Weekly Wellness Check",
+        "Start your week with a mindfulness session. Your baby feels what you feel!",
+        { type: "weekly_wellness" },
       );
     } catch (err) {
-      logger.error('Weekly wellness notification failed', { error: err.message });
+      logger.error("Weekly wellness notification failed", {
+        error: err.message,
+      });
     }
   });
 
   // Every day at 9:00 AM — Morning meditation nudge
-  cron.schedule('0 9 * * *', async () => {
-    logger.info('Running morning meditation notification job');
+  cron.schedule("0 9 * * *", async () => {
+    logger.info("Running morning meditation notification job");
     try {
       const tokens = await getAllActiveTokens();
       await sendMulticast(
         tokens,
-        '🧘 Good Morning!',
-        'Take 10 minutes for your mindfulness session today.',
-        { type: 'morning_meditation' }
+        "🧘 Good Morning!",
+        "Take 10 minutes for your mindfulness session today.",
+        { type: "morning_meditation" },
       );
     } catch (err) {
-      logger.error('Morning meditation notification failed', { error: err.message });
+      logger.error("Morning meditation notification failed", {
+        error: err.message,
+      });
     }
   });
 
   // First day of each month at 10:00 AM — Questionnaire reminder
-  cron.schedule('0 10 1 * *', async () => {
-    logger.info('Running monthly questionnaire notification job');
+  cron.schedule("0 10 1 * *", async () => {
+    logger.info("Running monthly questionnaire notification job");
     try {
       const tokens = await getAllActiveTokens();
       await sendMulticast(
         tokens,
-        '📋 Monthly Check-in Available',
-        'Your monthly wellness questionnaires are now available. Track your progress!',
-        { type: 'questionnaire_unlock', screen: 'questionnaires' }
+        "📋 Monthly Check-in Available",
+        "Your monthly wellness questionnaires are now available. Track your progress!",
+        { type: "questionnaire_unlock", screen: "questionnaires" },
       );
     } catch (err) {
-      logger.error('Monthly questionnaire notification failed', { error: err.message });
+      logger.error("Monthly questionnaire notification failed", {
+        error: err.message,
+      });
     }
   });
 
-  logger.info('Notification scheduler started.');
+  logger.info("Notification scheduler started.");
 }
 
 module.exports = { startScheduler };

@@ -52,7 +52,7 @@ android {
     }
 
     buildTypes {
-        release {.
+        release {
             signingConfig = signingConfigs.getByName("debug")
 
             // R8 shrinking, obfuscation, and resource stripping

@@ -3,11 +3,7 @@ name: Release Build
 on:
   push:
     branches:
-      - main
-      - master
       - develop
-    tags:
-      - 'v*.*.*'
   workflow_dispatch:
     inputs:
       build_apk:
@@ -43,20 +39,24 @@ jobs:
           cache: true
 
       # ── Environment file ──────────────────────────────────────────────────
-      # Recreate the .env file from GitHub Secrets so flutter_dotenv can load it.
-      # Add GEMINI_API_KEY and BACKEND_URL to your repository Secrets.
+      # Required secrets: GEMINI_API_KEY, BACKEND_URL
       - name: Create .env file
         run: |
           echo 'GEMINI_API_KEY="${{ secrets.GEMINI_API_KEY }}"' > .env
           echo 'BACKEND_URL="${{ secrets.BACKEND_URL }}"' >> .env
 
+      # ── google-services.json ──────────────────────────────────────────────
+      # Store the full JSON content of google-services.json as a secret named
+      # GOOGLE_SERVICES_JSON (plain JSON text). This overwrites the file that
+      # is committed to the repo (which should be a safe placeholder).
+      - name: Write google-services.json
+        run: echo '${{ secrets.GOOGLE_SERVICES_JSON }}' > android/app/google-services.json
+
       # ── Android signing ───────────────────────────────────────────────────
-      # Decode the base64-encoded keystore stored in KEYSTORE_BASE64 secret.
       - name: Decode keystore
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
 
-      # key.properties is gitignored; create it from secrets at build time.
       - name: Create key.properties
         run: |
           echo "storePassword=${{ secrets.STORE_PASSWORD }}" > android/key.properties
@@ -78,11 +78,13 @@ jobs:
         run: flutter build appbundle --release
 
       # ── Upload build artifacts ────────────────────────────────────────────
+      # Artifacts are stored in GitHub under the Actions run for 30 days.
+      # Download them from: Actions tab → select the run → Artifacts section.
       - name: Upload APK artifact
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_apk }}
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
+          name: release-apk-${{ github.sha }}
           path: build/app/outputs/flutter-apk/app-release.apk
           retention-days: 30
 
@@ -90,20 +92,6 @@ jobs:
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_aab }}
         uses: actions/upload-artifact@v4
         with:
-          name: release-aab
+          name: release-aab-${{ github.sha }}
           path: build/app/outputs/bundle/release/app-release.aab
           retention-days: 30
-
-      # ── GitHub Release (on version tags only) ─────────────────────────────
-      - name: Create GitHub Release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v2
-        with:
-          files: |
-            build/app/outputs/flutter-apk/app-release.apk
-            build/app/outputs/bundle/release/app-release.aab
-          generate_release_notes: true
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

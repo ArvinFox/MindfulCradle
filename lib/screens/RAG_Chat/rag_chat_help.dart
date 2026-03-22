@@ -99,6 +99,10 @@ class _ChatBotPageState extends State<ChatBotPage> {
         setState(() {
           messages = history;
           _isLoadingHistory = false;
+          // Reset streaming states when switching chats
+          _isTyping = false;
+          _isStreaming = false;
+          _streamingMessageIndex = -1;
         });
       }
     } else {
@@ -111,24 +115,33 @@ class _ChatBotPageState extends State<ChatBotPage> {
         setState(() {
           messages = [];
           _isLoadingHistory = false;
+          // Reset streaming states for new chat
+          _isTyping = false;
+          _isStreaming = false;
+          _streamingMessageIndex = -1;
         });
       } catch (e) {
         print('Error creating session: $e');
         setState(() {
           _isLoadingHistory = false;
+          // Reset streaming states on error
+          _isTyping = false;
+          _isStreaming = false;
+          _streamingMessageIndex = -1;
         });
       }
     }
   }
 
-  Future<void> _saveMessageToHistory(String role, String text) async {
+  Future<void> _saveMessageToHistory(String role, String text, {String? sessionId}) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.id;
+    final targetSessionId = sessionId ?? _currentSessionId;
 
-    if (userId != null && _currentSessionId != null) {
+    if (userId != null && targetSessionId != null) {
       await _chatHistoryService.saveMessage(
         userId: userId,
-        sessionId: _currentSessionId!,
+        sessionId: targetSessionId,
         role: role,
         text: text,
       );
@@ -138,7 +151,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
         final title = _chatHistoryService.generateTitleFromMessage(text);
         await _chatHistoryService.updateSessionTitle(
           userId: userId,
-          sessionId: _currentSessionId!,
+          sessionId: targetSessionId,
           title: title,
         );
         _isNewSession = false;
@@ -304,8 +317,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
       }
     }
 
+    // Capture the session ID to ensure messages are saved to the correct session
+    // even if user switches chats during streaming
+    final String? sessionId = _currentSessionId;
+
     // Save user message
-    await _saveMessageToHistory(userMsg['role']!, userMsg['text']!);
+    await _saveMessageToHistory(userMsg['role']!, userMsg['text']!, sessionId: sessionId);
 
     if (_ragInitFuture != null) {
       await _ragInitFuture;
@@ -314,16 +331,20 @@ class _ChatBotPageState extends State<ChatBotPage> {
     final RagService? service = _ragService;
     if (service == null || _ragInitError != null) {
       if (!mounted) return;
-      final String errorDetail = _ragInitError ?? '';
-      final String fallbackMessage = context.t.chat('assistantNotConfigured');
-      final String message = errorDetail.isNotEmpty
+
+      // Only update UI if this is still the current session
+      if (_currentSessionId == sessionId) {
+        final String errorDetail = _ragInitError ?? '';
+        final String fallbackMessage = context.t.chat('assistantNotConfigured');
+        final String message = errorDetail.isNotEmpty
           ? context.t.chat('ragInitFailed') + errorDetail
           : fallbackMessage;
-      setState(() {
-        messages.add({"role": "bot", "text": message});
-        _isTyping = false;
-      });
-      _scrollToBottom();
+        setState(() {
+          messages.add({"role": "bot", "text": message});
+          _isTyping = false;
+        });
+        _scrollToBottom();
+      }
       return;
     }
 
@@ -345,6 +366,13 @@ class _ChatBotPageState extends State<ChatBotPage> {
         conversationHistory: conversationHistory,
       )) {
         if (!mounted) return;
+
+        // Check if user has switched to a different chat session
+        if (_currentSessionId != sessionId) {
+          // Continue collecting the response but don't update UI
+          fullResponseBuffer.write(chunk);
+          continue;
+        }
 
         fullResponseBuffer.write(chunk);
         final currentText = fullResponseBuffer.toString();
@@ -374,26 +402,33 @@ class _ChatBotPageState extends State<ChatBotPage> {
       // Stream complete - finalize the message
       if (!mounted) return;
       final finalText = fullResponseBuffer.toString();
-      setState(() {
-        _isStreaming = false;
-        messages = List.from(messages)
-          ..[_streamingMessageIndex] = {"role": "bot", "text": finalText};
-        _streamingMessageIndex = -1;
-      });
 
-      _scrollToBottom();
+      // Only update UI if this is still the current session
+      if (_currentSessionId == sessionId) {
+        setState(() {
+          _isStreaming = false;
+          messages = List.from(messages)
+            ..[_streamingMessageIndex] = {"role": "bot", "text": finalText};
+          _streamingMessageIndex = -1;
+        });
+        _scrollToBottom();
+      }
 
-      // Save bot response
-      await _saveMessageToHistory("bot", finalText);
+      // Save bot response to the correct session regardless
+      await _saveMessageToHistory("bot", finalText, sessionId: sessionId);
     } catch (e) {
       if (!mounted) return;
-      setState(() {
-        messages.add({"role": "bot", "text": context.t.chat('errorRetry')});
-        _isTyping = false;
-        _isStreaming = false;
-        _streamingMessageIndex = -1;
-      });
-      _scrollToBottom();
+
+      // Only update UI if this is still the current session
+      if (_currentSessionId == sessionId) {
+        setState(() {
+          messages.add({"role": "bot", "text": context.t.chat('errorRetry')});
+          _isTyping = false;
+          _isStreaming = false;
+          _streamingMessageIndex = -1;
+        });
+        _scrollToBottom();
+      }
     }
   }
 

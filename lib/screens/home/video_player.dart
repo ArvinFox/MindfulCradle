@@ -40,6 +40,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   Timer? _hintTimer;
   bool _hintVisible = true;
   bool _wasFullScreen = false;
+  bool _isDisposing = false; // Flag to prevent multiple disposal calls
 
   @override
   void initState() {
@@ -171,32 +172,52 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
   @override
   void dispose() {
+    if (_isDisposing) return; // Prevent multiple disposal calls
+    _isDisposing = true;
+
     WidgetsBinding.instance.removeObserver(this);
+
+    // Cancel all timers first
+    _progressTimer?.cancel();
+    _hintTimer?.cancel();
+
+    // Stop video playback immediately
+    if (_controller.value.isPlaying) {
+      _controller.pause();
+    }
+
+    // Remove listener and dispose controller
+    _controller.removeListener(_youtubeListener);
+    _controller.dispose();
+
+    // Flush any remaining progress
+    _flushProgress();
+
     // Force portrait when page is destroyed
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     // Ensure bars are visible when leaving
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
-    _controller.dispose();
-    _progressTimer?.cancel();
-    _hintTimer?.cancel();
-    _flushProgress();
     super.dispose();
   }
 
   /// Handles exiting: Saves progress -> Resets Orientation -> Checks Achievements -> Pops
   Future<void> _handleExit({bool isSystemBack = false}) async {
+    if (_isDisposing) return; // Prevent multiple exit calls
+
+    // Immediately pause and stop the video to prevent lingering playback
+    _controller.pause();
+    _controller.seekTo(const Duration(seconds: 0));
+
     _progressTimer?.cancel();
     _controller.removeListener(_youtubeListener);
-    _controller.pause();
 
     // Force Portrait Mode immediately
     await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
 
     // Save Progress
-    if (mounted) {
+    if (mounted && !_isDisposing) {
       final videoProvider = Provider.of<VideoProvider>(context, listen: false);
       await videoProvider.updateProgress(
         context: context,
@@ -207,14 +228,18 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     }
 
     // Handle Achievements & Pop
-    if (mounted) {
+    if (mounted && !_isDisposing) {
       final achProvider = Provider.of<AchievementProvider>(
         context,
         listen: false,
       );
 
       if (!isSystemBack) {
-        Navigator.of(context).pop();
+        // Add a small delay to ensure video player cleanup before navigation
+        await Future.delayed(const Duration(milliseconds: 100));
+        if (mounted && !_isDisposing) {
+          Navigator.of(context).pop();
+        }
       }
 
       // Trigger Pending Dialogs (shows on the home screen)

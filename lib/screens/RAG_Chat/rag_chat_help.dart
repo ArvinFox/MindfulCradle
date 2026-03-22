@@ -121,14 +121,15 @@ class _ChatBotPageState extends State<ChatBotPage> {
     }
   }
 
-  Future<void> _saveMessageToHistory(String role, String text) async {
+  Future<void> _saveMessageToHistory(String role, String text, {String? sessionId}) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.id;
+    final targetSessionId = sessionId ?? _currentSessionId;
 
-    if (userId != null && _currentSessionId != null) {
+    if (userId != null && targetSessionId != null) {
       await _chatHistoryService.saveMessage(
         userId: userId,
-        sessionId: _currentSessionId!,
+        sessionId: targetSessionId,
         role: role,
         text: text,
       );
@@ -138,7 +139,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
         final title = _chatHistoryService.generateTitleFromMessage(text);
         await _chatHistoryService.updateSessionTitle(
           userId: userId,
-          sessionId: _currentSessionId!,
+          sessionId: targetSessionId,
           title: title,
         );
         _isNewSession = false;
@@ -304,8 +305,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
       }
     }
 
+    // Capture the session ID to ensure messages are saved to the correct session
+    // even if user switches chats during streaming
+    final String? sessionId = _currentSessionId;
+
     // Save user message
-    await _saveMessageToHistory(userMsg['role']!, userMsg['text']!);
+    await _saveMessageToHistory(userMsg['role']!, userMsg['text']!, sessionId: sessionId);
 
     if (_ragInitFuture != null) {
       await _ragInitFuture;
@@ -384,7 +389,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
       _scrollToBottom();
 
       // Save bot response
-      await _saveMessageToHistory("bot", finalText);
+      await _saveMessageToHistory("bot", finalText, sessionId: sessionId);
     } catch (e) {
       if (!mounted) return;
       setState(() {

@@ -27,12 +27,23 @@ class HomeRoutes {
   ) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => YouTubeVideoPlayerPage(
+      PageRouteBuilder(
+        pageBuilder: (context, animation, secondaryAnimation) =>
+            YouTubeVideoPlayerPage(
           video: video,
           userId: userId,
           youtubeId: youtubeId,
         ),
+        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+          // Use a simple fade transition to avoid complex animations that might interfere with video player
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        // Ensure the route maintains state properly
+        maintainState: false,
+        fullscreenDialog: false,
       ),
     );
   }

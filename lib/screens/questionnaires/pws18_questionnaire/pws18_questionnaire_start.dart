@@ -210,13 +210,19 @@ class _PWS18QuestionnaireStartPageState
     bool isCompleted = provider.userAttempts.containsKey(attemptNum);
     DateTime? unlockDate = provider.unlockDates[attemptNum];
     bool isLocked = false;
+    String lockReason = '';
 
     if (!isCompleted) {
+      // Check sequential lock (attempt 2 and 3 require previous attempt completion)
       if (attemptNum > 1 &&
           !provider.userAttempts.containsKey(attemptNum - 1)) {
         isLocked = true;
-      } else if (unlockDate != null && DateTime.now().isBefore(unlockDate)) {
+        lockReason = 'sequential';
+      }
+      // Check time-based lock
+      else if (unlockDate != null && DateTime.now().isBefore(unlockDate)) {
         isLocked = true;
+        lockReason = 'time';
       }
     }
 
@@ -235,13 +241,23 @@ class _PWS18QuestionnaireStartPageState
 
     bool isExpanded = _expandedAttempts.contains(attemptNum);
 
-    final statusText = isCompleted
-        ? (isExpanded
-              ? context.t.questionnaires('hideResults')
-              : context.t.questionnaires('viewResults'))
-        : isLocked
-        ? '${context.t.questionnaires('unlocksOn')} $dateStr'
-        : context.t.questionnaires('availableNow');
+    // Determine status text based on lock reason
+    String statusText;
+    if (isCompleted) {
+      statusText = isExpanded
+          ? context.t.questionnaires('hideResults')
+          : context.t.questionnaires('viewResults');
+    } else if (isLocked) {
+      if (lockReason == 'time') {
+        statusText = '${context.t.questionnaires('unlocksOn')} $dateStr';
+      } else if (lockReason == 'sequential') {
+        statusText = context.t.questionnaires('unlocksAfterPrevious');
+      } else {
+        statusText = context.t.questionnaires('locked');
+      }
+    } else {
+      statusText = context.t.questionnaires('availableNow');
+    }
 
     final completedDateText = completedDateStr.isNotEmpty
         ? '${context.t.questionnaires('completedOn')} $completedDateStr'

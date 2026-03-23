@@ -593,13 +593,19 @@ class _NotificationSettingsScreenState
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, false),
-                                      child: Text(context.isSinhala ? 'නැත' : context.t.common('cancel')),
+                                      child: Text(
+                                        context.isSinhala
+                                            ? 'නැත'
+                                            : context.t.common('cancel'),
+                                      ),
                                     ),
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, true),
                                       child: Text(
-                                        context.isSinhala ? 'ඔව්' : context.t.common('confirm'),
+                                        context.isSinhala
+                                            ? 'ඔව්'
+                                            : context.t.common('confirm'),
                                         style: const TextStyle(
                                           color: Colors.red,
                                         ),

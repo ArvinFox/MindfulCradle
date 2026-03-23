@@ -41,6 +41,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   bool _hintVisible = true;
   bool _wasFullScreen = false;
   bool _isDisposing = false; // Flag to prevent multiple disposal calls
+  bool _isExiting = false; // Flag to make video player invisible during exit
 
   @override
   void initState() {
@@ -211,7 +212,8 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   Future<void> _handleExit({bool isSystemBack = false}) async {
     if (_isDisposing) return; // Prevent multiple exit calls
 
-    // Immediately pause playback
+    // Make video player invisible immediately and pause playback
+    setState(() => _isExiting = true);
     _controller.pause();
 
     _progressTimer?.cancel();
@@ -309,8 +311,11 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                 ),
                 body: Column(
                   children: [
-                    // Video Player Area
-                    Container(color: Colors.black, child: player),
+                    // Video Player Area - Make invisible during exit to prevent artifacts
+                    Opacity(
+                      opacity: _isExiting ? 0.0 : 1.0,
+                      child: Container(color: Colors.black, child: player),
+                    ),
 
                     // Fixed Progress Bar
                     Padding(

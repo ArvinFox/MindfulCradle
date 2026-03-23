@@ -11,6 +11,7 @@ import '../../providers/language_provider.dart';
 import '../../widgets/video_tile.dart';
 import '../../routes/home_routes.dart';
 import '../../utils/translate.dart';
+import '../profile/notification_settings_screen.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -126,6 +127,19 @@ class _HomePageState extends State<HomePage> {
         systemOverlayStyle: SystemUiOverlayStyle.light,
         iconTheme: const IconThemeData(color: Colors.white),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.notifications_outlined),
+            tooltip: context.t.notifications('notificationSettings'),
+            onPressed: () {
+              HapticFeedback.lightImpact();
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const NotificationSettingsScreen(),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: context.t.common('logout'),

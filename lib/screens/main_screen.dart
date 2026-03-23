@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mamamind/screens/RAG_Chat/rag_chat_help.dart';
 import 'package:mamamind/services/notification_service.dart';
 import 'package:mamamind/utils/helpers.dart';
@@ -11,6 +12,7 @@ import '../../widgets/connectivity_banner.dart';
 import 'home/home_page.dart';
 import 'achievements/achievements_page.dart';
 import 'profile/profile_page.dart';
+import 'profile/notification_settings_screen.dart';
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});

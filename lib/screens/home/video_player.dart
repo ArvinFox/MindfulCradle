@@ -146,14 +146,20 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   }
 
   Future<void> _flushProgress() async {
-    if (!mounted) return;
-    final videoProvider = Provider.of<VideoProvider>(context, listen: false);
-    await videoProvider.updateProgress(
-      context: context,
-      userId: widget.userId,
-      videoId: widget.video.id,
-      watchedSeconds: _watchedSeconds,
-    );
+    // Note: This is called from dispose, so context might not be valid
+    // Progress should already be saved in _handleExit, but this is a safety measure
+    try {
+      final videoProvider = Provider.of<VideoProvider>(context, listen: false);
+      await videoProvider.updateProgress(
+        context: context,
+        userId: widget.userId,
+        videoId: widget.video.id,
+        watchedSeconds: _watchedSeconds,
+      );
+    } catch (e) {
+      // Context might not be valid in dispose, progress was already saved in _handleExit
+      debugPrint('Could not flush progress in dispose: $e');
+    }
   }
 
   @override
@@ -213,39 +219,32 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     _progressTimer?.cancel();
     _controller.removeListener(_youtubeListener);
 
-    // Force Portrait Mode immediately
-    await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    await SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-
-    // Save Progress
-    if (mounted && !_isDisposing) {
-      final videoProvider = Provider.of<VideoProvider>(context, listen: false);
-      await videoProvider.updateProgress(
-        context: context,
-        userId: widget.userId,
-        videoId: widget.video.id,
-        watchedSeconds: _watchedSeconds,
-      );
-    }
+    // Save Progress synchronously to ensure it's saved before navigation
+    final videoProvider = Provider.of<VideoProvider>(context, listen: false);
+    await videoProvider.updateProgress(
+      context: context,
+      userId: widget.userId,
+      videoId: widget.video.id,
+      watchedSeconds: _watchedSeconds,
+    );
 
     // Handle Achievements & Pop
-    if (mounted && !_isDisposing) {
-      final achProvider = Provider.of<AchievementProvider>(
-        context,
-        listen: false,
-      );
+    final achProvider = Provider.of<AchievementProvider>(
+      context,
+      listen: false,
+    );
 
-      if (!isSystemBack) {
-        // Add a small delay to ensure video player cleanup before navigation
-        await Future.delayed(const Duration(milliseconds: 100));
-        if (mounted && !_isDisposing) {
-          Navigator.of(context).pop();
-        }
-      }
-
-      // Trigger Pending Dialogs (shows on the home screen)
-      achProvider.showPendingAchievements(context);
+    if (!isSystemBack) {
+      // Navigate immediately without delay
+      Navigator.of(context).pop();
     }
+
+    // Trigger Pending Dialogs (shows on the home screen) - do this after navigation
+    achProvider.showPendingAchievements(context);
+
+    // Do orientation reset after navigation to avoid delaying the UI
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
   @override

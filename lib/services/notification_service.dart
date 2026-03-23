@@ -94,11 +94,29 @@ class NotificationService {
     }
   }
 
-  /// Request notification permissions.
-  /// Must be called AFTER the app has launched (from a visible screen),
-  /// because Android needs an active Activity to show the permission dialog.
-  Future<void> requestPermissions() async {
+  /// Check if notification permissions are granted
+  Future<bool> areNotificationsEnabled() async {
+    final status = await Permission.notification.status;
+    if (kDebugMode) {
+      debugPrint('Notification permission status: $status');
+    }
+    return status.isGranted;
+  }
+
+  /// Request notification permissions and return whether they were granted
+  Future<bool> requestPermissions() async {
+    if (kDebugMode) {
+      debugPrint('NotificationService: Requesting permissions...');
+    }
+
     await _requestPermissions();
+    final enabled = await areNotificationsEnabled();
+
+    if (kDebugMode) {
+      debugPrint('NotificationService: Permissions enabled: $enabled');
+    }
+
+    return enabled;
   }
 
   /// Internal permission request implementation
@@ -113,19 +131,11 @@ class NotificationService {
     // Android 12 users before this call is ever made.
     final result = await Permission.notification.request();
     if (kDebugMode) {
-      debugPrint('Notification permission result: $result');
+      debugPrint('Notification permission request result: $result');
     }
 
-    // If the user had previously tapped "Don't allow" twice on Android 13+,
-    // the OS will not show the dialog again; send them to app settings instead.
-    if (result.isPermanentlyDenied) {
-      if (kDebugMode) {
-        debugPrint(
-          'Notification permission permanently denied — opening app settings.',
-        );
-      }
-      await openAppSettings();
-    }
+    // NOTE: We no longer automatically open app settings when permissions are denied
+    // The UI should handle prompting users to enable permissions when needed
 
     // ── iOS / macOS: FCM also configures its own alert/badge/sound ──
     final NotificationSettings settings = await _fcm.requestPermission(
@@ -159,6 +169,7 @@ class NotificationService {
   Future<void> _initializeLocalNotifications() async {
     const AndroidInitializationSettings androidSettings =
         AndroidInitializationSettings('@mipmap/ic_launcher');
+    AndroidInitializationSettings('@drawable/ic_notification');
 
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
@@ -278,6 +289,7 @@ class NotificationService {
           priority: Priority.high,
           enableVibration: true,
           playSound: true,
+          largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
         );
 
     const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
@@ -484,11 +496,11 @@ class NotificationService {
       );
 
       if (kDebugMode) {
-        debugPrint('✅ Successfully scheduled notification ID $id');
+        debugPrint('Successfully scheduled notification ID $id');
       }
     } catch (e) {
       if (kDebugMode) {
-        debugPrint('❌ Error scheduling notification ID $id: $e');
+        debugPrint('Error scheduling notification ID $id: $e');
       }
       rethrow;
     }

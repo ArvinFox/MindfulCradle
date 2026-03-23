@@ -61,7 +61,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
         hideControls: false,
         controlsVisibleAtStart: true,
         disableDragSeek: false,
-        loop: false,
+        loop: true,
         isLive: false,
         forceHD: false,
         enableCaption: false,
@@ -115,22 +115,8 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   void _youtubeListener() {
     if (!mounted) return;
 
-    // Handle video end state
-    if (_controller.value.playerState == PlayerState.ended) {
-      // Stop the progress timer when video ends
-      _progressTimer?.cancel();
-      _progressTimer = null;
-    }
-    // Handle when video starts playing again (including replay)
-    else if (_controller.value.playerState == PlayerState.playing &&
-             _progressTimer == null) {
-      // For replay, reset watched seconds to start fresh
-      if (_controller.value.position.inSeconds < 5) { // If near the beginning
-        _watchedSeconds = 0;
-      }
-      // Restart progress timer if video is playing but timer is stopped
-      _startProgressTimer();
-    }
+    // With loop enabled, video will automatically restart, so we don't need to handle ended state
+    // The timer will continue running as the video loops
 
     if (_controller.value.isFullScreen != _wasFullScreen) {
       _wasFullScreen = _controller.value.isFullScreen;
@@ -289,14 +275,6 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
           controller: _controller,
           showVideoProgressIndicator: true,
           progressIndicatorColor: AppColors.primary,
-          bottomActions: [
-            CurrentPosition(),
-            const SizedBox(width: 10),
-            ProgressBar(isExpanded: true),
-            const SizedBox(width: 10),
-            RemainingDuration(),
-            const FullScreenButton(),
-          ],
         ),
         builder: (context, player) {
           return Stack(
@@ -332,7 +310,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                     // Video Player Area - Make invisible during exit to prevent artifacts
                     Opacity(
                       opacity: _isExiting ? 0.0 : 1.0,
-                      child: Container(color: Colors.black, child: player),
+                      child: player,
                     ),
 
                     // Fixed Progress Bar

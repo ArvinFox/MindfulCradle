@@ -6,6 +6,7 @@ import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/translate.dart';
+import 'notification_settings_screen.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});

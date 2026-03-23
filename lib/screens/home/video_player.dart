@@ -308,10 +308,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                 body: Column(
                   children: [
                     // Video Player Area - Make invisible during exit to prevent artifacts
-                    Opacity(
-                      opacity: _isExiting ? 0.0 : 1.0,
-                      child: player,
-                    ),
+                    Opacity(opacity: _isExiting ? 0.0 : 1.0, child: player),
 
                     // Fixed Progress Bar
                     Padding(

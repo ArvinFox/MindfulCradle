@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../constants/colors.dart';
 import '../../services/notification_service.dart';
 import '../../utils/translate.dart';
@@ -17,15 +19,37 @@ class _NotificationSettingsScreenState
   final NotificationService _notificationService = NotificationService();
   Map<String, dynamic> _schedules = {};
   bool _isLoading = true;
+  bool _notificationsEnabled = false;
 
   @override
   void initState() {
     super.initState();
-    _loadSchedules();
+    _checkPermissionsAndLoadSchedules();
+  }
+
+  Future<void> _checkPermissionsAndLoadSchedules() async {
+    if (kDebugMode) {
+      debugPrint('_checkPermissionsAndLoadSchedules called');
+    }
+
+    setState(() => _isLoading = true);
+
+    // Check if notifications are enabled
+    _notificationsEnabled = await _notificationService
+        .areNotificationsEnabled();
+
+    if (kDebugMode) {
+      debugPrint('Notifications enabled: $_notificationsEnabled');
+    }
+
+    if (_notificationsEnabled) {
+      await _loadSchedules();
+    } else {
+      setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _loadSchedules() async {
-    setState(() => _isLoading = true);
     try {
       final schedules = await _notificationService.getSchedules();
       if (mounted) {
@@ -39,6 +63,111 @@ class _NotificationSettingsScreenState
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _requestPermissions() async {
+    if (kDebugMode) {
+      debugPrint('Requesting notification permissions...');
+    }
+
+    try {
+      // First check the current status
+      final currentStatus = await Permission.notification.status;
+      if (kDebugMode) {
+        debugPrint('Current permission status: $currentStatus');
+      }
+
+      if (currentStatus.isPermanentlyDenied) {
+        if (kDebugMode) {
+          debugPrint('Permission permanently denied, showing instructions');
+        }
+        // Show instructions dialog instead of directly opening settings
+        _showPermissionInstructionsDialog();
+        return;
+      }
+
+      final granted = await _notificationService.requestPermissions();
+
+      if (kDebugMode) {
+        debugPrint('Permission granted: $granted');
+      }
+
+      if (mounted) {
+        setState(() => _notificationsEnabled = granted);
+        if (granted) {
+          await _loadSchedules();
+          if (kDebugMode) {
+            debugPrint('Permissions granted, loading schedules');
+          }
+        } else {
+          if (kDebugMode) {
+            debugPrint('Permissions not granted');
+          }
+        }
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('Error requesting permissions: $e');
+      }
+    }
+  }
+
+  void _showPermissionInstructionsDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text(
+            'Enable Notifications',
+            style: GoogleFonts.poppins(
+              fontWeight: FontWeight.w600,
+              color: AppColors.primary,
+            ),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'To receive meditation and wellness reminders, you need to enable notifications for this app.',
+                style: GoogleFonts.roboto(fontSize: 14, height: 1.5),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Follow these steps:',
+                style: GoogleFonts.poppins(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '1. Go to Settings\n2. Tap "Notifications"\n3. Turn on "Allow Notifications"',
+                style: GoogleFonts.roboto(fontSize: 14, height: 1.6),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                // Open app settings
+                openAppSettings();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Open Settings'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   Future<void> _setupDefaultReminders() async {
@@ -207,8 +336,84 @@ class _NotificationSettingsScreenState
     return '$displayHour:$displayMinute $period';
   }
 
+  Widget _buildPermissionPrompt() {
+    if (kDebugMode) {
+      debugPrint('_buildPermissionPrompt called');
+    }
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.notifications_off_outlined,
+              size: 80,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Notifications Disabled',
+              style: GoogleFonts.poppins(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+                color: AppColors.primary,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'To receive reminders for meditation, wellness activities, and companion chats, you need to enable notifications.',
+              style: GoogleFonts.roboto(
+                fontSize: 16,
+                color: Colors.grey[600],
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () {
+                  if (kDebugMode) {
+                    debugPrint('Enable Notifications button pressed');
+                  }
+                  _requestPermissions();
+                },
+                icon: const Icon(Icons.notifications_active),
+                label: Text(
+                  'Enable Notifications',
+                  style: GoogleFonts.poppins(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    if (kDebugMode) {
+      debugPrint(
+        'Build called - _isLoading: $_isLoading, _notificationsEnabled: $_notificationsEnabled',
+      );
+    }
+
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
 
@@ -233,6 +438,8 @@ class _NotificationSettingsScreenState
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
+          : !_notificationsEnabled
+          ? _buildPermissionPrompt()
           : SingleChildScrollView(
               padding: EdgeInsets.all(isMobile ? 16 : 24),
               child: Center(
@@ -245,7 +452,7 @@ class _NotificationSettingsScreenState
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(
@@ -386,13 +593,13 @@ class _NotificationSettingsScreenState
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, false),
-                                      child: Text(context.t.common('cancel')),
+                                      child: Text(context.isSinhala ? 'නැත' : context.t.common('cancel')),
                                     ),
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, true),
                                       child: Text(
-                                        context.t.common('confirm'),
+                                        context.isSinhala ? 'ඔව්' : context.t.common('confirm'),
                                         style: const TextStyle(
                                           color: Colors.red,
                                         ),
@@ -451,7 +658,7 @@ class _NotificationSettingsScreenState
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, color: color, size: 28),

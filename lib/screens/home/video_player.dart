@@ -114,6 +114,24 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
   void _youtubeListener() {
     if (!mounted) return;
+
+    // Handle video end state
+    if (_controller.value.playerState == PlayerState.ended) {
+      // Stop the progress timer when video ends
+      _progressTimer?.cancel();
+      _progressTimer = null;
+    }
+    // Handle when video starts playing again (including replay)
+    else if (_controller.value.playerState == PlayerState.playing &&
+             _progressTimer == null) {
+      // For replay, reset watched seconds to start fresh
+      if (_controller.value.position.inSeconds < 5) { // If near the beginning
+        _watchedSeconds = 0;
+      }
+      // Restart progress timer if video is playing but timer is stopped
+      _startProgressTimer();
+    }
+
     if (_controller.value.isFullScreen != _wasFullScreen) {
       _wasFullScreen = _controller.value.isFullScreen;
       if (_wasFullScreen) {
@@ -128,10 +146,10 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
   void _startProgressTimer() {
     final videoProvider = Provider.of<VideoProvider>(context, listen: false);
-    _progressTimer?.cancel();
+    _progressTimer?.cancel(); // Cancel any existing timer
 
     _progressTimer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (_controller.value.isPlaying && mounted) {
+      if (_controller.value.isPlaying && mounted && !_isDisposing) {
         _watchedSeconds += 1;
         if (_watchedSeconds % 5 == 0) {
           videoProvider.updateProgress(

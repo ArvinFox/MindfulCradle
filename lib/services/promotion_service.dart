@@ -1,10 +1,10 @@
 import 'dart:math';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Manages gentle, session-spaced promotional nudges for Journal, Mood, and Meditation.
+/// Manages gentle, session-spaced promotional nudges for Journal, Mood, Meditation, and Evaluations.
 ///
 /// Rules:
-/// - Same type is not shown more than once every 4 hours.
+/// - Same type is not shown more than once every 45 minutes.
 /// - Only types that have not yet been completed (today) are considered.
 /// - A random candidate is picked for variety.
 class PromotionService {
@@ -13,25 +13,28 @@ class PromotionService {
   static const typeJournal = 'journal';
   static const typeMood = 'mood';
   static const typeMeditation = 'meditation';
+  static const typeEvaluation = 'evaluation';
 
-  /// 4 hours minimum between showing the same promotion type.
-  static const _minGapMs = 4 * 60 * 60 * 1000;
+  /// 45 minutes minimum between showing the same promotion type.
+  static const _minGapMs = 45 * 60 * 1000;
 
   /// Picks the next promotion to show, or null if nothing is needed.
   ///
   /// [hasMoodToday]          – user already logged mood today.
   /// [hasJournalEntry]       – user has at least one journal entry overall.
   /// [hasMeditationProgress] – user has completed at least one meditation.
+  /// [hasEvaluation]         – user has completed at least one evaluation.
   static Future<String?> pickPromotion({
     required bool hasMoodToday,
     required bool hasJournalEntry,
     required bool hasMeditationProgress,
+    bool hasEvaluation = false,
   }) async {
     final prefs = await SharedPreferences.getInstance();
     final now = DateTime.now().millisecondsSinceEpoch;
     final candidates = <String>[];
 
-    // Priority order: mood (daily check-in) > journal > meditation.
+    // Priority order: mood (daily check-in) > journal > meditation > evaluation.
     if (!hasMoodToday && _canShow(prefs, typeMood, now)) {
       candidates.add(typeMood);
     }
@@ -40,6 +43,9 @@ class PromotionService {
     }
     if (!hasMeditationProgress && _canShow(prefs, typeMeditation, now)) {
       candidates.add(typeMeditation);
+    }
+    if (!hasEvaluation && _canShow(prefs, typeEvaluation, now)) {
+      candidates.add(typeEvaluation);
     }
 
     if (candidates.isEmpty) return null;

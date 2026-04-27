@@ -48,6 +48,7 @@ class JournalDetailScreen extends StatelessWidget {
         ),
       ),
       body: AppBackground(
+        overlayOpacity: 0.75,
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
           child: Column(

@@ -12,10 +12,22 @@ import '../constants/colors.dart';
 class AppBackground extends StatelessWidget {
   final Widget child;
   final bool useGradient;
+
+  /// How opaque the white overlay is over the PNG background.
+  /// 0.0 = fully transparent (no fade), 1.0 = solid white.
+  /// 0.50 = 50% fade (default), 0.85 = heavy fade for chat page.
+  final double overlayOpacity;
+
+  /// Custom asset path for the background PNG.
+  /// Defaults to the main background. Pass a different path to use another image.
+  final String? imagePath;
+
   const AppBackground({
     super.key,
     required this.child,
     this.useGradient = false,
+    this.overlayOpacity = 0.50,
+    this.imagePath,
   });
 
   @override
@@ -69,7 +81,7 @@ class AppBackground extends StatelessWidget {
         // PNG background — full cover, falls back to gradient+blobs on error
         Positioned.fill(
           child: Image.asset(
-            'assets/main/Mindful_Cradle_Main_Background.png',
+            imagePath ?? 'assets/main/Mindful_Cradle_Main_Background.png',
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) {
               // Fallback: soothing gradient + ambient blobs
@@ -121,7 +133,7 @@ class AppBackground extends StatelessWidget {
         Positioned.fill(
           child: DecoratedBox(
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.60),
+              color: Colors.white.withValues(alpha: overlayOpacity),
             ),
           ),
         ),

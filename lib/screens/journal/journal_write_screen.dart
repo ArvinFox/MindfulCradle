@@ -8,6 +8,7 @@ import '../../providers/journal_provider.dart';
 import '../../providers/achievement_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/app_snackbar.dart';
+import '../../widgets/app_background.dart';
 
 class JournalWriteScreen extends StatefulWidget {
   const JournalWriteScreen({super.key});
@@ -143,112 +144,115 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
                 ),
         ],
       ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.fromLTRB(
-          20,
-          12,
-          20,
-          MediaQuery.of(context).viewInsets.bottom + 32,
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Date line
-            Text(
-              _formattedDate(isSinhala),
-              style: GoogleFonts.roboto(
-                fontSize: 12,
-                color: AppColors.textMuted,
+      body: AppBackground(
+        overlayOpacity: 0.75,
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            20,
+            12,
+            20,
+            MediaQuery.of(context).viewInsets.bottom + 32,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Date line
+              Text(
+                _formattedDate(isSinhala),
+                style: GoogleFonts.roboto(
+                  fontSize: 12,
+                  color: AppColors.textMuted,
+                ),
               ),
-            ),
-            const SizedBox(height: 14),
+              const SizedBox(height: 14),
 
-            // Title field
-            TextField(
-              controller: _titleController,
-              style: GoogleFonts.poppins(
-                fontSize: 22,
-                fontWeight: FontWeight.w700,
-                color: AppColors.text,
-              ),
-              decoration: InputDecoration(
-                hintText: isSinhala ? 'මාතෘකාව...' : 'Title...',
-                hintStyle: GoogleFonts.poppins(
+              // Title field
+              TextField(
+                controller: _titleController,
+                style: GoogleFonts.poppins(
                   fontSize: 22,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.textMuted.withValues(alpha: 0.5),
+                  color: AppColors.text,
                 ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
+                decoration: InputDecoration(
+                  hintText: isSinhala ? 'මාතෘකාව...' : 'Title...',
+                  hintStyle: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textMuted.withValues(alpha: 0.5),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                textCapitalization: TextCapitalization.sentences,
+                maxLines: 2,
+                minLines: 1,
               ),
-              textCapitalization: TextCapitalization.sentences,
-              maxLines: 2,
-              minLines: 1,
-            ),
 
-            Divider(color: AppColors.border, height: 28),
+              Divider(color: AppColors.border, height: 28),
 
-            // Content field
-            TextField(
-              controller: _contentController,
-              style: GoogleFonts.roboto(
-                fontSize: 15,
-                color: AppColors.text,
-                height: 1.7,
-              ),
-              decoration: InputDecoration(
-                hintText: isSinhala
-                    ? 'ඔබේ හැඟීම් ලියන්න...'
-                    : 'Write your thoughts and feelings...',
-                hintStyle: GoogleFonts.roboto(
+              // Content field
+              TextField(
+                controller: _contentController,
+                style: GoogleFonts.roboto(
                   fontSize: 15,
-                  color: AppColors.textMuted.withValues(alpha: 0.5),
+                  color: AppColors.text,
                   height: 1.7,
                 ),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-              ),
-              textCapitalization: TextCapitalization.sentences,
-              maxLines: null,
-              minLines: 12,
-            ),
-
-            const SizedBox(height: 20),
-
-            // Analysis preview hint
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: 0.06),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                ),
-              ),
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.auto_awesome_rounded,
-                    color: AppColors.primary,
-                    size: 18,
+                decoration: InputDecoration(
+                  hintText: isSinhala
+                      ? 'ඔබේ හැඟීම් ලියන්න...'
+                      : 'Write your thoughts and feelings...',
+                  hintStyle: GoogleFonts.roboto(
+                    fontSize: 15,
+                    color: AppColors.textMuted.withValues(alpha: 0.5),
+                    height: 1.7,
                   ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      isSinhala
-                          ? 'ඔබ සුරකින විට, ඔබේ ලිපිය ස්වයංක්‍රීයව හැඟීම් විශ්ලේෂණය කෙරේ'
-                          : 'When you save, your entry will be automatically analysed for sentiment and topics',
-                      style: GoogleFonts.roboto(
-                        fontSize: 12,
-                        color: AppColors.primary,
-                        height: 1.4,
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.zero,
+                ),
+                textCapitalization: TextCapitalization.sentences,
+                maxLines: null,
+                minLines: 12,
+              ),
+
+              const SizedBox(height: 20),
+
+              // Analysis preview hint
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.06),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: AppColors.primary.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.auto_awesome_rounded,
+                      color: AppColors.primary,
+                      size: 18,
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        isSinhala
+                            ? 'ඔබ සුරකින විට, ඔබේ ලිපිය ස්වයංක්‍රීයව හැඟීම් විශ්ලේෂණය කෙරේ'
+                            : 'When you save, your entry will be automatically analysed for sentiment and topics',
+                        style: GoogleFonts.roboto(
+                          fontSize: 12,
+                          color: AppColors.primary,
+                          height: 1.4,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

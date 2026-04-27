@@ -275,7 +275,7 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
         style: GoogleFonts.poppins(
           fontSize: 20,
           fontWeight: FontWeight.w600,
-          color: Colors.red,
+          color: AppColors.error,
         ),
       ),
       content: Text(
@@ -295,7 +295,7 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
         ElevatedButton(
           onPressed: () => Navigator.of(context).pop(true),
           style: ElevatedButton.styleFrom(
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
             foregroundColor: Colors.white,
           ),
           child: Text(
@@ -453,7 +453,7 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
                     ? 'ඔබගේ ගිණුම සහ සියලු දත්ත ස්ථිරවම මකන්න. මෙය අපැහැර ගත නොහැක.'
                     : 'Permanently delete your account and all data. This cannot be undone.',
                 buttonText: isSinhala ? 'ගිණුම මකන්න' : 'Delete Account',
-                buttonColor: Colors.red,
+                buttonColor: AppColors.error,
                 isLoading: _isDeleting,
                 onPressed: _deleteAccount,
               ),

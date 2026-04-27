@@ -106,6 +106,7 @@ class _DASS21QuestionnaireStartPageState
         ],
       ),
       body: AppBackground(
+        useGradient: true,
         child: provider.isLoading
             ? Center(
                 child: CircularProgressIndicator(
@@ -185,7 +186,7 @@ class _DASS21QuestionnaireStartPageState
                       // --- Attempt 3 ---
                       _buildAttemptCard(context, 3, provider, isSinhala),
 
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),

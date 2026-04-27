@@ -5,6 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../utils/validators.dart';
 import '../../models/user_model.dart';
@@ -60,7 +61,6 @@ class _LoginPageState extends State<LoginPage> {
     AuthProvider authProvider, {
     required String langCode,
   }) async {
-    // 1. Initial State & Validation
     setState(() => errorMessage = null);
     if (!_formKey.currentState!.validate()) {
       HapticFeedback.lightImpact();
@@ -82,52 +82,82 @@ class _LoginPageState extends State<LoginPage> {
 
     if (result == null) {
       HapticFeedback.mediumImpact();
-
-      try {
-        final uid = FirebaseAuth.instance.currentUser!.uid;
-        final userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(uid)
-            .get()
-            .timeout(const Duration(seconds: 15));
-
-        final data = userDoc.data();
-        if (data == null) {
-          setState(() {
-            errorMessage = context.t.auth('userDataNotFound');
-          });
-          return;
-        }
-
-        final isComplete = data['isUserRegistrationComplete'] ?? false;
-
-        if (!isComplete) {
-          final localUser = authProvider.user ?? UserModel.fromMap(data, uid);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (_) => UserRegistrationPage(user: localUser),
-            ),
-          );
-        } else {
-          Navigator.pushReplacementNamed(context, '/main-screen');
-        }
-      } catch (e) {
-        setState(() {
-          errorMessage = context.t.auth('errorLoadingUserData');
-        });
-      }
+      await _routeAfterSuccessfulLogin(authProvider);
     } else {
-      // UX: Error Haptic Feedback
       HapticFeedback.vibrate();
       setState(() => errorMessage = result);
+    }
+  }
+
+  Future<void> _handleGoogleLogin(
+    BuildContext context,
+    AuthProvider authProvider, {
+    required String langCode,
+  }) async {
+    setState(() => errorMessage = null);
+
+    final result = await authProvider.loginWithGoogle(
+      rememberMe: rememberMe,
+      langCode: langCode,
+    );
+
+    if (!mounted) return;
+
+    if (result == null) {
+      HapticFeedback.mediumImpact();
+      await _routeAfterSuccessfulLogin(authProvider);
+    } else {
+      HapticFeedback.vibrate();
+      setState(() => errorMessage = result);
+    }
+  }
+
+  Future<void> _routeAfterSuccessfulLogin(AuthProvider authProvider) async {
+    try {
+      final uid = FirebaseAuth.instance.currentUser!.uid;
+      final userDoc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .get()
+          .timeout(const Duration(seconds: 15));
+
+      if (!mounted) return;
+
+      final data = userDoc.data();
+      if (data == null) {
+        setState(() {
+          errorMessage = context.t.auth('userDataNotFound');
+        });
+        return;
+      }
+
+      final isComplete = data['isUserRegistrationComplete'] ?? false;
+
+      if (!isComplete) {
+        final localUser = authProvider.user ?? UserModel.fromMap(data, uid);
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => UserRegistrationPage(user: localUser),
+          ),
+        );
+      } else {
+        Navigator.pushReplacementNamed(context, '/main-screen');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        errorMessage = context.t.auth('errorLoadingUserData');
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 600;
+    final width = size.width;
+    final isMobile = width < 600;
+    final isCompact = width < 380;
     final langProvider = Provider.of<LanguageProvider>(context);
     final isSinhala = langProvider.currentLang == 'si';
 
@@ -146,67 +176,119 @@ class _LoginPageState extends State<LoginPage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.inputBackground,
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: AppColors.primary.withOpacity(0.1),
-                      ),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: context.t.common(
-                          context.isEnglish ? 'english' : 'sinhala',
+                // Branding + Language row
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 38,
+                      height: 38,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [
+                            AppColors.heroGradientStart,
+                            AppColors.heroGradientMid,
+                          ],
                         ),
-                        style: GoogleFonts.roboto(
-                          fontSize: 14,
-                          color: AppColors.text,
-                        ),
-                        iconEnabledColor: AppColors.text,
-                        items: [
-                          DropdownMenuItem(
-                            value: context.t.common('english'),
-                            child: Text(
-                              context.t.common('english'),
-                              style: TextStyle(color: AppColors.text),
-                            ),
-                          ),
-                          DropdownMenuItem(
-                            value: context.t.common('sinhala'),
-                            child: Text(
-                              context.t.common('sinhala'),
-                              style: TextStyle(color: AppColors.text),
-                            ),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.primary.withValues(alpha: 0.28),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
                           ),
                         ],
-                        onChanged: (val) {
-                          if (val == null) return;
-                          langProvider.setLanguage(
-                            val == context.t.common('english') ? "en" : "si",
-                          );
-                        },
+                      ),
+                      child: const Icon(
+                        Icons.spa_rounded,
+                        color: Colors.white,
+                        size: 20,
                       ),
                     ),
-                  ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Mindful Cradle',
+                      style: GoogleFonts.poppins(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.inputBackground.withValues(
+                          alpha: 0.30,
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.30),
+                        ),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: context.t.common(
+                            context.isEnglish ? 'english' : 'sinhala',
+                          ),
+                          style: GoogleFonts.roboto(
+                            fontSize: 14,
+                            color: AppColors.text,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          iconEnabledColor: AppColors.text,
+                          items: [
+                            DropdownMenuItem(
+                              value: context.t.common('english'),
+                              child: Text(
+                                context.t.common('english'),
+                                style: const TextStyle(color: AppColors.text),
+                              ),
+                            ),
+                            DropdownMenuItem(
+                              value: context.t.common('sinhala'),
+                              child: Text(
+                                context.t.common('sinhala'),
+                                style: const TextStyle(color: AppColors.text),
+                              ),
+                            ),
+                          ],
+                          onChanged: (val) {
+                            if (val == null) return;
+                            langProvider.setLanguage(
+                              val == context.t.common('english') ? 'en' : 'si',
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 28),
 
+                // Title + subtitle
                 Text(
                   context.t.auth('login'),
                   style: GoogleFonts.poppins(
-                    fontSize: isMobile ? 36 : 42,
+                    fontSize: isMobile ? (width * 0.085).clamp(26.0, 32.0) : 34,
                     fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+                    color: AppColors.text,
                   ),
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 4),
+                Text(
+                  isSinhala
+                      ? 'ඔබේ ගිණුමට ලොග් වන්න'
+                      : 'Sign in to your account',
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    color: AppColors.textMuted,
+                  ),
+                ),
+                SizedBox(height: isCompact ? 20 : 28),
 
                 // Error Message
                 if (errorMessage != null)
@@ -214,7 +296,7 @@ class _LoginPageState extends State<LoginPage> {
                     padding: const EdgeInsets.all(12),
                     margin: const EdgeInsets.only(bottom: 20),
                     decoration: BoxDecoration(
-                      color: Colors.red.withOpacity(0.1),
+                      color: Colors.red.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: Colors.red.shade300),
                     ),
@@ -260,7 +342,7 @@ class _LoginPageState extends State<LoginPage> {
                             isPasswordVisible
                                 ? Icons.visibility_off_outlined
                                 : Icons.visibility_outlined,
-                            color: AppColors.text.withOpacity(0.6),
+                            color: AppColors.text.withValues(alpha: 0.6),
                           ),
                           onPressed: () {
                             setState(() {
@@ -275,25 +357,40 @@ class _LoginPageState extends State<LoginPage> {
                   ),
                   onSaved: (val) => password = val ?? '',
                 ),
-                const SizedBox(height: 10),
+                const SizedBox(height: 12),
 
-                // Remember Me & Forgot Password
+                // Remember Me & Forgot Password (Fixed with Row)
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     GestureDetector(
                       onTap: () => setState(() => rememberMe = !rememberMe),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
                           Checkbox(
                             value: rememberMe,
+                            visualDensity: isCompact
+                                ? const VisualDensity(
+                                    horizontal: -2,
+                                    vertical: -2,
+                                  )
+                                : VisualDensity.standard,
                             onChanged: (val) =>
                                 setState(() => rememberMe = val ?? false),
                             activeColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(4),
+                            ),
                           ),
                           Text(
                             context.t.auth('rememberMe'),
-                            style: GoogleFonts.roboto(),
+                            style: GoogleFonts.roboto(
+                              fontSize: isCompact ? 13 : 14,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.text.withValues(alpha: 0.9),
+                            ),
                           ),
                         ],
                       ),
@@ -305,14 +402,14 @@ class _LoginPageState extends State<LoginPage> {
                         context.t.auth('forgotPassword'),
                         style: GoogleFonts.roboto(
                           color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
+                          fontSize: isCompact ? 13 : 14,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 30),
+                SizedBox(height: isCompact ? 24 : 32),
 
                 // Login Button
                 AuthPrimaryButton(
@@ -327,15 +424,96 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                   fontSize: isMobile ? 18 : 20,
                 ),
-                const SizedBox(height: 30),
+                const SizedBox(height: 24),
+
+                // Divider Line
+                Row(
+                  children: [
+                    Expanded(
+                      child: Divider(
+                        color: AppColors.text.withValues(alpha: 0.30),
+                        thickness: 1,
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      child: Text(
+                        context.t.auth('or'),
+                        style: GoogleFonts.roboto(
+                          color: AppColors.text.withValues(alpha: 0.6),
+                          fontWeight: FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(
+                        color: AppColors.text.withValues(alpha: 0.30),
+                        thickness: 1,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 24),
+
+                // Custom Google Sign-In Button (Perfectly Centered)
+                SizedBox(
+                  width: double.infinity,
+                  height: isMobile ? 54 : 58,
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      side: BorderSide(
+                        color: AppColors.text.withValues(alpha: 0.30),
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      elevation: 0,
+                    ),
+                    onPressed: () {
+                      if (authProvider.isLoading) return;
+                      _handleGoogleLogin(
+                        context,
+                        authProvider,
+                        langCode: langProvider.currentLang,
+                      );
+                    },
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SvgPicture.asset(
+                          'assets/login/google_logo.svg',
+                          height: 24,
+                          width: 24,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          context.t.auth('continueWithGoogle'),
+                          style: GoogleFonts.roboto(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.text.withValues(alpha: 0.9),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 32),
 
                 // Sign Up Link
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      context.t.auth('dontHaveAccount'),
-                      style: GoogleFonts.roboto(color: AppColors.text),
+                      '${context.t.auth('dontHaveAccount')} ',
+                      style: GoogleFonts.roboto(
+                        color: AppColors.text.withValues(alpha: 0.8),
+                        fontSize: isCompact ? 13 : 14,
+                        fontWeight: FontWeight.w500,
+                      ),
                     ),
                     GestureDetector(
                       onTap: () => Navigator.pushNamed(context, '/signup'),
@@ -343,8 +521,8 @@ class _LoginPageState extends State<LoginPage> {
                         context.t.auth('signUp'),
                         style: GoogleFonts.roboto(
                           color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
+                          fontSize: isCompact ? 13 : 14,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),

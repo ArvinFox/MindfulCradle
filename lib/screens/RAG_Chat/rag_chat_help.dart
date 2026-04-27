@@ -5,12 +5,15 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:mamamind/services/rag_service.dart';
 import 'package:mamamind/services/chat_history_service.dart';
 import '../../constants/colors.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/achievement_provider.dart';
 import '../../utils/translate.dart';
+import '../../utils/app_snackbar.dart';
 import 'chat_history_screen.dart';
 
 class ChatBotPage extends StatefulWidget {
@@ -40,6 +43,56 @@ class _ChatBotPageState extends State<ChatBotPage> {
   // Streaming state
   bool _isStreaming = false;
   int _streamingMessageIndex = -1;
+
+  // Crisis detection keywords
+  static const List<String> _crisisKeywordsEn = [
+    'suicide',
+    'suicidal',
+    'kill myself',
+    'kill my self',
+    'end my life',
+    'take my life',
+    'want to die',
+    'want to end my life',
+    'self harm',
+    'self-harm',
+    'hurt myself',
+    'cutting myself',
+    "don't want to live",
+    'do not want to live',
+    'no reason to live',
+    'give up on life',
+    'better off dead',
+    'no point in living',
+    'no point in life',
+    'end it all',
+    'no way out',
+    'life is not worth living',
+    'life is meaningless',
+    'slit my wrist',
+    'overdose on',
+    'not worth living',
+    'think about dying',
+    'thoughts of dying',
+  ];
+  static const List<String> _crisisKeywordsSi = [
+    'සිය දිවි',
+    'ආත්ම ඝාතනය',
+    'ජීවිතය නිම',
+    'ජීවත් නොවෙමි',
+    'ජීවිතය ගන්නෙමි',
+    'ජීවිතය හමාරයි',
+    'මිය යන්නෙමි',
+    'ජීවත් නොවිය',
+    'ජීවිතය අවසන්',
+    'ජීවිතය නිකරුණේ',
+    'ජීවිතේ නිම',
+    'මරණ',
+    'මරනය',
+    'මරණය',
+    'මැරෙන්න',
+    'මැරෙන්න',
+  ];
 
   @override
   void initState() {
@@ -121,7 +174,9 @@ class _ChatBotPageState extends State<ChatBotPage> {
           _streamingMessageIndex = -1;
         });
       } catch (e) {
-        print('Error creating session: $e');
+        if (kDebugMode) {
+          debugPrint('Error creating session: $e');
+        }
         setState(() {
           _isLoadingHistory = false;
           // Reset streaming states on error
@@ -133,7 +188,11 @@ class _ChatBotPageState extends State<ChatBotPage> {
     }
   }
 
-  Future<void> _saveMessageToHistory(String role, String text, {String? sessionId}) async {
+  Future<void> _saveMessageToHistory(
+    String role,
+    String text, {
+    String? sessionId,
+  }) async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.id;
     final targetSessionId = sessionId ?? _currentSessionId;
@@ -266,12 +325,10 @@ class _ChatBotPageState extends State<ChatBotPage> {
     // Only show error if API key is missing
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.t.chat('apiKeyMissing')),
-          duration: const Duration(seconds: 4),
-          backgroundColor: Colors.red.shade600,
-        ),
+      AppSnackBar.error(
+        context,
+        context.t.chat('apiKeyMissing'),
+        duration: const Duration(seconds: 4),
       );
     });
   }
@@ -279,6 +336,18 @@ class _ChatBotPageState extends State<ChatBotPage> {
   Future<void> _sendMessage() async {
     if (_controller.text.trim().isEmpty) return;
     final text = _controller.text.trim();
+    final String fallbackMessage = context.t.chat('assistantNotConfigured');
+    final String ragInitFailedPrefix = context.t.chat('ragInitFailed');
+    final String languageHint = _currentLang == 'en'
+        ? context.t.chat('languageHintEnglish')
+        : context.t.chat('languageHintSinhala');
+
+    // Read user name early (before async gaps)
+    final authProviderEarly = Provider.of<AuthProvider>(context, listen: false);
+    final userName = authProviderEarly.user?.fullName;
+
+    // Crisis content detection
+    final isCrisis = _isCrisisMessage(text);
 
     final userMsg = {"role": "user", "text": text};
     setState(() {
@@ -302,6 +371,20 @@ class _ChatBotPageState extends State<ChatBotPage> {
           );
           _isNewSession = true;
 
+          // Unlock chat_companion on first ever chat session
+          if (context.mounted) {
+            final achievementProvider = Provider.of<AchievementProvider>(
+              context,
+              listen: false,
+            );
+            await achievementProvider.unlockAchievement(
+              context,
+              'chat_companion',
+              showUI: false,
+            );
+            achievementProvider.showPendingAchievements(context);
+          }
+
           // Save welcome message first (if exists)
           if (messages.length > 1 && messages[0]['role'] == 'bot') {
             await _chatHistoryService.saveMessage(
@@ -312,7 +395,9 @@ class _ChatBotPageState extends State<ChatBotPage> {
             );
           }
         } catch (e) {
-          print('Error creating session on first message: $e');
+          if (kDebugMode) {
+            debugPrint('Error creating session on first message: $e');
+          }
         }
       }
     }
@@ -322,7 +407,11 @@ class _ChatBotPageState extends State<ChatBotPage> {
     final String? sessionId = _currentSessionId;
 
     // Save user message
-    await _saveMessageToHistory(userMsg['role']!, userMsg['text']!, sessionId: sessionId);
+    await _saveMessageToHistory(
+      userMsg['role']!,
+      userMsg['text']!,
+      sessionId: sessionId,
+    );
 
     if (_ragInitFuture != null) {
       await _ragInitFuture;
@@ -335,10 +424,9 @@ class _ChatBotPageState extends State<ChatBotPage> {
       // Only update UI if this is still the current session
       if (_currentSessionId == sessionId) {
         final String errorDetail = _ragInitError ?? '';
-        final String fallbackMessage = context.t.chat('assistantNotConfigured');
         final String message = errorDetail.isNotEmpty
-          ? context.t.chat('ragInitFailed') + errorDetail
-          : fallbackMessage;
+            ? ragInitFailedPrefix + errorDetail
+            : fallbackMessage;
         setState(() {
           messages.add({"role": "bot", "text": message});
           _isTyping = false;
@@ -353,17 +441,32 @@ class _ChatBotPageState extends State<ChatBotPage> {
       bool isFirstChunk = true;
       final fullResponseBuffer = StringBuffer();
 
-      // Get conversation history (excluding current user message)
+      // Get conversation history (excluding current user message and crisis cards)
       final conversationHistory = messages.length > 1
-          ? messages.sublist(0, messages.length - 1)
+          ? messages
+                .sublist(0, messages.length - 1)
+                .where((m) => m['role'] != 'crisis')
+                .toList()
           : <Map<String, String>>[];
 
       await for (final chunk in service.answerStream(
         text,
-        languageHint: context.t.chat(
-          'languageHint${_currentLang == 'en' ? 'English' : 'Sinhala'}',
-        ),
+        languageHint: languageHint,
         conversationHistory: conversationHistory,
+        userName: userName,
+        crisisExtra: isCrisis
+            ? 'CRITICAL: The user has expressed thoughts of self-harm, suicide, or extreme emotional distress. '
+                  'This application is based in Sri Lanka and serves Sri Lankan mothers. '
+                  'Respond with deep empathy and compassion in the same language the user wrote in. '
+                  'Acknowledge their pain and validate their feelings without judgment. '
+                  'Remind them that help is available and they are not alone. '
+                  'IMPORTANT: Only reference Sri Lanka specific helplines: '
+                  'National Mental Health Helpline (1926), CCC Mental Health Helpline (1333), '
+                  'and Sumithrayo (0112682535). '
+                  'Do NOT mention any helplines from the US, Canada, UK, or any other country. '
+                  'Do not provide information that could cause harm. '
+                  'Encourage them warmly to reach out for professional support immediately.'
+            : null,
       )) {
         if (!mounted) return;
 
@@ -416,6 +519,17 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
       // Save bot response to the correct session regardless
       await _saveMessageToHistory("bot", finalText, sessionId: sessionId);
+
+      // If crisis message, append crisis card AFTER the bot response
+      if (isCrisis) {
+        if (mounted && _currentSessionId == sessionId) {
+          setState(() {
+            messages = List.from(messages)..add({"role": "crisis", "text": ""});
+          });
+          _scrollToBottom();
+        }
+        await _saveMessageToHistory("crisis", "", sessionId: sessionId);
+      }
     } catch (e) {
       if (!mounted) return;
 
@@ -454,78 +568,96 @@ class _ChatBotPageState extends State<ChatBotPage> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: AppColors.background,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         automaticallyImplyLeading: false, // Removes the back button
         title: Text(
           context.t.chat('mindfulChat'),
           style: GoogleFonts.poppins(
-            color: Colors.white,
-            fontWeight: FontWeight.w600,
+            color: AppColors.text,
+            fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
         ),
         actions: [
           if (messages.isNotEmpty && !_isLoadingHistory)
             IconButton(
-              icon: const Icon(Icons.history, color: Colors.white),
+              icon: const Icon(Icons.history_rounded, color: AppColors.text),
               tooltip: context.t.chat('chatHistory'),
               onPressed: _viewChatHistory,
             ),
           if (messages.isNotEmpty && !_isLoadingHistory)
             IconButton(
-              icon: const Icon(Icons.add_comment_outlined, color: Colors.white),
+              icon: const Icon(
+                Icons.add_comment_outlined,
+                color: AppColors.text,
+              ),
               tooltip: context.t.chat('newChat'),
               onPressed: _startNewChat,
             ),
         ],
-        systemOverlayStyle: SystemUiOverlayStyle.light,
+        systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      body: Column(
+      body: Stack(
         children: [
-          // --- 1. DECORATIVE CURVED HEADER ---
-          Container(
-            height: 20,
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: const BorderRadius.only(
-                bottomLeft: Radius.circular(24),
-                bottomRight: Radius.circular(24),
+          Positioned.fill(
+            child: DecoratedBox(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Color(0xFFF8F5F2), Color(0xFFF4F0EC)],
+                ),
               ),
             ),
           ),
-
-          // --- 2. CHAT AREA ---
-          Expanded(
-            child: messages.isEmpty
-                ? _buildEmptyState(isMobile)
-                : ListView.builder(
-                    controller: _scrollController,
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                    physics: const BouncingScrollPhysics(),
-                    itemCount: messages.length + (_isTyping ? 1 : 0),
-                    itemBuilder: (context, index) {
-                      if (_isTyping && index == messages.length) {
-                        return _buildBotTypingIndicator();
-                      }
-                      final msg = messages[index];
-                      final isUser = msg["role"] == "user";
-                      // Show cursor animation for streaming message
-                      final isStreamingMsg =
-                          _isStreaming && index == _streamingMessageIndex;
-                      return _buildChatBubble(
-                        msg["text"]!,
-                        isUser,
-                        isMobile,
-                        isStreaming: isStreamingMsg,
-                      );
-                    },
-                  ),
+          Positioned(
+            top: -40,
+            right: -30,
+            child: Container(
+              width: 160,
+              height: 160,
+              decoration: BoxDecoration(
+                color: AppColors.heroGradientMid.withValues(alpha: 0.16),
+                shape: BoxShape.circle,
+              ),
+            ),
           ),
-
-          // --- 3. INPUT AREA ---
-          _buildInputArea(isMobile),
+          Column(
+            children: [
+              Expanded(
+                child: messages.isEmpty
+                    ? _buildEmptyState(isMobile)
+                    : ListView.builder(
+                        controller: _scrollController,
+                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                        physics: const BouncingScrollPhysics(),
+                        itemCount: messages.length + (_isTyping ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (_isTyping && index == messages.length) {
+                            return _buildBotTypingIndicator();
+                          }
+                          final msg = messages[index];
+                          if (msg["role"] == "crisis") {
+                            return _buildCrisisCard(isMobile);
+                          }
+                          final isUser = msg["role"] == "user";
+                          final isStreamingMsg =
+                              _isStreaming && index == _streamingMessageIndex;
+                          return _buildChatBubble(
+                            msg["text"]!,
+                            isUser,
+                            isMobile,
+                            isStreaming: isStreamingMsg,
+                          );
+                        },
+                      ),
+              ),
+              _buildInputArea(isMobile),
+            ],
+          ),
         ],
       ),
     );
@@ -692,13 +824,227 @@ class _ChatBotPageState extends State<ChatBotPage> {
 
           if (isUser) ...[
             const SizedBox(width: 8),
-            CircleAvatar(
-              backgroundColor: Colors.grey.shade200,
-              radius: 16,
-              child: Icon(Icons.person, size: 18, color: Colors.grey.shade600),
+            Builder(
+              builder: (context) {
+                final photoUrl = Provider.of<AuthProvider>(
+                  context,
+                  listen: false,
+                ).user?.photoUrl;
+                return CircleAvatar(
+                  backgroundColor: Colors.grey.shade200,
+                  radius: 16,
+                  backgroundImage: photoUrl != null
+                      ? NetworkImage(photoUrl)
+                      : null,
+                  child: photoUrl == null
+                      ? Icon(
+                          Icons.person,
+                          size: 18,
+                          color: Colors.grey.shade600,
+                        )
+                      : null,
+                );
+              },
             ),
           ],
         ],
+      ),
+    );
+  }
+
+  bool _isCrisisMessage(String text) {
+    final lower = text.toLowerCase();
+    for (final kw in _crisisKeywordsEn) {
+      if (lower.contains(kw)) return true;
+    }
+    for (final kw in _crisisKeywordsSi) {
+      if (text.contains(kw)) return true;
+    }
+    return false;
+  }
+
+  Widget _buildCrisisCard(bool isMobile) {
+    final isSinhala = _currentLang == 'si';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          gradient: const LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFFFF3F3), Color(0xFFFFF0F5)],
+          ),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFFFCDD2), width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFFE53935).withValues(alpha: 0.10),
+              blurRadius: 14,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(18),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header row
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(9),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFE0E0),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.favorite_rounded,
+                      color: Color(0xFFE53935),
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isSinhala ? 'ඔබ තනිව නොසිටී' : 'You are not alone',
+                          style: GoogleFonts.poppins(
+                            fontSize: isMobile ? 15 : 16,
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFFB71C1C),
+                          ),
+                        ),
+                        Text(
+                          isSinhala
+                              ? 'සහාය ලැබිය හැකිය. කරුණාකර සම්බන්ධ වන්න.'
+                              : 'Help is available. Please reach out.',
+                          style: GoogleFonts.roboto(
+                            fontSize: 12,
+                            color: const Color(0xFFC62828),
+                            height: 1.4,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Divider(color: const Color(0xFFFFCDD2), thickness: 1),
+              const SizedBox(height: 12),
+              Text(
+                isSinhala ? 'හදිසි සහාය දුරකතන' : 'Emergency Helplines',
+                style: GoogleFonts.poppins(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF37474F),
+                  letterSpacing: 0.3,
+                ),
+              ),
+              const SizedBox(height: 10),
+              _buildCallButton(
+                name: isSinhala
+                    ? 'ජාතික මානසික සෞඛ්‍ය helpline'
+                    : 'National Mental Health Helpline',
+                number: '1926',
+                color: const Color(0xFFE53935),
+              ),
+              const SizedBox(height: 8),
+              _buildCallButton(
+                name: isSinhala
+                    ? 'CCC මානසික සෞඛ්‍ය helpline'
+                    : 'CCC Mental Health Helpline',
+                number: '1333',
+                color: const Color(0xFFAD1457),
+              ),
+              const SizedBox(height: 8),
+              _buildCallButton(
+                name: 'Sumithrayo',
+                number: '0112682535',
+                color: const Color(0xFF6A1B9A),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCallButton({
+    required String name,
+    required String number,
+    required Color color,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: () async {
+          final uri = Uri(scheme: 'tel', path: number);
+          try {
+            await launchUrl(uri, mode: LaunchMode.externalApplication);
+          } catch (_) {}
+        },
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.07),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: color.withValues(alpha: 0.28)),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.call_rounded,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: GoogleFonts.poppins(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: color,
+                      ),
+                    ),
+                    Text(
+                      number,
+                      style: GoogleFonts.robotoMono(
+                        fontSize: 14,
+                        fontWeight: FontWeight.w700,
+                        color: const Color(0xFF1F2933),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.call_made_rounded,
+                size: 16,
+                color: color.withValues(alpha: 0.55),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -769,12 +1115,12 @@ class _ChatBotPageState extends State<ChatBotPage> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.06),
+            blurRadius: 12,
             offset: const Offset(0, -5),
           ),
         ],
@@ -785,9 +1131,9 @@ class _ChatBotPageState extends State<ChatBotPage> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
-                color: AppColors.background,
+                color: AppColors.surfaceVariant,
                 borderRadius: BorderRadius.circular(30),
-                border: Border.all(color: Colors.grey.shade200),
+                border: Border.all(color: AppColors.border),
               ),
               child: TextField(
                 controller: _controller,
@@ -796,7 +1142,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
                 decoration: InputDecoration(
                   hintText: context.t.chat('typeMessage'),
                   hintStyle: GoogleFonts.roboto(
-                    color: Colors.grey.shade400,
+                    color: AppColors.textMuted,
                     fontSize: isMobile ? 14 : 16,
                   ),
                   border: InputBorder.none,
@@ -812,9 +1158,23 @@ class _ChatBotPageState extends State<ChatBotPage> {
             child: Container(
               width: 50,
               height: 50,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppColors.heroGradientStart,
+                    AppColors.heroGradientMid,
+                  ],
+                ),
                 shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.primary.withValues(alpha: 0.22),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: const Icon(
                 Icons.send_rounded,

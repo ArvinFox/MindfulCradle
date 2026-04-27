@@ -30,15 +30,15 @@ class QuestionnaireQuestionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppColors.cardBackground,
+      color: AppColors.surface,
       margin: const EdgeInsets.symmetric(vertical: 6),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
         side: isMissing
-            ? const BorderSide(color: Colors.red, width: 2.0)
-            : BorderSide.none,
+            ? BorderSide(color: Colors.red, width: 2.0)
+            : BorderSide(color: AppColors.border, width: 1),
       ),
-      elevation: 3,
+      elevation: 2,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Column(
@@ -99,12 +99,12 @@ class QuestionnaireQuestionCard extends StatelessWidget {
                           side: BorderSide(
                             color: selected
                                 ? AppColors.completed
-                                : AppColors.tileInactive.withOpacity(0.5),
+                                : AppColors.tileInactive.withValues(alpha: 0.5),
                             width: selected ? 2 : 1,
                           ),
                         ),
                         shadowColor: selected
-                            ? AppColors.completed.withOpacity(0.7)
+                            ? AppColors.completed.withValues(alpha: 0.7)
                             : AppColors.completed,
                         elevation: selected ? 8 : 0,
                         pressElevation: 2,

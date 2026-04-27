@@ -89,6 +89,8 @@ class RagService {
     String query, {
     String? languageHint,
     List<Map<String, String>>? conversationHistory,
+    String? userName,
+    String? crisisExtra,
   }) async* {
     if (!_initialized) {
       await initialize();
@@ -112,6 +114,8 @@ class RagService {
       context: context,
       languageHint: languageHint,
       conversationHistory: conversationHistory,
+      userName: userName,
+      crisisExtra: crisisExtra,
     );
 
     try {
@@ -187,6 +191,8 @@ class RagService {
     required String context,
     String? languageHint,
     List<Map<String, String>>? conversationHistory,
+    String? userName,
+    String? crisisExtra,
   }) {
     final StringBuffer buffer = StringBuffer();
     buffer.writeln(
@@ -196,6 +202,15 @@ class RagService {
       'provide a general supportive response and suggest consulting with a healthcare provider. '
       'Be warm, reassuring, and supportive in your responses.',
     );
+    if (userName != null && userName.trim().isNotEmpty) {
+      final firstName = userName.trim().split(RegExp(r'\s+')).first;
+      buffer.writeln(
+        'The user\'s name is $firstName. Address them warmly by name when it feels natural.',
+      );
+    }
+    if (crisisExtra != null && crisisExtra.isNotEmpty) {
+      buffer.writeln(crisisExtra);
+    }
     if (languageHint != null && languageHint.isNotEmpty) {
       buffer.writeln('Please reply in: $languageHint.');
     }

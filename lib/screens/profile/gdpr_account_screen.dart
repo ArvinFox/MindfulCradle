@@ -5,9 +5,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../constants/colors.dart';
-import '../../utils/helpers.dart';
+import '../../utils/app_snackbar.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../widgets/app_background.dart';
 
 /// GDPR Account Management Screen
 /// Allows users to export their data and delete their account
@@ -49,34 +50,25 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
           final savedMessage = langCode == 'si'
               ? 'දත්ත ගොනුව සුරකින ලදි: ${file.path}'
               : 'Data file saved: ${file.path}';
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(savedMessage),
-              duration: const Duration(seconds: 5),
-            ),
+          AppSnackBar.success(
+            context,
+            savedMessage,
+            duration: const Duration(seconds: 5),
           );
         }
       } else if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              langCode == 'si'
-                  ? 'දත්ත අපනයනය අසාර්ථකයි'
-                  : 'Failed to export data',
-            ),
-          ),
+        AppSnackBar.error(
+          context,
+          langCode == 'si' ? 'දත්ත අපනයනය අසාර්ථකයි' : 'Failed to export data',
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              langProvider.currentLang == 'si'
-                  ? 'දත්ත අපනයනය අසාර්ථකයි'
-                  : 'Failed to export data',
-            ),
-          ),
+        AppSnackBar.error(
+          context,
+          langProvider.currentLang == 'si'
+              ? 'දත්ත අපනයනය අසාර්ථකයි'
+              : 'Failed to export data',
         );
       }
     } finally {
@@ -246,14 +238,11 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
 
       if (error == null) {
         // Success - navigate to login
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              langCode == 'si'
-                  ? 'ගිණුම සාර්ථකව මකා දමන ලදි'
-                  : 'Account deleted successfully',
-            ),
-          ),
+        AppSnackBar.success(
+          context,
+          langCode == 'si'
+              ? 'ගිණුම සාර්ථකව මකා දමන ලදි'
+              : 'Account deleted successfully',
         );
         Navigator.of(
           context,
@@ -261,20 +250,15 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
       } else {
         // Error
         HapticFeedback.vibrate();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(error)));
+        AppSnackBar.error(context, error);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              langCode == 'si'
-                  ? 'ගිණුම මකා දැමීම අසාර්ථකයි'
-                  : 'Failed to delete account',
-            ),
-          ),
+        AppSnackBar.error(
+          context,
+          langCode == 'si'
+              ? 'ගිණුම මකා දැමීම අසාර්ථකයි'
+              : 'Failed to delete account',
         );
       }
     } finally {
@@ -399,121 +383,133 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.primary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           isSinhala ? 'දත්ත සහ පෞද්ගලිකත්වය' : 'Data & Privacy',
-          style: appBarTextStyle,
+          style: GoogleFonts.poppins(
+            fontWeight: FontWeight.w600,
+            fontSize: 18,
+            color: AppColors.text,
+          ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          // Header
-          Text(
-            isSinhala ? 'GDPR අයිතිවාසිකම්' : 'GDPR Rights',
-            style: GoogleFonts.poppins(
-              fontSize: 24,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
+      body: AppBackground(
+        child: SafeArea(
+          top: false,
+          child: ListView(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              16,
+              16 + MediaQuery.of(context).padding.bottom,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            isSinhala
-                ? 'ඔබගේ දත්ත පිළිබඳ සම්පූර්ණ පාලනය ඔබට ඇත'
-                : 'You have full control over your data',
-            style: GoogleFonts.poppins(fontSize: 14, color: AppColors.text),
-          ),
-          const SizedBox(height: 24),
+            children: [
+              // Header
+              Text(
+                isSinhala ? 'GDPR අයිතිවාසිකම්' : 'GDPR Rights',
+                style: GoogleFonts.poppins(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isSinhala
+                    ? 'ඔබගේ දත්ත පිළිබඳ සම්පූර්ණ පාලනය ඔබට ඇත'
+                    : 'You have full control over your data',
+                style: GoogleFonts.poppins(fontSize: 14, color: AppColors.text),
+              ),
+              const SizedBox(height: 24),
 
-          // Export Data Card
-          _buildDataCard(
-            icon: Icons.download,
-            title: isSinhala ? 'දත්ත අපනයනය කරන්න' : 'Export Your Data',
-            description: isSinhala
-                ? 'ඔබගේ සියලු සෞඛ්‍ය ලකුණු සහ පැතිකඩ දත්ත CSV ගොනුවක් ලෙස සුරකින්න'
-                : 'Save all your health scores and profile data as a CSV file',
-            buttonText: isSinhala ? 'අපනයනය කරන්න' : 'Export Data',
-            buttonColor: AppColors.primary,
-            isLoading: _isExporting,
-            onPressed: _exportData,
+              // Export Data Card
+              _buildDataCard(
+                icon: Icons.download,
+                title: isSinhala ? 'දත්ත අපනයනය කරන්න' : 'Export Your Data',
+                description: isSinhala
+                    ? 'ඔබගේ සියලු සෞඛ්‍ය ලකුණු සහ පැතිකඩ දත්ත CSV ගොනුවක් ලෙස සුරකින්න'
+                    : 'Save all your health scores and profile data as a CSV file',
+                buttonText: isSinhala ? 'අපනයනය කරන්න' : 'Export Data',
+                buttonColor: AppColors.primary,
+                isLoading: _isExporting,
+                onPressed: _exportData,
+              ),
+
+              const SizedBox(height: 16),
+
+              // Delete Account Card
+              _buildDataCard(
+                icon: Icons.delete_forever,
+                title: isSinhala ? 'ගිණුම මකන්න' : 'Delete Account',
+                description: isSinhala
+                    ? 'ඔබගේ ගිණුම සහ සියලු දත්ත ස්ථිරවම මකන්න. මෙය අපැහැර ගත නොහැක.'
+                    : 'Permanently delete your account and all data. This cannot be undone.',
+                buttonText: isSinhala ? 'ගිණුම මකන්න' : 'Delete Account',
+                buttonColor: Colors.red,
+                isLoading: _isDeleting,
+                onPressed: _deleteAccount,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Information Section
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.05),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isSinhala ? 'අපි එකතු කරන දත්ත' : 'Data We Collect',
+                      style: GoogleFonts.poppins(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildInfoItem(
+                      isSinhala ? 'DASS-21 ප්‍රතිචාර' : 'DASS-21 responses',
+                    ),
+                    _buildInfoItem(
+                      isSinhala ? 'PWS-18 ප්‍රතිචාර' : 'PWS-18 responses',
+                    ),
+                    _buildInfoItem(
+                      isSinhala ? 'MAAS ප්‍රතිචාර' : 'MAAS responses',
+                    ),
+                    _buildInfoItem(
+                      isSinhala ? 'වීඩියෝ ප්‍රගතිය' : 'Video progress',
+                    ),
+                    _buildInfoItem(
+                      isSinhala ? 'පැතිකඩ තොරතුරු' : 'Profile information',
+                    ),
+                    _buildInfoItem(
+                      isSinhala ? 'ගර්භණී සතිය' : 'Pregnancy week',
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-
-          const SizedBox(height: 16),
-
-          // Delete Account Card
-          _buildDataCard(
-            icon: Icons.delete_forever,
-            title: isSinhala ? 'ගිණුම මකන්න' : 'Delete Account',
-            description: isSinhala
-                ? 'ඔබගේ ගිණුම සහ සියලු දත්ත ස්ථිරවම මකන්න. මෙය අපැහැර ගත නොහැක.'
-                : 'Permanently delete your account and all data. This cannot be undone.',
-            buttonText: isSinhala ? 'ගිණුම මකන්න' : 'Delete Account',
-            buttonColor: Colors.red,
-            isLoading: _isDeleting,
-            onPressed: _deleteAccount,
-          ),
-
-          const SizedBox(height: 24),
-
-          // Information Section
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color: AppColors.cardBackground,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isSinhala ? 'අපි එකතු කරන දත්ත' : 'Data We Collect',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildInfoItem(
-                  isSinhala
-                      ? 'DASS-21 ප්‍රතිචාර'
-                      : 'DASS-21 responses',
-                ),
-                _buildInfoItem(
-                  isSinhala
-                      ? 'PWS-18 ප්‍රතිචාර'
-                      : 'PWS-18 responses',
-                ),
-                _buildInfoItem(
-                  isSinhala
-                      ? 'MAAS ප්‍රතිචාර'
-                      : 'MAAS responses',
-                ),
-                _buildInfoItem(
-                  isSinhala ? 'වීඩියෝ ප්‍රගතිය' : 'Video progress',
-                ),
-                _buildInfoItem(
-                  isSinhala ? 'පැතිකඩ තොරතුරු' : 'Profile information',
-                ),
-                _buildInfoItem(isSinhala ? 'ගර්භණී සතිය' : 'Pregnancy week'),
-              ],
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -528,13 +524,13 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
     required VoidCallback onPressed,
   }) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),

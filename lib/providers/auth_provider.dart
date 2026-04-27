@@ -114,6 +114,55 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// Google login
+  Future<String?> loginWithGoogle({
+    bool rememberMe = false,
+    String langCode = 'en',
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final result = await _authService
+          .loginWithGoogle(langCode: langCode)
+          .timeout(const Duration(seconds: 20));
+
+      if (result == null) {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          if (rememberMe) {
+            await _secureStorage.write(key: _userIdKey, value: user.uid);
+            final prefs = await SharedPreferences.getInstance();
+            await prefs.remove(_userIdKey);
+          }
+          _listenToUser(user.uid);
+        }
+      }
+
+      return result;
+    } on TimeoutException {
+      return langCode == 'si'
+          ? 'සම්බන්ධතාවය ප්‍රමාද වී ඇත. කරුණාකර නැවත උත්සාහ කරන්න.'
+          : 'Connection timed out. Please try again.';
+    } catch (e) {
+      return langCode == 'si'
+          ? 'සත්‍යාපනය අසාර්ථකයි. කරුණාකර නැවත උත්සාහ කරන්න.'
+          : 'Authentication failed. Please try again.';
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  /// Updates the user's photo URL in Firestore and local state.
+  Future<void> updatePhotoUrl(String photoUrl) async {
+    if (_user == null) return;
+    await _firestore.collection('users').doc(_user!.id).update({
+      'photoUrl': photoUrl,
+    });
+    // Local state is updated automatically via the Firestore stream listener.
+  }
+
   /// Logout user
   Future<void> logout() async {
     _isLoading = true;

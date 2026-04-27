@@ -2,6 +2,7 @@ class UserModel {
   final String id;
   final String fullName;
   final String email;
+  final String? photoUrl;
   final List<String> achievements;
   final List<int> unlockedVideos;
   final int totalSessionTime;
@@ -12,6 +13,7 @@ class UserModel {
     required this.id,
     required this.fullName,
     required this.email,
+    this.photoUrl,
     required this.achievements,
     required this.unlockedVideos,
     required this.totalSessionTime,
@@ -53,6 +55,7 @@ class UserModel {
       id: docId,
       fullName: map['fullName'] ?? '',
       email: map['email'] ?? '',
+      photoUrl: map['photoUrl'] as String?,
       achievements: List<String>.from(map['achievements'] ?? []),
       unlockedVideos: List<int>.from(map['unlockedVideos'] ?? []),
       totalSessionTime: map['totalSessionTime'] ?? 0,
@@ -65,6 +68,7 @@ class UserModel {
     return {
       'fullName': fullName,
       'email': email,
+      if (photoUrl != null) 'photoUrl': photoUrl,
       'achievements': achievements,
       'unlockedVideos': unlockedVideos,
       'totalSessionTime': totalSessionTime,
@@ -77,6 +81,7 @@ class UserModel {
     String? id,
     String? fullName,
     String? email,
+    String? photoUrl,
     List<String>? achievements,
     List<int>? unlockedVideos,
     int? totalSessionTime,
@@ -87,6 +92,7 @@ class UserModel {
       id: id ?? this.id,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
+      photoUrl: photoUrl ?? this.photoUrl,
       achievements: achievements ?? this.achievements,
       unlockedVideos: unlockedVideos ?? this.unlockedVideos,
       totalSessionTime: totalSessionTime ?? this.totalSessionTime,

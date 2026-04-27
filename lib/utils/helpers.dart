@@ -10,13 +10,13 @@ InputDecoration customInputDecoration(String labelText) {
       fontWeight: FontWeight.w500,
     ),
     filled: true,
-    fillColor: AppColors.inputBackground,
+    fillColor: AppColors.surfaceVariant,
     contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 15),
 
     // Default border
     border: OutlineInputBorder(
       borderRadius: BorderRadius.circular(15),
-      borderSide: BorderSide.none,
+      borderSide: const BorderSide(color: AppColors.border, width: 1),
     ),
 
     // Focused state
@@ -33,7 +33,7 @@ InputDecoration customInputDecoration(String labelText) {
 
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(15),
-      borderSide: BorderSide.none,
+      borderSide: const BorderSide(color: AppColors.border, width: 1),
     ),
   );
 }

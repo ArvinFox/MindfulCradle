@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   /// Sign up
   Future<String?> signUp({
@@ -62,6 +64,44 @@ class AuthService {
     }
   }
 
+  /// Google login
+  Future<String?> loginWithGoogle({String langCode = 'en'}) async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        return langCode == 'si'
+            ? 'ගූගල් ඇතුළුවීම අවලංගු කරන ලදී.'
+            : 'Google sign in was cancelled.';
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _auth
+          .signInWithCredential(credential)
+          .timeout(const Duration(seconds: 20));
+
+      final firebaseUser = userCredential.user;
+      if (firebaseUser == null) {
+        return _localizeGenericError(langCode);
+      }
+
+      await _ensureUserDocument(firebaseUser);
+      return null;
+    } on TimeoutException {
+      return langCode == 'si'
+          ? 'සම්බන්ධතාවය ප්‍රමාද වී ඇත. කරුණාකර නැවත උත්සාහ කරන්න.'
+          : 'Connection timed out. Please try again.';
+    } on FirebaseAuthException catch (e) {
+      return _localizeAuthError(e, langCode);
+    } catch (_) {
+      return _localizeGenericError(langCode);
+    }
+  }
+
   /// Reset password
   Future<String?> resetPassword({
     required String email,
@@ -79,7 +119,40 @@ class AuthService {
 
   /// Logout
   Future<void> signOut() async {
+    await _googleSignIn.signOut();
     await _auth.signOut();
+  }
+
+  Future<void> _ensureUserDocument(User firebaseUser) async {
+    final userDocRef = _firestore.collection('users').doc(firebaseUser.uid);
+    final userDoc = await userDocRef.get();
+
+    if (userDoc.exists) {
+      await userDocRef.set({
+        'email': firebaseUser.email ?? '',
+        'fullName':
+            (firebaseUser.displayName != null &&
+                firebaseUser.displayName!.trim().isNotEmpty)
+            ? firebaseUser.displayName!.trim()
+            : (userDoc.data()?['fullName'] ?? ''),
+      }, SetOptions(merge: true));
+      return;
+    }
+
+    final user = UserModel.newUser(
+      id: firebaseUser.uid,
+      fullName:
+          (firebaseUser.displayName != null &&
+              firebaseUser.displayName!.trim().isNotEmpty)
+          ? firebaseUser.displayName!.trim()
+          : 'New User',
+      email: firebaseUser.email ?? '',
+    );
+
+    await userDocRef.set({
+      ...user.toMap(),
+      'isUserRegistrationComplete': false,
+    });
   }
 
   String _localizeGenericError(String langCode) {
@@ -125,6 +198,10 @@ class AuthService {
         return isSinhala
             ? 'ජාල සම්බන්ධතාවය අසාර්ථකයි.'
             : 'Network connection failed.';
+      case 'sign_in_canceled':
+        return isSinhala
+            ? 'ගූගල් ඇතුළුවීම අවලංගු කරන ලදී.'
+            : 'Google sign in was cancelled.';
       default:
         return _localizeGenericError(langCode);
     }

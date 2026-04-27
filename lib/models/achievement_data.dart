@@ -80,7 +80,7 @@ class AchievementData {
       icon: Icons.sentiment_very_satisfied,
       color: Color(0xFFEF4565), // Pink/Red
     ),
-    
+
     // SPECIAL
     Achievement(
       id: 'super_mom',
@@ -90,6 +90,57 @@ class AchievementData {
       descriptionSi: 'සියලුම වීඩියෝ සහ ඇගයීම් සම්පූර්ණ කර ඇත!',
       icon: Icons.diamond,
       color: Color(0xFF3DA9FC), // Blue
+    ),
+
+    // JOURNAL MILESTONES
+    Achievement(
+      id: 'first_journal',
+      titleEn: 'Dear Diary',
+      titleSi: 'ප්‍රිය දිනපොත',
+      descriptionEn: 'Wrote your first journal entry.',
+      descriptionSi: 'ඔබේ පළමු දිනපොත් ලිපිය ලිව්වා.',
+      icon: Icons.edit_note_rounded,
+      color: Color(0xFFFF7043), // Orange
+    ),
+    Achievement(
+      id: 'journal_writer',
+      titleEn: 'Storyteller',
+      titleSi: 'කතාකාරයා',
+      descriptionEn: 'Wrote 5 journal entries.',
+      descriptionSi: 'දිනපොත් ලිපි 5ක් ලිව්වා.',
+      icon: Icons.auto_stories_rounded,
+      color: Color(0xFFFFA000), // Amber
+    ),
+
+    // MOOD MILESTONES
+    Achievement(
+      id: 'mood_check_in',
+      titleEn: 'Feeling Aware',
+      titleSi: 'හැඟීම් දැනුවත්',
+      descriptionEn: 'Logged your first mood check-in.',
+      descriptionSi: 'ඔබේ පළමු මනෝ තත්ත්වය සටහන් කළා.',
+      icon: Icons.mood_rounded,
+      color: Color(0xFFEC407A), // Rose
+    ),
+    Achievement(
+      id: 'mood_tracker',
+      titleEn: 'Consistent Soul',
+      titleSi: 'ස්ථාවර ආත්මය',
+      descriptionEn: 'Logged your mood 5 times.',
+      descriptionSi: 'මනෝ තත්ත්වය 5 වතාවක් සටහන් කළා.',
+      icon: Icons.local_fire_department_rounded,
+      color: Color(0xFFFF5722), // Deep Orange
+    ),
+
+    // CHAT MILESTONE
+    Achievement(
+      id: 'chat_companion',
+      titleEn: 'Chat Companion',
+      titleSi: 'සංවාද මිතුරා',
+      descriptionEn: 'Started your first AI companion chat.',
+      descriptionSi: 'ඔබේ පළමු AI සහචර සංවාදය ආරම්භ කළා.',
+      icon: Icons.chat_bubble_outline_rounded,
+      color: Color(0xFF3D5AFE), // Indigo
     ),
   ];
 

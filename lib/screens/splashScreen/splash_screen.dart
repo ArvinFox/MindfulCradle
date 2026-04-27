@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:mamamind/providers/auth_provider.dart';
-import 'package:mamamind/screens/main_screen.dart';
-import 'package:mamamind/screens/auth/login_page.dart';
 import '/constants/colors.dart';
 import '/constants/app_config.dart';
 
@@ -33,26 +32,10 @@ class _SplashPageState extends State<SplashPage>
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
-      // Load user from prefs
+      // Pre-load the user so app.dart can make the correct routing decision
+      // as soon as the splash timer expires. No navigation logic here —
+      // routing is owned by app.dart to avoid race conditions on slow devices.
       await authProvider.loadUserFromPrefs();
-
-      // 👇 Force splash to show for at least 2 seconds
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (!mounted) return;
-
-      // Navigate based on login state
-      if (authProvider.isLoggedIn) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const MainScreen()),
-        );
-      } else {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => const LoginPage()),
-        );
-      }
     });
   }
 
@@ -66,38 +49,84 @@ class _SplashPageState extends State<SplashPage>
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
+    final logoSize = isMobile ? (size.width * 0.28).clamp(94.0, 132.0) : 150.0;
+    final titleSize = isMobile ? (size.width * 0.08).clamp(26.0, 34.0) : 40.0;
 
     return Scaffold(
-      backgroundColor: AppColors.primary.withOpacity(0.9),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(30),
-                child: Image.asset(
-                  'assets/login/app_logo.jpg',
-                  width: isMobile ? 120 : 150,
-                  height: isMobile ? 120 : 150,
-                  fit: BoxFit.cover,
-                ),
-              ),
-              const SizedBox(height: 20),
-              Text(
-                AppConfig.appName,
-                style: TextStyle(
-                  fontSize: isMobile ? 32 : 40,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 20),
-              const CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-              ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.heroGradientStart,
+              AppColors.heroGradientMid,
+              AppColors.heroGradientEnd,
             ],
+          ),
+        ),
+        child: FadeTransition(
+          opacity: _fadeAnimation,
+          child: SafeArea(
+            child: Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.20),
+                        borderRadius: BorderRadius.circular(26),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.30),
+                        ),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(20),
+                        child: Image.asset(
+                          'assets/login/app_logo.jpg',
+                          width: logoSize,
+                          height: logoSize,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Text(
+                      AppConfig.appName,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.poppins(
+                        fontSize: titleSize,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Mindful support for every step',
+                      style: GoogleFonts.roboto(
+                        fontSize: isMobile ? 13 : 14,
+                        color: Colors.white.withValues(alpha: 0.88),
+                      ),
+                    ),
+                    const SizedBox(height: 26),
+                    SizedBox(
+                      width: 24,
+                      height: 24,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          Colors.white,
+                        ),
+                        backgroundColor: Colors.white.withValues(alpha: 0.28),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),

@@ -7,6 +7,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../services/chat_history_service.dart';
 import '../../utils/translate.dart';
+import '../../widgets/app_background.dart';
 
 class ChatHistoryScreen extends StatefulWidget {
   const ChatHistoryScreen({super.key});
@@ -91,111 +92,123 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.primary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(
           context.t.chat('chatHistory'),
           style: GoogleFonts.poppins(
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            fontSize: 18,
+            color: AppColors.text,
           ),
         ),
-        backgroundColor: AppColors.primary,
-        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: _isLoading
-          ? Center(child: CircularProgressIndicator(color: AppColors.primary))
-          : _sessions.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.chat_bubble_outline,
-                    size: 64,
-                    color: AppColors.text.withOpacity(0.3),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    isSinhala ? 'චැට් ඉතිහාසයක් නැත' : 'No Chat History',
-                    style: GoogleFonts.poppins(
-                      fontSize: 18,
-                      color: AppColors.text.withOpacity(0.6),
+      body: AppBackground(
+        child: _isLoading
+            ? Center(child: CircularProgressIndicator(color: AppColors.primary))
+            : _sessions.isEmpty
+            ? Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.chat_bubble_outline,
+                      size: 64,
+                      color: AppColors.text.withValues(alpha: 0.3),
                     ),
-                  ),
-                ],
-              ),
-            )
-          : RefreshIndicator(
-              onRefresh: _loadSessions,
-              color: AppColors.primary,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _sessions.length,
-                itemBuilder: (context, index) {
-                  final session = _sessions[index];
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 12),
-                    color: AppColors.cardBackground,
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: ListTile(
-                      contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                    const SizedBox(height: 16),
+                    Text(
+                      isSinhala ? 'චැට් ඉතිහාසයක් නැත' : 'No Chat History',
+                      style: GoogleFonts.poppins(
+                        fontSize: 18,
+                        color: AppColors.text.withValues(alpha: 0.6),
                       ),
-                      leading: CircleAvatar(
-                        backgroundColor: AppColors.primary.withOpacity(0.1),
-                        child: Icon(
-                          Icons.chat_bubble,
-                          color: AppColors.primary,
+                    ),
+                  ],
+                ),
+              )
+            : RefreshIndicator(
+                onRefresh: _loadSessions,
+                color: AppColors.primary,
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(16),
+                  itemCount: _sessions.length,
+                  itemBuilder: (context, index) {
+                    final session = _sessions[index];
+                    return Card(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      color: AppColors.cardBackground,
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
                         ),
-                      ),
-                      title: Text(
-                        session.title,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w500,
-                          color: AppColors.text,
+                        leading: CircleAvatar(
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.1,
+                          ),
+                          child: Icon(
+                            Icons.chat_bubble,
+                            color: AppColors.primary,
+                          ),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      subtitle: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: 4),
-                          Text(
-                            '${session.messageCount} ${isSinhala ? 'පණිවිඩ' : 'messages'}',
-                            style: GoogleFonts.roboto(
-                              fontSize: 12,
-                              color: AppColors.text.withOpacity(0.6),
-                            ),
+                        title: Text(
+                          session.title,
+                          style: GoogleFonts.poppins(
+                            fontWeight: FontWeight.w500,
+                            color: AppColors.text,
                           ),
-                          Text(
-                            DateFormat(
-                              'MMM d, yyyy • h:mm a',
-                            ).format(session.updatedAt),
-                            style: GoogleFonts.roboto(
-                              fontSize: 11,
-                              color: AppColors.text.withOpacity(0.5),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 4),
+                            Text(
+                              '${session.messageCount} ${isSinhala ? 'පණිවිඩ' : 'messages'}',
+                              style: GoogleFonts.roboto(
+                                fontSize: 12,
+                                color: AppColors.text.withValues(alpha: 0.6),
+                              ),
                             ),
-                          ),
-                        ],
+                            Text(
+                              DateFormat(
+                                'MMM d, yyyy • h:mm a',
+                              ).format(session.updatedAt),
+                              style: GoogleFonts.roboto(
+                                fontSize: 11,
+                                color: AppColors.text.withValues(alpha: 0.5),
+                              ),
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: Icon(Icons.delete_outline),
+                          color: Colors.red.withValues(alpha: 0.7),
+                          onPressed: () => _deleteSession(session),
+                        ),
+                        onTap: () {
+                          // Return the selected session ID
+                          Navigator.pop(context, session.id);
+                        },
                       ),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete_outline),
-                        color: Colors.red.withOpacity(0.7),
-                        onPressed: () => _deleteSession(session),
-                      ),
-                      onTap: () {
-                        // Return the selected session ID
-                        Navigator.pop(context, session.id);
-                      },
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
+      ),
     );
   }
 }

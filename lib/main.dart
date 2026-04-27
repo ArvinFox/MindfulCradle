@@ -7,11 +7,14 @@ import 'package:mamamind/providers/language_provider.dart';
 import 'package:mamamind/providers/maas_provider.dart';
 import 'package:mamamind/providers/pws18_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app.dart';
 import 'providers/auth_provider.dart';
 import 'providers/connectivity_provider.dart';
 import 'providers/video_provider.dart';
 import 'providers/achievement_provider.dart';
+import 'providers/journal_provider.dart';
+import 'providers/mood_provider.dart';
 import 'services/localization_service.dart';
 import 'services/notification_service.dart';
 
@@ -50,6 +53,11 @@ void main() async {
     if (kDebugMode) debugPrint("Notifications initialization error: $e");
   }
 
+  // Read onboarding flag before building the widget tree so routing is
+  // always deterministic, regardless of device speed.
+  final prefs = await SharedPreferences.getInstance();
+  final hasSeenOnboarding = prefs.getBool('onboarding_complete') ?? false;
+
   runApp(
     MultiProvider(
       providers: [
@@ -61,17 +69,21 @@ void main() async {
         ChangeNotifierProvider(create: (_) => MAASProvider()),
         ChangeNotifierProvider(create: (_) => PWS18Provider()),
         ChangeNotifierProvider(create: (_) => AchievementProvider()),
+        ChangeNotifierProvider(create: (_) => JournalProvider()),
+        ChangeNotifierProvider(create: (_) => MoodProvider()),
       ],
-      child: const MyApp(),
+      child: MyApp(hasSeenOnboarding: hasSeenOnboarding),
     ),
   );
 }
 
 class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  final bool hasSeenOnboarding;
+
+  const MyApp({super.key, required this.hasSeenOnboarding});
 
   @override
   Widget build(BuildContext context) {
-    return const MindfulCradleApp();
+    return MindfulCradleApp(hasSeenOnboarding: hasSeenOnboarding);
   }
 }

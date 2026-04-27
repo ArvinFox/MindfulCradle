@@ -5,6 +5,8 @@ import 'package:permission_handler/permission_handler.dart';
 import '../../constants/colors.dart';
 import '../../services/notification_service.dart';
 import '../../utils/translate.dart';
+import '../../utils/app_snackbar.dart';
+import '../../widgets/app_background.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
   const NotificationSettingsScreen({super.key});
@@ -178,29 +180,17 @@ class _NotificationSettingsScreenState
       await _loadSchedules();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.t.notifications('defaultRemindersSet')),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
+      AppSnackBar.success(
+        context,
+        context.t.notifications('defaultRemindersSet'),
+        duration: const Duration(seconds: 2),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 3),
-        ),
+      AppSnackBar.error(
+        context,
+        'Error: $e',
+        duration: const Duration(seconds: 3),
       );
     }
   }
@@ -269,29 +259,17 @@ class _NotificationSettingsScreenState
       await _loadSchedules();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.t.notifications('reminderScheduled')),
-          backgroundColor: Colors.green,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
+      AppSnackBar.success(
+        context,
+        context.t.notifications('reminderScheduled'),
+        duration: const Duration(seconds: 2),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 3),
-        ),
+      AppSnackBar.error(
+        context,
+        'Error: $e',
+        duration: const Duration(seconds: 3),
       );
     }
   }
@@ -302,29 +280,17 @@ class _NotificationSettingsScreenState
       await _loadSchedules();
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(context.t.notifications('reminderCancelled')),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 2),
-        ),
+      AppSnackBar.warning(
+        context,
+        context.t.notifications('reminderCancelled'),
+        duration: const Duration(seconds: 2),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
-          ),
-          duration: const Duration(seconds: 3),
-        ),
+      AppSnackBar.error(
+        context,
+        'Error: $e',
+        duration: const Duration(seconds: 3),
       );
     }
   }
@@ -336,72 +302,207 @@ class _NotificationSettingsScreenState
     return '$displayHour:$displayMinute $period';
   }
 
-  Widget _buildPermissionPrompt() {
+  Widget _buildPermissionPrompt({required bool isMobile}) {
     if (kDebugMode) {
       debugPrint('_buildPermissionPrompt called');
     }
 
+    final isSinhala = context.isSinhala;
+
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.notifications_off_outlined,
-              size: 80,
-              color: Colors.grey[400],
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Notifications Disabled',
-              style: GoogleFonts.poppins(
-                fontSize: 20,
-                fontWeight: FontWeight.w600,
-                color: AppColors.primary,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'To receive reminders for meditation, wellness activities, and companion chats, you need to enable notifications.',
-              style: GoogleFonts.roboto(
-                fontSize: 16,
-                color: Colors.grey[600],
-                height: 1.5,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  if (kDebugMode) {
-                    debugPrint('Enable Notifications button pressed');
-                  }
-                  _requestPermissions();
-                },
-                icon: const Icon(Icons.notifications_active),
-                label: Text(
-                  'Enable Notifications',
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-              ),
-            ),
-          ],
+        padding: EdgeInsets.symmetric(
+          horizontal: isMobile ? 20 : 28,
+          vertical: isMobile ? 18 : 24,
         ),
+        child: Container(
+          width: double.infinity,
+          constraints: const BoxConstraints(maxWidth: 680),
+          padding: EdgeInsets.all(isMobile ? 22 : 28),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                AppColors.primary.withValues(alpha: 0.10),
+                AppColors.accent.withValues(alpha: 0.16),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(
+              color: AppColors.primary.withValues(alpha: 0.20),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: isMobile ? 68 : 76,
+                height: isMobile ? 68 : 76,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.22),
+                      blurRadius: 18,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  Icons.notifications_off_rounded,
+                  size: isMobile ? 32 : 36,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 18),
+              Text(
+                context.t.notifications('notificationsDisabled'),
+                style: GoogleFonts.poppins(
+                  fontSize: isMobile ? 20 : 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.primary,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                context.t.notifications('enableNotificationsDescription'),
+                style: GoogleFonts.roboto(
+                  fontSize: isMobile ? 14 : 15,
+                  color: AppColors.text.withValues(alpha: 0.85),
+                  height: 1.45,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 22),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    if (kDebugMode) {
+                      debugPrint('Enable Notifications button pressed');
+                    }
+                    _requestPermissions();
+                  },
+                  icon: Icon(Icons.notifications_active_rounded),
+                  label: Text(
+                    context.t.notifications('enableNotifications'),
+                    style: GoogleFonts.poppins(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.primary,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    elevation: 0,
+                  ),
+                ),
+              ),
+              if (!isSinhala) ...[
+                const SizedBox(height: 14),
+                Text(
+                  'You can change this anytime from system settings.',
+                  style: GoogleFonts.roboto(
+                    fontSize: 12,
+                    color: AppColors.text.withValues(alpha: 0.65),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverviewCard({required bool isMobile}) {
+    final activeCount = _schedules.length;
+    final isEnabled = _notificationsEnabled;
+
+    return Container(
+      width: double.infinity,
+      padding: EdgeInsets.all(isMobile ? 16 : 20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: isMobile ? 48 : 54,
+            height: isMobile ? 48 : 54,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Icon(
+              isEnabled
+                  ? Icons.notifications_active_rounded
+                  : Icons.notifications_off_rounded,
+              color: AppColors.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  context.t.notifications('notificationSettings'),
+                  style: GoogleFonts.poppins(
+                    fontSize: isMobile ? 15 : 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isEnabled
+                      ? '$activeCount ${context.t.notifications('customizeReminders').toLowerCase()}'
+                      : context.t.notifications('notificationsDisabled'),
+                  style: GoogleFonts.roboto(
+                    fontSize: 13,
+                    color: AppColors.text.withValues(alpha: 0.75),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: (isEnabled ? Colors.green : Colors.orange).withValues(
+                alpha: 0.14,
+              ),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              isEnabled
+                  ? context.t.common('yes').toUpperCase()
+                  : context.t.common('no').toUpperCase(),
+              style: GoogleFonts.poppins(
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: isEnabled ? Colors.green[700] : Colors.orange[700],
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -420,226 +521,247 @@ class _NotificationSettingsScreenState
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: AppColors.primary,
+        backgroundColor: Colors.transparent,
         elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back_ios, color: AppColors.primary),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
         title: Text(
           context.t.notifications('notificationSettings'),
           style: GoogleFonts.poppins(
-            fontSize: isMobile ? 18 : 22,
             fontWeight: FontWeight.w600,
-            color: Colors.white,
+            fontSize: 18,
+            color: AppColors.text,
           ),
         ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : !_notificationsEnabled
-          ? _buildPermissionPrompt()
-          : SingleChildScrollView(
-              padding: EdgeInsets.all(isMobile ? 16 : 24),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 800),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Description
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
+      body: AppBackground(
+        child: _isLoading
+            ? const SafeArea(
+                top: false,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            : !_notificationsEnabled
+            ? SafeArea(
+                top: false,
+                child: _buildPermissionPrompt(isMobile: isMobile),
+              )
+            : SafeArea(
+                top: false,
+                child: RefreshIndicator(
+                  color: AppColors.primary,
+                  onRefresh: _loadSchedules,
+                  child: SingleChildScrollView(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: EdgeInsets.fromLTRB(
+                      isMobile ? 16 : 24,
+                      isMobile ? 10 : 14,
+                      isMobile ? 16 : 24,
+                      (isMobile ? 16 : 24) +
+                          MediaQuery.of(context).padding.bottom,
+                    ),
+                    child: Center(
+                      child: ConstrainedBox(
+                        constraints: const BoxConstraints(maxWidth: 800),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Icon(
-                              Icons.notifications_active,
-                              color: AppColors.primary,
-                              size: 32,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
+                            _buildOverviewCard(isMobile: isMobile),
+                            const SizedBox(height: 14),
+                            Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary.withValues(
+                                  alpha: 0.08,
+                                ),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
                               child: Text(
                                 context.t.notifications(
                                   'notificationDescription',
                                 ),
                                 style: GoogleFonts.roboto(
                                   fontSize: 14,
-                                  color: Colors.grey[700],
+                                  color: AppColors.text.withValues(alpha: 0.86),
+                                  height: 1.35,
                                 ),
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Setup Default Reminders Button
-                      if (_schedules.isEmpty)
-                        SizedBox(
-                          width: double.infinity,
-                          child: ElevatedButton.icon(
-                            onPressed: _setupDefaultReminders,
-                            icon: const Icon(Icons.auto_awesome),
-                            label: Text(
-                              context.t.notifications('setupDefaultReminders'),
-                              style: GoogleFonts.poppins(fontSize: 16),
-                            ),
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primary,
-                              foregroundColor: Colors.white,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                          ),
-                        ),
-
-                      if (_schedules.isNotEmpty) ...[
-                        Text(
-                          context.t.notifications('customizeReminders'),
-                          style: GoogleFonts.poppins(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                      ],
-
-                      // Meditation Reminders
-                      _buildReminderCard(
-                        type: 'meditation',
-                        icon: Icons.self_improvement,
-                        title: context.t.notifications('meditationReminders'),
-                        color: Colors.purple,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Companion Chat Reminders
-                      _buildReminderCard(
-                        type: 'companion',
-                        icon: Icons.chat_bubble_outline,
-                        title: context.t.notifications(
-                          'companionChatReminders',
-                        ),
-                        color: Colors.blue,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Wellness Reminders
-                      _buildReminderCard(
-                        type: 'wellness',
-                        icon: Icons.favorite,
-                        title: context.t.notifications('wellnessReminders'),
-                        color: Colors.pink,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Questionnaires Reminders
-                      _buildReminderCard(
-                        type: 'questionnaires',
-                        icon: Icons.assignment,
-                        title: context.t.notifications(
-                          'questionnairesReminders',
-                        ),
-                        color: Colors.teal,
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      // Hydration Reminders
-                      _buildReminderCard(
-                        type: 'hydration',
-                        icon: Icons.water_drop,
-                        title: context.t.notifications('hydrationReminders'),
-                        color: Colors.cyan,
-                      ),
-
-                      const SizedBox(height: 24),
-
-                      // Cancel All Button
-                      if (_schedules.isNotEmpty)
-                        SizedBox(
-                          width: double.infinity,
-                          child: OutlinedButton.icon(
-                            onPressed: () async {
-                              final confirmed = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text(
-                                    context.t.common('confirm'),
+                            const SizedBox(height: 20),
+                            if (_schedules.isEmpty)
+                              SizedBox(
+                                width: double.infinity,
+                                child: ElevatedButton.icon(
+                                  onPressed: _setupDefaultReminders,
+                                  icon: Icon(Icons.auto_awesome_rounded),
+                                  label: Text(
+                                    context.t.notifications(
+                                      'setupDefaultReminders',
+                                    ),
                                     style: GoogleFonts.poppins(
+                                      fontSize: 15,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  content: Text(
-                                    context.t.notifications(
-                                      'allRemindersCancelled',
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.primary,
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
                                     ),
-                                    style: GoogleFonts.roboto(),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    elevation: 0,
                                   ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, false),
-                                      child: Text(
-                                        context.isSinhala
-                                            ? 'නැත'
-                                            : context.t.common('cancel'),
-                                      ),
-                                    ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, true),
-                                      child: Text(
-                                        context.isSinhala
-                                            ? 'ඔව්'
-                                            : context.t.common('confirm'),
-                                        style: const TextStyle(
-                                          color: Colors.red,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
                                 ),
-                              );
-
-                              if (confirmed == true) {
-                                await _notificationService.cancelAllReminders();
-                                await _loadSchedules();
-                              }
-                            },
-                            icon: const Icon(Icons.cancel),
-                            label: Text(
-                              context.t.notifications('disableNotifications'),
-                              style: GoogleFonts.poppins(fontSize: 16),
-                            ),
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: Colors.red,
-                              side: const BorderSide(color: Colors.red),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
                               ),
+                            if (_schedules.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 12),
+                                child: Text(
+                                  context.t.notifications('customizeReminders'),
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 20,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.primary,
+                                  ),
+                                ),
+                              ),
+
+                            _buildReminderCard(
+                              type: 'meditation',
+                              icon: Icons.self_improvement_rounded,
+                              title: context.t.notifications(
+                                'meditationReminders',
+                              ),
+                              color: const Color(0xFF8E5AF7),
                             ),
-                          ),
+                            const SizedBox(height: 12),
+                            _buildReminderCard(
+                              type: 'companion',
+                              icon: Icons.chat_bubble_outline_rounded,
+                              title: context.t.notifications(
+                                'companionChatReminders',
+                              ),
+                              color: const Color(0xFF3A7BFF),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildReminderCard(
+                              type: 'wellness',
+                              icon: Icons.favorite_rounded,
+                              title: context.t.notifications(
+                                'wellnessReminders',
+                              ),
+                              color: const Color(0xFFE55493),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildReminderCard(
+                              type: 'questionnaires',
+                              icon: Icons.assignment_rounded,
+                              title: context.t.notifications(
+                                'questionnairesReminders',
+                              ),
+                              color: const Color(0xFF169A93),
+                            ),
+                            const SizedBox(height: 12),
+                            _buildReminderCard(
+                              type: 'hydration',
+                              icon: Icons.water_drop_rounded,
+                              title: context.t.notifications(
+                                'hydrationReminders',
+                              ),
+                              color: const Color(0xFF27A5C6),
+                            ),
+                            const SizedBox(height: 22),
+                            if (_schedules.isNotEmpty)
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () async {
+                                    final confirmed = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: Text(
+                                          context.t.common('confirm'),
+                                          style: GoogleFonts.poppins(
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        content: Text(
+                                          context.t.notifications(
+                                            'allRemindersCancelled',
+                                          ),
+                                          style: GoogleFonts.roboto(),
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, false),
+                                            child: Text(
+                                              context.isSinhala
+                                                  ? 'නැත'
+                                                  : context.t.common('cancel'),
+                                            ),
+                                          ),
+                                          TextButton(
+                                            onPressed: () =>
+                                                Navigator.pop(context, true),
+                                            child: Text(
+                                              context.isSinhala
+                                                  ? 'ඔව්'
+                                                  : context.t.common('confirm'),
+                                              style: TextStyle(
+                                                color: Colors.red,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+
+                                    if (confirmed == true) {
+                                      await _notificationService
+                                          .cancelAllReminders();
+                                      await _loadSchedules();
+                                    }
+                                  },
+                                  icon: Icon(Icons.cancel_outlined),
+                                  label: Text(
+                                    context.t.notifications(
+                                      'disableNotifications',
+                                    ),
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  style: OutlinedButton.styleFrom(
+                                    foregroundColor: Colors.red,
+                                    side: BorderSide(
+                                      color: Colors.red.withValues(alpha: 0.50),
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 15,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                  ),
+                                ),
+                              ),
+                          ],
                         ),
-                    ],
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
+      ),
     );
   }
 
@@ -653,61 +775,118 @@ class _NotificationSettingsScreenState
     final schedule = _schedules[type];
     final hour = schedule?['hour'] ?? 0;
     final minute = schedule?['minute'] ?? 0;
+    final isMobile = MediaQuery.of(context).size.width < 600;
 
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 28),
+    return Container(
+      padding: EdgeInsets.all(isMobile ? 14 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: isScheduled
+              ? color.withValues(alpha: 0.35)
+              : Colors.grey.withValues(alpha: 0.22),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: isMobile ? 44 : 48,
+            height: isMobile ? 44 : 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(12),
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: GoogleFonts.poppins(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
+            child: Icon(icon, color: color, size: isMobile ? 22 : 24),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: isMobile ? 15 : 16,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (isScheduled ? color : Colors.grey).withValues(
+                      alpha: 0.12,
+                    ),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: Text(
+                    isScheduled
+                        ? '${context.t.notifications('reminderTime')}: ${_formatTime(hour, minute)}'
+                        : context.t.notifications('setTime'),
+                    style: GoogleFonts.roboto(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: isScheduled ? color : Colors.grey[700],
                     ),
                   ),
-                  if (isScheduled)
-                    Text(
-                      _formatTime(hour, minute),
-                      style: GoogleFonts.roboto(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Column(
+            children: [
+              SizedBox(
+                width: 40,
+                height: 40,
+                child: IconButton.filledTonal(
+                  style: IconButton.styleFrom(
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.12),
+                  ),
+                  icon: Icon(
+                    isScheduled ? Icons.edit_rounded : Icons.add_alarm_rounded,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  onPressed: () => _scheduleReminder(type),
+                  tooltip: context.t.notifications('setTime'),
+                ),
+              ),
+              if (isScheduled) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: 40,
+                  height: 40,
+                  child: IconButton.filledTonal(
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.red.withValues(alpha: 0.12),
                     ),
-                ],
-              ),
-            ),
-            if (isScheduled)
-              IconButton(
-                icon: const Icon(Icons.close, color: Colors.red),
-                onPressed: () => _cancelReminder(type),
-                tooltip: context.t.common('delete'),
-              ),
-            IconButton(
-              icon: Icon(
-                isScheduled ? Icons.edit : Icons.add_alarm,
-                color: AppColors.primary,
-              ),
-              onPressed: () => _scheduleReminder(type),
-              tooltip: context.t.notifications('setTime'),
-            ),
-          ],
-        ),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: Colors.red,
+                      size: 20,
+                    ),
+                    onPressed: () => _cancelReminder(type),
+                    tooltip: context.t.common('delete'),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }

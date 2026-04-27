@@ -12,6 +12,7 @@ import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_language_toggle.dart';
 import '../../widgets/auth/consent_dialog.dart';
 import '../../utils/translate.dart';
+import '../../utils/app_snackbar.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -75,70 +76,71 @@ class _SignupPageState extends State<SignupPage> {
     // Show GDPR consent dialog
     final consent = await ConsentDialog.show(context, langCode);
 
+    // Guard against widget disposal during the dialog
+    if (!mounted) return;
+
     if (consent == null || !consent) {
       // User declined consent - stay on signup
       HapticFeedback.vibrate();
-      final exitMessage = langCode == 'si'
-          ? 'ඉදිරියට යාම සඳහා දත්ත කැමැත්ත අවශ්‍යයි.'
-          : 'Consent is required to continue.';
-
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(exitMessage)));
-      }
+      AppSnackBar.info(
+        context,
+        langCode == 'si'
+            ? 'ඉදිරියට යාම සඳහා දත්ත කැමැත්ත අවශ්‍යයි.'
+            : 'Consent is required to continue.',
+      );
       return;
     }
 
     // User accepted consent - proceed with signup
     setState(() => loading = true);
 
+    // Capture values before async gap
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+    final fullName = _fullNameController.text.trim();
+
+    String? result;
     try {
-      final result = await _authService.signUp(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-        fullName: _fullNameController.text.trim(),
+      result = await _authService.signUp(
+        email: email,
+        password: password,
+        fullName: fullName,
         langCode: langCode,
       );
-
-      if (!mounted) return;
-
-      if (result == null) {
-        // Success feedback
-        HapticFeedback.mediumImpact();
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.t.auth('accountCreated'))),
-        );
-
-        _fullNameController.clear();
-        _emailController.clear();
-        _passwordController.clear();
-        _confirmController.clear();
-
-        Navigator.pushReplacementNamed(context, '/login');
-      } else {
-        // Error feedback
-        HapticFeedback.vibrate();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(result)));
-      }
     } catch (e) {
-      if (!mounted) return;
-      final fallbackText = context.t.auth('unexpectedError');
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(fallbackText)));
-    } finally {
-      if (mounted) setState(() => loading = false);
+      result = langCode == 'si'
+          ? 'අනපේක්ෂිත දෝෂයක් සිදු විය. නැවත උත්සාහ කරන්න.'
+          : 'An unexpected error occurred. Please try again.';
+    }
+
+    if (!mounted) return;
+    setState(() => loading = false);
+
+    if (result == null) {
+      // Success feedback
+      HapticFeedback.mediumImpact();
+
+      AppSnackBar.success(context, context.t.auth('accountCreated'));
+
+      _fullNameController.clear();
+      _emailController.clear();
+      _passwordController.clear();
+      _confirmController.clear();
+
+      Navigator.pushReplacementNamed(context, '/login');
+    } else {
+      // Error feedback
+      HapticFeedback.vibrate();
+      AppSnackBar.error(context, result);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 600;
+    final width = size.width;
+    final isMobile = width < 600;
+    final isCompact = width < 380;
 
     final langProvider = Provider.of<LanguageProvider>(context);
     final isSinhala = langProvider.currentLang == 'si';
@@ -150,20 +152,66 @@ class _SignupPageState extends State<SignupPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Align(
-              alignment: Alignment.centerRight,
-              child: AuthLanguageToggle(),
+            // Branding + Language row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        AppColors.heroGradientStart,
+                        AppColors.heroGradientMid,
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.28),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.spa_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Mindful Cradle',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const Spacer(),
+                const AuthLanguageToggle(),
+              ],
             ),
-            const SizedBox(height: 15),
+            const SizedBox(height: 24),
             Text(
               context.t.auth('signUp'),
               style: GoogleFonts.poppins(
-                fontSize: isMobile ? 36 : 42,
+                fontSize: isMobile ? (width * 0.085).clamp(26.0, 32.0) : 34,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+                color: AppColors.text,
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 4),
+            Text(
+              isSinhala ? 'නව ගිණුමක් සාදන්න' : 'Create your account',
+              style: GoogleFonts.roboto(
+                fontSize: 14,
+                color: AppColors.textMuted,
+              ),
+            ),
+            SizedBox(height: isCompact ? 16 : 24),
 
             // Full Name
             TextFormField(
@@ -216,7 +264,7 @@ class _SignupPageState extends State<SignupPage> {
                         isPasswordVisible
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: AppColors.text.withOpacity(0.6),
+                        color: AppColors.text.withValues(alpha: 0.6),
                       ),
                       onPressed: () {
                         setState(() {
@@ -249,7 +297,7 @@ class _SignupPageState extends State<SignupPage> {
                         isConfirmPasswordVisible
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: AppColors.text.withOpacity(0.6),
+                        color: AppColors.text.withValues(alpha: 0.6),
                       ),
                       onPressed: () {
                         setState(() {
@@ -273,15 +321,19 @@ class _SignupPageState extends State<SignupPage> {
               onPressed: loading ? null : _handleSignup,
               fontSize: isMobile ? 18 : 20,
             ),
-            const SizedBox(height: 30),
+            SizedBox(height: isCompact ? 20 : 28),
             // Login Link
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
+            Wrap(
+              alignment: WrapAlignment.center,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 4,
+              runSpacing: 2,
               children: [
                 Text(
                   context.t.auth('alreadyHaveAccount'),
                   style: GoogleFonts.roboto(
                     color: AppColors.text,
+                    fontSize: isCompact ? 13 : 14,
                   ), // Using Roboto font
                 ),
                 GestureDetector(
@@ -292,6 +344,7 @@ class _SignupPageState extends State<SignupPage> {
                     context.t.auth('login'),
                     style: GoogleFonts.roboto(
                       color: AppColors.primary,
+                      fontSize: isCompact ? 13 : 14,
                       fontWeight: FontWeight.bold,
                       decoration: TextDecoration.underline,
                     ),

@@ -632,7 +632,7 @@ class _NotificationSettingsScreenState
                                   ),
                                 ),
                               ),
-
+                            const SizedBox(height: 12),
                             _buildReminderCard(
                               type: 'meditation',
                               icon: Icons.self_improvement_rounded,
@@ -730,7 +730,10 @@ class _NotificationSettingsScreenState
                                       await _loadSchedules();
                                     }
                                   },
-                                  icon: Icon(Icons.cancel_outlined),
+                                  icon: const Icon(
+                                    Icons.cancel_outlined,
+                                    color: Colors.white,
+                                  ),
                                   label: Text(
                                     context.t.notifications(
                                       'disableNotifications',
@@ -741,10 +744,9 @@ class _NotificationSettingsScreenState
                                     ),
                                   ),
                                   style: OutlinedButton.styleFrom(
-                                    foregroundColor: Colors.red,
-                                    side: BorderSide(
-                                      color: Colors.red.withValues(alpha: 0.50),
-                                    ),
+                                    foregroundColor: Colors.white,
+                                    side: BorderSide.none,
+                                    backgroundColor: AppColors.error,
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 15,
                                     ),
@@ -777,116 +779,128 @@ class _NotificationSettingsScreenState
     final minute = schedule?['minute'] ?? 0;
     final isMobile = MediaQuery.of(context).size.width < 600;
 
-    return Container(
-      padding: EdgeInsets.all(isMobile ? 14 : 16),
-      decoration: BoxDecoration(
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isScheduled
-              ? color.withValues(alpha: 0.35)
-              : Colors.grey.withValues(alpha: 0.22),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            width: isMobile ? 44 : 48,
-            height: isMobile ? 44 : 48,
+        child: InkWell(
+          onTap: () => _scheduleReminder(type),
+          child: Container(
+            padding: EdgeInsets.all(isMobile ? 14 : 16),
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: isScheduled
+                    ? color.withValues(alpha: 0.35)
+                    : Colors.grey.withValues(alpha: 0.22),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.04),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
-            child: Icon(icon, color: color, size: isMobile ? 22 : 24),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
+            child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    fontSize: isMobile ? 15 : 16,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.text,
+                Container(
+                  width: isMobile ? 44 : 48,
+                  height: isMobile ? 44 : 48,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.14),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, color: color, size: isMobile ? 22 : 24),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          fontSize: isMobile ? 15 : 16,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.text,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: (isScheduled ? color : Colors.grey).withValues(
+                            alpha: 0.12,
+                          ),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Text(
+                          isScheduled
+                              ? '${context.t.notifications('reminderTime')}: ${_formatTime(hour, minute)}'
+                              : context.t.notifications('setTime'),
+                          style: GoogleFonts.roboto(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                            color: isScheduled ? color : Colors.grey[700],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (isScheduled ? color : Colors.grey).withValues(
-                      alpha: 0.12,
+                const SizedBox(width: 8),
+                Column(
+                  children: [
+                    SizedBox(
+                      width: 40,
+                      height: 40,
+                      child: IconButton.filledTonal(
+                        style: IconButton.styleFrom(
+                          backgroundColor: AppColors.primary.withValues(
+                            alpha: 0.12,
+                          ),
+                        ),
+                        icon: Icon(
+                          isScheduled
+                              ? Icons.edit_rounded
+                              : Icons.add_alarm_rounded,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        onPressed: () => _scheduleReminder(type),
+                        tooltip: context.t.notifications('setTime'),
+                      ),
                     ),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Text(
-                    isScheduled
-                        ? '${context.t.notifications('reminderTime')}: ${_formatTime(hour, minute)}'
-                        : context.t.notifications('setTime'),
-                    style: GoogleFonts.roboto(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      color: isScheduled ? color : Colors.grey[700],
-                    ),
-                  ),
+                    if (isScheduled) ...[
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        width: 40,
+                        height: 40,
+                        child: IconButton.filledTonal(
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.red.withValues(alpha: 0.12),
+                          ),
+                          icon: Icon(
+                            Icons.close_rounded,
+                            color: Colors.red,
+                            size: 20,
+                          ),
+                          onPressed: () => _cancelReminder(type),
+                          tooltip: context.t.common('delete'),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 8),
-          Column(
-            children: [
-              SizedBox(
-                width: 40,
-                height: 40,
-                child: IconButton.filledTonal(
-                  style: IconButton.styleFrom(
-                    backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                  ),
-                  icon: Icon(
-                    isScheduled ? Icons.edit_rounded : Icons.add_alarm_rounded,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  onPressed: () => _scheduleReminder(type),
-                  tooltip: context.t.notifications('setTime'),
-                ),
-              ),
-              if (isScheduled) ...[
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: 40,
-                  height: 40,
-                  child: IconButton.filledTonal(
-                    style: IconButton.styleFrom(
-                      backgroundColor: Colors.red.withValues(alpha: 0.12),
-                    ),
-                    icon: Icon(
-                      Icons.close_rounded,
-                      color: Colors.red,
-                      size: 20,
-                    ),
-                    onPressed: () => _cancelReminder(type),
-                    tooltip: context.t.common('delete'),
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ],
+        ),
       ),
     );
   }

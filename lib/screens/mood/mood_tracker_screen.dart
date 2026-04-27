@@ -130,7 +130,8 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
         ],
       ),
       body: AppBackground(
-        useGradient: true,
+        imagePath: 'assets/login/Mindful_Cradle_Login_Background.png',
+        overlayOpacity: 0.75,
         child: moodProvider.loading
             ? const Center(
                 child: CircularProgressIndicator(color: AppColors.primary),
@@ -444,9 +445,9 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.08),
+        color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.20)),
+        border: Border.all(color: color.withValues(alpha: 0.14)),
       ),
       child: Column(
         children: [

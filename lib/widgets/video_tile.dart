@@ -168,7 +168,7 @@ class VideoTile extends StatelessWidget {
                           ),
                         ),
                         child: Text(
-                          'S${sessionIndex + 1}',
+                          '#${sessionIndex + 1}',
                           style: GoogleFonts.poppins(
                             fontSize: 10,
                             fontWeight: FontWeight.w700,

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../../constants/colors.dart';
 import '../../models/achievement_data.dart';
 
 class AchievementCard extends StatelessWidget {
@@ -136,7 +137,7 @@ class _UnlockedCard extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
-                      fontSize: 13,
+                      fontSize: 15,
                       fontWeight: FontWeight.w700,
                       color: Colors.white,
                       height: 1.2,
@@ -152,8 +153,8 @@ class _UnlockedCard extends StatelessWidget {
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.roboto(
-                        fontSize: 10.5,
-                        color: Colors.white.withOpacity(0.88),
+                        fontSize: 12,
+                        color: Colors.white,
                         height: 1.4,
                       ),
                     ),
@@ -178,14 +179,14 @@ class _UnlockedCard extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.check_circle_rounded,
-                          size: 11,
+                          size: 12,
                           color: Colors.white.withOpacity(0.92),
                         ),
                         const SizedBox(width: 4),
                         Text(
                           isSinhala ? 'ලැබිණි' : 'Earned',
                           style: GoogleFonts.poppins(
-                            fontSize: 10,
+                            fontSize: 11,
                             fontWeight: FontWeight.w600,
                             color: Colors.white.withOpacity(0.92),
                           ),
@@ -214,9 +215,9 @@ class _LockedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFF0F0F0),
+        color: const Color(0xFFEFF6F7),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFDDDDDD), width: 1),
+        border: Border.all(color: const Color(0xFFCBE0E3), width: 1),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(14, 18, 14, 14),
@@ -226,14 +227,14 @@ class _LockedCard extends StatelessWidget {
             Container(
               width: 62,
               height: 62,
-              decoration: BoxDecoration(
-                color: const Color(0xFFE0E0E0),
+              decoration: const BoxDecoration(
+                color: Color(0xFFD8ECF0),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.lock_outline_rounded,
                 size: 28,
-                color: Color(0xFFAAAAAA),
+                color: Color(0xFF7AABB2),
               ),
             ),
             const SizedBox(height: 12),
@@ -243,9 +244,9 @@ class _LockedCard extends StatelessWidget {
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.poppins(
-                fontSize: 13,
+                fontSize: 15,
                 fontWeight: FontWeight.w600,
-                color: const Color(0xFFAAAAAA),
+                color: AppColors.primary.withOpacity(0.80),
                 height: 1.2,
               ),
             ),
@@ -259,8 +260,8 @@ class _LockedCard extends StatelessWidget {
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.roboto(
-                  fontSize: 10.5,
-                  color: const Color(0xFFBBBBBB),
+                  fontSize: 12,
+                  color: AppColors.primary.withOpacity(0.65),
                   height: 1.4,
                 ),
               ),
@@ -269,7 +270,7 @@ class _LockedCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
               decoration: BoxDecoration(
-                color: const Color(0xFFE8E8E8),
+                color: const Color(0xFFDEF0F3),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -277,16 +278,16 @@ class _LockedCard extends StatelessWidget {
                 children: [
                   const Icon(
                     Icons.lock_outline_rounded,
-                    size: 11,
-                    color: Color(0xFFAAAAAA),
+                    size: 12,
+                    color: Color(0xFF7AABB2),
                   ),
                   const SizedBox(width: 4),
                   Text(
                     isSinhala ? 'අගුළු' : 'Locked',
                     style: GoogleFonts.poppins(
-                      fontSize: 10,
+                      fontSize: 11,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFFAAAAAA),
+                      color: const Color(0xFF7AABB2),
                     ),
                   ),
                 ],

@@ -11,6 +11,7 @@ import '../../providers/language_provider.dart';
 import '../../services/cloudinary_service.dart';
 import '../../utils/app_snackbar.dart';
 import '../../utils/translate.dart';
+import '../../widgets/app_background.dart';
 
 class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
@@ -77,49 +78,10 @@ class _ProfilePageState extends State<ProfilePage> {
     if (authProvider.isInitializing) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF3FAFA), Color(0xFFF9FDFC)],
-                  ),
-                ),
-              ),
-            ),
-            Positioned(
-              top: -60,
-              right: -40,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: const BoxDecoration(
-                  color: Color(0x262B8A8D),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Positioned(
-              top: 150,
-              left: -50,
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: const BoxDecoration(
-                  color: Color(0x1FE0817A),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            const Positioned.fill(
-              child: Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              ),
-            ),
-          ],
+        body: AppBackground(
+          child: Center(
+            child: CircularProgressIndicator(color: AppColors.primary),
+          ),
         ),
       );
     }
@@ -127,56 +89,17 @@ class _ProfilePageState extends State<ProfilePage> {
     if (user == null) {
       return Scaffold(
         backgroundColor: AppColors.background,
-        body: Stack(
-          children: [
-            Positioned.fill(
-              child: DecoratedBox(
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF3FAFA), Color(0xFFF9FDFC)],
-                  ),
-                ),
+        body: AppBackground(
+          child: Center(
+            child: Text(
+              context.t.profile('userDataNotAvailable'),
+              style: GoogleFonts.poppins(
+                color: AppColors.text,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
               ),
             ),
-            Positioned(
-              top: -60,
-              right: -40,
-              child: Container(
-                width: 200,
-                height: 200,
-                decoration: const BoxDecoration(
-                  color: Color(0x262B8A8D),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Positioned(
-              top: 150,
-              left: -50,
-              child: Container(
-                width: 160,
-                height: 160,
-                decoration: const BoxDecoration(
-                  color: Color(0x1FE0817A),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: Center(
-                child: Text(
-                  context.t.profile('userDataNotAvailable'),
-                  style: GoogleFonts.poppins(
-                    color: AppColors.text,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-              ),
-            ),
-          ],
+          ),
         ),
       );
     }
@@ -198,238 +121,197 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ),
       ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFF3FAFA), Color(0xFFF9FDFC)],
-                ),
-              ),
-            ),
+      body: AppBackground(
+        child: SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(
+            16,
+            8,
+            16,
+            92 + MediaQuery.of(context).padding.bottom,
           ),
-          Positioned(
-            top: -60,
-            right: -40,
-            child: Container(
-              width: 200,
-              height: 200,
-              decoration: const BoxDecoration(
-                color: Color(0x262B8A8D),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Positioned(
-            top: 150,
-            left: -50,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: const BoxDecoration(
-                color: Color(0x1FE0817A),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          SingleChildScrollView(
-            padding: EdgeInsets.fromLTRB(
-              16,
-              8,
-              16,
-              92 + MediaQuery.of(context).padding.bottom,
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [
-                        AppColors.heroGradientStart,
-                        AppColors.heroGradientMid,
-                        AppColors.heroGradientEnd,
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: AppColors.primary.withValues(alpha: 0.25),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
+          child: Column(
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.heroGradientStart,
+                      AppColors.heroGradientMid,
+                      AppColors.heroGradientEnd,
                     ],
                   ),
-                  child: Column(
-                    children: [
-                      GestureDetector(
-                        behavior: HitTestBehavior.opaque,
-                        onTap: _uploadingPhoto
-                            ? null
-                            : () => _pickAndUploadPhoto(authProvider),
-                        child: Stack(
-                          alignment: Alignment.bottomRight,
-                          children: [
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: AppColors.primary.withValues(alpha: 0.25),
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    GestureDetector(
+                      behavior: HitTestBehavior.opaque,
+                      onTap: _uploadingPhoto
+                          ? null
+                          : () => _pickAndUploadPhoto(authProvider),
+                      child: Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            width: isMobile ? 92 : 102,
+                            height: isMobile ? 92 : 102,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.22),
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.35),
+                                width: 1.4,
+                              ),
+                            ),
+                            child: _uploadingPhoto
+                                ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2.5,
+                                  )
+                                : ClipOval(
+                                    child: user.photoUrl != null
+                                        ? Image.network(
+                                            user.photoUrl!,
+                                            fit: BoxFit.cover,
+                                            width: isMobile ? 92 : 102,
+                                            height: isMobile ? 92 : 102,
+                                            errorBuilder: (_, __, ___) =>
+                                                const Icon(
+                                                  Icons.person_rounded,
+                                                  size: 56,
+                                                  color: Colors.white,
+                                                ),
+                                          )
+                                        : const Icon(
+                                            Icons.person_rounded,
+                                            size: 56,
+                                            color: Colors.white,
+                                          ),
+                                  ),
+                          ),
+                          // Camera badge
+                          if (!_uploadingPhoto)
                             Container(
-                              width: isMobile ? 92 : 102,
-                              height: isMobile ? 92 : 102,
+                              padding: const EdgeInsets.all(5),
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.22),
+                                color: Colors.white,
                                 shape: BoxShape.circle,
                                 border: Border.all(
-                                  color: Colors.white.withValues(alpha: 0.35),
-                                  width: 1.4,
-                                ),
-                              ),
-                              child: _uploadingPhoto
-                                  ? const CircularProgressIndicator(
-                                      color: Colors.white,
-                                      strokeWidth: 2.5,
-                                    )
-                                  : ClipOval(
-                                      child: user.photoUrl != null
-                                          ? Image.network(
-                                              user.photoUrl!,
-                                              fit: BoxFit.cover,
-                                              width: isMobile ? 92 : 102,
-                                              height: isMobile ? 92 : 102,
-                                              errorBuilder: (_, __, ___) =>
-                                                  const Icon(
-                                                    Icons.person_rounded,
-                                                    size: 56,
-                                                    color: Colors.white,
-                                                  ),
-                                            )
-                                          : const Icon(
-                                              Icons.person_rounded,
-                                              size: 56,
-                                              color: Colors.white,
-                                            ),
-                                    ),
-                            ),
-                            // Camera badge
-                            if (!_uploadingPhoto)
-                              Container(
-                                padding: const EdgeInsets.all(5),
-                                decoration: BoxDecoration(
-                                  color: Colors.white,
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: AppColors.primary.withValues(
-                                      alpha: 0.3,
-                                    ),
+                                  color: AppColors.primary.withValues(
+                                    alpha: 0.3,
                                   ),
                                 ),
-                                child: Icon(
-                                  Icons.camera_alt_rounded,
-                                  size: 14,
-                                  color: AppColors.primary,
-                                ),
                               ),
-                          ],
-                        ),
+                              child: Icon(
+                                Icons.camera_alt_rounded,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                        ],
                       ),
-                      const SizedBox(height: 14),
-                      Text(
-                        user.fullName,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.poppins(
-                          fontSize: isMobile ? 22 : 26,
-                          fontWeight: FontWeight.w700,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        user.email,
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.roboto(
-                          fontSize: 14,
-                          color: Colors.white.withValues(alpha: 0.90),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 18),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Padding(
-                    padding: const EdgeInsets.only(left: 4),
-                    child: Text(
-                      context.t.profile('settings'),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      user.fullName,
+                      textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
-                        fontSize: 18,
+                        fontSize: isMobile ? 22 : 26,
                         fontWeight: FontWeight.w700,
-                        color: AppColors.text,
+                        color: Colors.white,
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      user.email,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.roboto(
+                        fontSize: 14,
+                        color: Colors.white.withValues(alpha: 0.90),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 18),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: Text(
+                    context.t.profile('settings'),
+                    style: GoogleFonts.poppins(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.text,
                     ),
                   ),
                 ),
-                const SizedBox(height: 10),
-                _buildLanguageCard(context, isSinhala, langProvider),
-                const SizedBox(height: 12),
-                _buildNavCard(
-                  context: context,
-                  title: context.t.notifications('notificationSettings'),
-                  subtitle: isSinhala
-                      ? 'මතක් කිරීම් සකසන්න'
-                      : 'Manage reminders',
-                  icon: Icons.notifications_active_rounded,
-                  onTap: () =>
-                      Navigator.pushNamed(context, '/notification-settings'),
-                ),
-                const SizedBox(height: 12),
-                _buildNavCard(
-                  context: context,
-                  title: isSinhala ? 'දත්ත හා පෞද්ගලිකත්වය' : 'Data & Privacy',
-                  subtitle: isSinhala
-                      ? 'GDPR පාලන සහ දත්ත අපනයනය'
-                      : 'GDPR controls and data export',
-                  icon: Icons.privacy_tip_rounded,
-                  onTap: () => Navigator.pushNamed(context, '/gdpr-account'),
-                ),
-                const SizedBox(height: 18),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      LogoutUtils.showLogoutDialog(
-                        context: context,
-                        authProvider: authProvider,
-                        language: langProvider.currentLang,
-                        redirectRoute: '/login',
-                      );
-                    },
-                    icon: const Icon(Icons.logout_rounded),
-                    label: Text(isSinhala ? 'ලොග් අවුට්' : 'Log Out'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.error,
-                      side: BorderSide(
-                        color: AppColors.error.withValues(alpha: 0.35),
-                      ),
-                      backgroundColor: AppColors.error.withValues(alpha: 0.06),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      textStyle: GoogleFonts.poppins(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w600,
-                      ),
+              ),
+              const SizedBox(height: 10),
+              _buildLanguageCard(context, isSinhala, langProvider),
+              const SizedBox(height: 12),
+              _buildNavCard(
+                context: context,
+                title: context.t.notifications('notificationSettings'),
+                subtitle: isSinhala ? 'මතක් කිරීම් සකසන්න' : 'Manage reminders',
+                icon: Icons.notifications_active_rounded,
+                onTap: () =>
+                    Navigator.pushNamed(context, '/notification-settings'),
+              ),
+              const SizedBox(height: 12),
+              _buildNavCard(
+                context: context,
+                title: isSinhala ? 'දත්ත හා පෞද්ගලිකත්වය' : 'Data & Privacy',
+                subtitle: isSinhala
+                    ? 'GDPR පාලන සහ දත්ත අපනයනය'
+                    : 'GDPR controls and data export',
+                icon: Icons.privacy_tip_rounded,
+                onTap: () => Navigator.pushNamed(context, '/gdpr-account'),
+              ),
+              const SizedBox(height: 18),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () {
+                    LogoutUtils.showLogoutDialog(
+                      context: context,
+                      authProvider: authProvider,
+                      language: langProvider.currentLang,
+                      redirectRoute: '/login',
+                    );
+                  },
+                  icon: const Icon(Icons.logout_rounded, color: Colors.white),
+                  label: Text(isSinhala ? 'ලොග් අවුට්' : 'Log Out'),
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: Colors.white,
+                    side: BorderSide.none,
+                    backgroundColor: AppColors.error,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    textStyle: GoogleFonts.poppins(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
+        ),
       ),
     );
   }

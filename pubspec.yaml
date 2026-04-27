@@ -49,6 +49,7 @@ flutter:
   assets:
     - .env
     - assets/login/
+    - assets/main/
     - assets/video_player/
     - assets/data/
     - languages/

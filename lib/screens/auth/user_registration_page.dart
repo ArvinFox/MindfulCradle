@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
 import '../../models/user_model.dart';
@@ -10,6 +11,7 @@ import '../../utils/app_snackbar.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/translate.dart';
 import '../../services/localization_service.dart';
+import '../../widgets/app_background.dart';
 
 class UserRegistrationPage extends StatefulWidget {
   final UserModel user;
@@ -175,6 +177,13 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
 
       AppSnackBar.success(context, context.t.auth('saveSuccess'));
 
+      // Mark that the very next home-page session should skip the mood
+      // prompt — the user has just completed registration and doesn't need
+      // an immediate check-in nudge.
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('skip_mood_prompt_once', true);
+
+      if (!mounted) return;
       // Navigate to main screen
       Navigator.of(
         context,
@@ -697,69 +706,37 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
       },
       child: Scaffold(
         backgroundColor: Colors.transparent,
-        body: Stack(
-          children: [
-            // Background image
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: const BoxDecoration(
-                image: DecorationImage(
-                  image: AssetImage("assets/login/app_background.png"),
-                  fit: BoxFit.cover,
-                ),
-              ),
-            ),
-            Container(
-              width: double.infinity,
-              height: double.infinity,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.background.withValues(alpha: 0.12),
-                    AppColors.background.withValues(alpha: 0.2),
+        body: AppBackground(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+              child: Container(
+                width: isMobile ? size.width * 0.92 : 520,
+                padding: EdgeInsets.all(isMobile ? 20 : 28),
+                decoration: BoxDecoration(
+                  color: AppColors.surface.withValues(alpha: 0.96),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 18,
+                      offset: const Offset(0, 8),
+                    ),
                   ],
                 ),
-              ),
-            ),
-
-            // Form Card
-            Center(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 40,
-                ),
-                child: Container(
-                  width: isMobile ? size.width * 0.92 : 520,
-                  padding: EdgeInsets.all(isMobile ? 20 : 28),
-                  decoration: BoxDecoration(
-                    color: AppColors.surface.withValues(alpha: 0.96),
-                    borderRadius: BorderRadius.circular(22),
-                    border: Border.all(color: AppColors.border),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: _currentStep == 0
-                          ? _buildPage1(context, isMobile)
-                          : _buildPage2(context, isMobile, isSinhala),
-                    ),
+                child: Form(
+                  key: _formKey,
+                  child: AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 300),
+                    child: _currentStep == 0
+                        ? _buildPage1(context, isMobile)
+                        : _buildPage2(context, isMobile, isSinhala),
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -11,6 +11,7 @@ import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
 import '../../widgets/auth/auth_language_toggle.dart';
 import '../../utils/translate.dart';
+import '../../utils/app_snackbar.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -73,23 +74,17 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
       if (result == null) {
         HapticFeedback.mediumImpact();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.t.auth('resetLinkSent'))),
-        );
+        AppSnackBar.success(context, context.t.auth('resetLinkSent'));
         // Navigate back to login page after success
         Navigator.pushReplacementNamed(context, '/login');
       } else {
         HapticFeedback.vibrate();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(result)));
+        AppSnackBar.error(context, result);
       }
     } catch (e) {
       if (!mounted) return;
       HapticFeedback.vibrate();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.t.auth('unexpectedError'))),
-      );
+      AppSnackBar.error(context, context.t.auth('unexpectedError'));
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -109,21 +104,70 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Align(
-              alignment: Alignment.centerRight,
-              child: AuthLanguageToggle(),
+            // Branding + Language row
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Container(
+                  width: 38,
+                  height: 38,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [
+                        AppColors.heroGradientStart,
+                        AppColors.heroGradientMid,
+                      ],
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: AppColors.primary.withValues(alpha: 0.28),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: const Icon(
+                    Icons.spa_rounded,
+                    color: Colors.white,
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'Mindful Cradle',
+                  style: GoogleFonts.poppins(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                ),
+                const Spacer(),
+                const AuthLanguageToggle(),
+              ],
             ),
-            const SizedBox(height: 15),
-            // Title
+            const SizedBox(height: 24),
+            // Title + description
             Text(
               context.t.auth('resetPasswordTitle'),
               style: GoogleFonts.poppins(
-                fontSize: isMobile ? 36 : 42,
+                fontSize: isMobile ? 28 : 34,
                 fontWeight: FontWeight.w700,
-                color: AppColors.primary,
+                color: AppColors.text,
               ),
             ),
-            const SizedBox(height: 30),
+            const SizedBox(height: 8),
+            Text(
+              isSinhala
+                  ? 'ඔබේ ඊමේල් ලිපිනය ඇතුළු කරන්න, ඔබට නැවත සැකසීමේ සබැඳියක් යවනු ලැබේ.'
+                  : "Enter your email and we'll send you a reset link.",
+              style: GoogleFonts.roboto(
+                fontSize: 14,
+                color: AppColors.textMuted,
+                height: 1.5,
+              ),
+            ),
+            const SizedBox(height: 28),
 
             // Email Text Field
             TextFormField(

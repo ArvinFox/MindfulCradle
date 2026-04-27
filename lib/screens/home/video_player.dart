@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
-import 'package:flutter/cupertino.dart';
 import '../../constants/colors.dart';
 import '../../models/video_model.dart';
 import '../../providers/video_provider.dart';
@@ -232,6 +231,8 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
       watchedSeconds: _watchedSeconds,
     );
 
+    if (!mounted) return;
+
     // Handle Achievements & Pop
     final achProvider = Provider.of<AchievementProvider>(
       context,
@@ -253,6 +254,9 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
   @override
   Widget build(BuildContext context) {
+    final size = MediaQuery.of(context).size;
+    final isCompact = size.width < 380 || size.height < 720;
+
     double progress = widget.video.duration > 0
         ? (_watchedSeconds / widget.video.duration).clamp(0.0, 1.0)
         : 0.0;
@@ -260,15 +264,15 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     final langProvider = Provider.of<LanguageProvider>(context, listen: false);
     final isSinhala = langProvider.currentLang == "si";
 
-    return WillPopScope(
-      onWillPop: () async {
-        // HANDLE FULL SCREEN BACK PRESS
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
         if (_controller.value.isFullScreen) {
           _controller.toggleFullScreenMode();
-          return false;
+          return;
         }
         await _handleExit(isSystemBack: true);
-        return true;
       },
       child: YoutubePlayerBuilder(
         player: YoutubePlayer(
@@ -282,10 +286,14 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
               Scaffold(
                 backgroundColor: AppColors.background,
                 appBar: AppBar(
-                  backgroundColor: AppColors.primary,
-                  elevation: 4,
+                  backgroundColor: AppColors.background,
+                  surfaceTintColor: Colors.transparent,
+                  elevation: 0,
                   leading: IconButton(
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                    icon: const Icon(
+                      Icons.arrow_back_ios,
+                      color: AppColors.text,
+                    ),
                     onPressed: () async {
                       await _handleExit(isSystemBack: false);
                     },
@@ -295,10 +303,10 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                     langProvider.currentLang == "si"
                         ? widget.video.titleSi
                         : widget.video.title,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 20,
+                    style: TextStyle(
+                      color: AppColors.text,
+                      fontWeight: FontWeight.w700,
+                      fontSize: isCompact ? 17 : 19,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -312,16 +320,16 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
 
                     // Fixed Progress Bar
                     Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 20,
-                        vertical: 16,
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isCompact ? 14 : 20,
+                        vertical: isCompact ? 12 : 16,
                       ),
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(20),
                         child: Container(
-                          height: 24,
+                          height: isCompact ? 20 : 24,
                           decoration: BoxDecoration(
-                            color: AppColors.primary.withOpacity(0.3),
+                            color: AppColors.primary.withValues(alpha: 0.25),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Stack(
@@ -341,9 +349,9 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                               Center(
                                 child: Text(
                                   '${(progress * 100).toStringAsFixed(0)}%',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.white,
-                                    fontSize: 12,
+                                    fontSize: isCompact ? 11 : 12,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -368,37 +376,37 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                             ),
                           ),
                           SingleChildScrollView(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isCompact ? 14 : 20,
+                              vertical: isCompact ? 12 : 16,
                             ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
                                   isSinhala ? "උපදෙස්:" : "Instructions:",
-                                  style: const TextStyle(
-                                    fontSize: 22,
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 19 : 22,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.primary,
                                   ),
                                 ),
                                 const SizedBox(height: 12),
                                 Container(
-                                  padding: const EdgeInsets.all(16),
+                                  padding: EdgeInsets.all(isCompact ? 12 : 16),
                                   decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.65),
+                                    color: Colors.white.withValues(alpha: 0.75),
                                     borderRadius: BorderRadius.circular(16),
                                     border: Border.all(
-                                      color: AppColors.primary.withOpacity(
-                                        0.25,
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.25,
                                       ),
                                       width: 1.0,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: AppColors.primary.withOpacity(
-                                          0.1,
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.10,
                                         ),
                                         blurRadius: 10,
                                         offset: const Offset(0, 5),
@@ -409,7 +417,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                                       ? RichText(
                                           text: TextSpan(
                                             style: const TextStyle(
-                                              fontSize: 15.5,
+                                              fontSize: 15,
                                               height: 1.6,
                                               color: AppColors.text,
                                             ),
@@ -431,7 +439,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                                       : RichText(
                                           text: TextSpan(
                                             style: const TextStyle(
-                                              fontSize: 15.5,
+                                              fontSize: 15,
                                               height: 1.6,
                                               color: AppColors.text,
                                             ),
@@ -454,8 +462,8 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                                 const SizedBox(height: 30),
                                 Text(
                                   isSinhala ? "උපදේශන සටහන්:" : "Hints:",
-                                  style: const TextStyle(
-                                    fontSize: 22,
+                                  style: TextStyle(
+                                    fontSize: isCompact ? 19 : 22,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.primary,
                                   ),
@@ -467,18 +475,20 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                                     duration: const Duration(milliseconds: 300),
                                     child: Container(
                                       decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(
-                                          0.12,
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.12,
                                         ),
                                         border: Border.all(
-                                          color: AppColors.primary.withOpacity(
-                                            0.3,
+                                          color: AppColors.primary.withValues(
+                                            alpha: 0.30,
                                           ),
                                           width: 1.0,
                                         ),
                                         borderRadius: BorderRadius.circular(16),
                                       ),
-                                      padding: const EdgeInsets.all(18),
+                                      padding: EdgeInsets.all(
+                                        isCompact ? 14 : 18,
+                                      ),
                                       child: Row(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
@@ -492,8 +502,8 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                                           Expanded(
                                             child: Text(
                                               _currentHint,
-                                              style: const TextStyle(
-                                                fontSize: 16,
+                                              style: TextStyle(
+                                                fontSize: isCompact ? 14 : 16,
                                                 height: 1.5,
                                                 color: Colors.black87,
                                                 fontStyle: FontStyle.italic,
@@ -504,7 +514,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                                       ),
                                     ),
                                   ),
-                                const SizedBox(height: 40),
+                                SizedBox(height: isCompact ? 24 : 40),
                               ],
                             ),
                           ),

@@ -16,7 +16,9 @@
     "completion": "Completion",
     "selectSession": "Select a session to begin your mindfulness journey",
     "meditationSessions": "Meditation Sessions",
-    "completePreviousSession": "Complete previous session."
+    "completePreviousSession": "Complete previous session.",
+    "unlocked": "Unlocked",
+    "toggleLayout": "Toggle layout"
   },
   "si": {
     "welcome": "ආයුබෝවන්",
@@ -35,6 +37,8 @@
     "completion": "සම්පූර්ණත්වය",
     "selectSession": "ඔබේ සතිමත් කිරීමේ ගමන ආරම්භ කිරීමට සැසියක් තෝරන්න",
     "meditationSessions": "ධ්‍යානය සැසි",
-    "completePreviousSession": "පෙර සැසිය සම්පූර්ණ කරන්න."
+    "completePreviousSession": "පෙර සැසිය සම්පූර්ණ කරන්න.",
+    "unlocked": "විවෘතයි",
+    "toggleLayout": "පිරිසැලසුම මාරු කරන්න"
   }
 }

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:math';
+import 'dart:ui' show Color;
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -289,6 +290,7 @@ class NotificationService {
           priority: Priority.high,
           enableVibration: true,
           playSound: true,
+          color: Color(0xFF1F6F78),
           largeIcon: DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
         );
 
@@ -460,6 +462,7 @@ class NotificationService {
             priority: Priority.high,
             enableVibration: true,
             playSound: true,
+            color: Color(0xFF1F6F78),
           );
 
       const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(

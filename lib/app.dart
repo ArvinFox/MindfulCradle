@@ -7,11 +7,14 @@ import 'package:mamamind/providers/auth_provider.dart';
 import 'package:mamamind/screens/auth/login_page.dart';
 import 'package:mamamind/screens/auth/user_registration_page.dart';
 import 'package:mamamind/screens/main_screen.dart';
+import 'package:mamamind/screens/onboarding/onboarding_screen.dart';
 import 'package:mamamind/screens/splashScreen/splash_screen.dart';
 import 'package:mamamind/utils/globals.dart';
 
 class MindfulCradleApp extends StatefulWidget {
-  const MindfulCradleApp({super.key});
+  final bool hasSeenOnboarding;
+
+  const MindfulCradleApp({super.key, required this.hasSeenOnboarding});
 
   @override
   State<MindfulCradleApp> createState() => _MindfulCradleAppState();
@@ -68,8 +71,12 @@ class _MindfulCradleAppState extends State<MindfulCradleApp>
             home = const MainScreen();
           }
         } else {
-          // Not logged in
-          home = const LoginPage();
+          // Not logged in — use the pre-loaded flag from main() to avoid
+          // any race condition between async SharedPreferences reads and
+          // the splash timer on low-performance devices.
+          home = widget.hasSeenOnboarding
+              ? const LoginPage()
+              : const OnboardingScreen();
         }
 
         return MaterialApp(
@@ -80,8 +87,43 @@ class _MindfulCradleAppState extends State<MindfulCradleApp>
           navigatorKey: navigatorKey, // For Global Dialogs
 
           theme: ThemeData(
-            primaryColor: AppColors.primary,
+            useMaterial3: true,
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              secondary: AppColors.accent,
+              onSecondary: Colors.white,
+              surface: AppColors.surface,
+              onSurface: AppColors.text,
+              error: AppColors.error,
+              onError: Colors.white,
+            ),
             scaffoldBackgroundColor: AppColors.background,
+            appBarTheme: const AppBarTheme(
+              backgroundColor: AppColors.background,
+              foregroundColor: AppColors.text,
+              elevation: 0,
+              centerTitle: true,
+            ),
+            // Floating snackbar defaults — semantic color is set per-call via AppSnackBar
+            snackBarTheme: SnackBarThemeData(
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: AppColors.snackNeutral,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+              contentTextStyle: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+            ),
+            cardTheme: CardThemeData(
+              color: AppColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              elevation: 0,
+            ),
             textTheme: Theme.of(context).textTheme.apply(
               bodyColor: AppColors.text,
               displayColor: AppColors.text,

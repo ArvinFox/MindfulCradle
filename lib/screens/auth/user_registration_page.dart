@@ -6,7 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
 import '../../models/user_model.dart';
 import '../../utils/helpers.dart';
-import '../../providers/auth_provider.dart';
+import '../../utils/app_snackbar.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/translate.dart';
 import '../../services/localization_service.dart';
@@ -82,27 +82,34 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     );
   }
 
-  // confirmation dialog
-  Widget _buildConfRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  // Stacked label-above-value item — eliminates line-break alignment issues
+  Widget _buildConfItem(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: AppColors.surfaceVariant,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            label,
-            style: GoogleFonts.roboto(
+            label.toUpperCase(),
+            style: GoogleFonts.poppins(
+              fontSize: 10,
               fontWeight: FontWeight.w600,
-              color: AppColors.text.withOpacity(0.9),
+              color: AppColors.textMuted,
+              letterSpacing: 0.7,
             ),
           ),
-          const SizedBox(width: 10),
-          Flexible(
-            child: Text(
-              value,
-              textAlign: TextAlign.right,
-              style: GoogleFonts.roboto(color: AppColors.text),
+          const SizedBox(height: 3),
+          Text(
+            value,
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              fontWeight: FontWeight.w500,
+              color: AppColors.text,
             ),
           ),
         ],
@@ -149,7 +156,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
         : null;
 
     try {
-      await userDoc.update({
+      await userDoc.set({
         'age': int.tryParse(ageController.text) ?? 0,
         'residence': residenceController.text.trim(),
         'pregnancyMonth': pregnancyMonth,
@@ -162,17 +169,11 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
         'mindfulnessDuration': mindfulnessToSave,
         'isUserRegistrationComplete': true,
         'registrationDate': FieldValue.serverTimestamp(),
-      });
-
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      // Ensure local user model is updated to reflect completion
-      await authProvider.loadUserFromPrefs();
+      }, SetOptions(merge: true));
 
       if (!mounted) return;
 
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.t.auth('saveSuccess'))));
+      AppSnackBar.success(context, context.t.auth('saveSuccess'));
 
       // Navigate to main screen
       Navigator.of(
@@ -181,137 +182,190 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     } catch (e) {
       if (!mounted) return;
       HapticFeedback.vibrate();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.t.auth('saveError') + e.toString())),
-      );
+      AppSnackBar.error(context, context.t.auth('saveError') + e.toString());
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
   void _showConfirmationDialog() {
-    final yesNo = (bool value) =>
+    String yesNo(bool value) =>
         value ? context.t.auth('yes') : context.t.auth('no');
+    final width = MediaQuery.of(context).size.width;
+    final compact = width < 380;
 
     showDialog(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20), // Consistent rounding
-          ),
-          title: Text(
-            context.t.auth('confirmDetails'),
-            style: GoogleFonts.poppins(
-              fontWeight: FontWeight.w600,
-              color: AppColors.primary,
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: width < 720 ? width - 24 : 640,
+              maxHeight: MediaQuery.of(ctx).size.height * 0.82,
             ),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildConfRow(context.t.auth('age'), ageController.text),
-                _buildConfRow(
-                  context.t.auth('residence'),
-                  residenceController.text,
-                ),
-                const Divider(height: 20),
-                _buildConfRow(context.t.auth('pregnancyMonth'), pregnancyMonth),
-                _buildConfRow(
-                  context.t.auth('firstTimeMother'),
-                  yesNo(firstTimeMother),
-                ),
-                _buildConfRow(context.t.auth('employed'), yesNo(employed)),
-                _buildConfRow(
-                  context.t.auth('obstetricComplication'),
-                  yesNo(obstetricComplication),
-                ),
-                _buildConfRow(
-                  context.t.auth('psychologicalSupport'),
-                  yesNo(psychologicalSupport),
-                ),
-                _buildConfRow(
-                  context.t.auth('distressingEvents'),
-                  yesNo(distressingEvents),
-                ),
-                _buildConfRow(
-                  context.t.auth('practicedMindfulness'),
-                  yesNo(practicedMindfulness),
-                ),
-                if (practicedMindfulness)
-                  _buildConfRow(
-                    context.t.auth('mindfulnessDuration'),
-                    mindfulnessDuration,
-                  ),
-              ],
-            ),
-          ),
-          actionsPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 8,
-          ),
-          actions: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.text,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(
-                        color: AppColors.primary,
-                        width: 1.5,
-                      ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    onPressed: () => Navigator.pop(ctx),
-                    child: Text(
-                      context.t.auth('cancel'),
-                      style: GoogleFonts.roboto(fontSize: 16),
+            child: Container(
+              padding: EdgeInsets.all(compact ? 14 : 18),
+              decoration: BoxDecoration(
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    context.t.auth('confirmDetails'),
+                    style: GoogleFonts.poppins(
+                      fontSize: compact ? 17 : 20,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.primary,
                     ),
                   ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 5,
-                    ),
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      _saveToFirebase();
-                    },
-                    child: _isSaving
-                        ? const SizedBox(
-                            height: 20,
-                            width: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            context.t.auth('confirm'),
-                            style: GoogleFonts.roboto(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
+                  const SizedBox(height: 10),
+                  Flexible(
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildConfItem(
+                            context.t.auth('age'),
+                            ageController.text,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildConfItem(
+                            context.t.auth('residence'),
+                            residenceController.text,
+                          ),
+                          const SizedBox(height: 12),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 2),
+                            child: Text(
+                              context.t.auth('pregnancyInfo').toUpperCase(),
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: AppColors.primary,
+                                letterSpacing: 0.8,
+                              ),
                             ),
                           ),
+                          const SizedBox(height: 6),
+                          _buildConfItem(
+                            context.t.auth('pregnancyMonth'),
+                            pregnancyMonth,
+                          ),
+                          const SizedBox(height: 8),
+                          _buildConfItem(
+                            context.t.auth('firstTimeMother'),
+                            yesNo(firstTimeMother),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildConfItem(
+                            context.t.auth('employed'),
+                            yesNo(employed),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildConfItem(
+                            context.t.auth('obstetricComplication'),
+                            yesNo(obstetricComplication),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildConfItem(
+                            context.t.auth('psychologicalSupport'),
+                            yesNo(psychologicalSupport),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildConfItem(
+                            context.t.auth('distressingEvents'),
+                            yesNo(distressingEvents),
+                          ),
+                          const SizedBox(height: 8),
+                          _buildConfItem(
+                            context.t.auth('practicedMindfulness'),
+                            yesNo(practicedMindfulness),
+                          ),
+                          if (practicedMindfulness) ...[
+                            const SizedBox(height: 8),
+                            _buildConfItem(
+                              context.t.auth('mindfulnessDuration'),
+                              mindfulnessDuration,
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.text,
+                            padding: EdgeInsets.symmetric(
+                              vertical: compact ? 12 : 14,
+                            ),
+                            side: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1.3,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: () => Navigator.pop(ctx),
+                          child: Text(
+                            context.t.auth('cancel'),
+                            style: GoogleFonts.roboto(
+                              fontSize: compact ? 14 : 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            foregroundColor: Colors.white,
+                            padding: EdgeInsets.symmetric(
+                              vertical: compact ? 12 : 14,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            elevation: 0,
+                          ),
+                          onPressed: () async {
+                            Navigator.pop(ctx);
+                            await _saveToFirebase();
+                          },
+                          child: _isSaving
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
+                                  ),
+                                )
+                              : Text(
+                                  context.t.auth('confirm'),
+                                  style: GoogleFonts.roboto(
+                                    fontSize: compact ? 14 : 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ],
+          ),
         );
       },
     );
@@ -320,6 +374,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
   // --- Page Builder Functions ---
 
   Widget _buildPage1(BuildContext context, bool isMobile) {
+    final isCompact = MediaQuery.of(context).size.width < 380;
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -329,12 +384,12 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
           context.t.auth('basicInfo'),
           textAlign: TextAlign.center,
           style: GoogleFonts.poppins(
-            fontSize: isMobile ? 32 : 36,
+            fontSize: isMobile ? (isCompact ? 28 : 32) : 36,
             fontWeight: FontWeight.w700,
             color: AppColors.primary,
           ),
         ),
-        const SizedBox(height: 30),
+        SizedBox(height: isCompact ? 20 : 26),
 
         TextFormField(
           controller: ageController,
@@ -348,8 +403,9 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
             if (val == null || val.isEmpty) return context.t.auth('required');
             final numValue = int.tryParse(val);
             if (numValue == null) return context.t.auth('mustNumber');
-            if (numValue < 18 || numValue > 70)
+            if (numValue < 18 || numValue > 70) {
               return context.t.auth('ageLimit');
+            }
             return null;
           },
         ),
@@ -382,14 +438,14 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppColors.primary,
                 foregroundColor: AppColors.buttonText,
-                padding: const EdgeInsets.symmetric(
-                  vertical: 16,
-                  horizontal: 32,
+                padding: EdgeInsets.symmetric(
+                  vertical: isCompact ? 14 : 16,
+                  horizontal: isCompact ? 24 : 32,
                 ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(15),
                 ),
-                elevation: 5,
+                elevation: 0,
               ),
               child: Text(
                 context.t.auth('next'),
@@ -406,6 +462,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
   }
 
   Widget _buildPage2(BuildContext context, bool isMobile, bool isSinhala) {
+    final isCompact = MediaQuery.of(context).size.width < 380;
     final durationOptions = [
       context.t.auth('lessThan1Month'),
       context.t.auth('1month'),
@@ -426,16 +483,16 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
             context.t.auth('pregnancyInfo'),
             textAlign: TextAlign.center,
             style: GoogleFonts.poppins(
-              fontSize: isMobile ? 32 : 36,
+              fontSize: isMobile ? (isCompact ? 28 : 32) : 36,
               fontWeight: FontWeight.w700,
               color: AppColors.primary,
             ),
           ),
-          const SizedBox(height: 30),
+          SizedBox(height: isCompact ? 20 : 26),
 
           // Pregnancy Month Dropdown
           DropdownButtonFormField<String>(
-            value: pregnancyMonth.isEmpty ? null : pregnancyMonth,
+            initialValue: pregnancyMonth.isEmpty ? null : pregnancyMonth,
             decoration: customInputDecoration(context.t.auth('pregnancyMonth')),
             items: List.generate(9, (index) {
               final monthValue = index + 1;
@@ -491,7 +548,9 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
             practicedMindfulness,
             (val) {
               setState(() => practicedMindfulness = val);
-              if (!val) mindfulnessDuration = ''; // Reset duration if unchecked
+              if (!val) {
+                mindfulnessDuration = '';
+              } // Reset duration if unchecked
             },
           ),
           const SizedBox(height: 10),
@@ -501,7 +560,9 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
             Padding(
               padding: const EdgeInsets.only(top: 10.0),
               child: DropdownButtonFormField<String>(
-                value: mindfulnessDuration.isEmpty ? null : mindfulnessDuration,
+                initialValue: mindfulnessDuration.isEmpty
+                    ? null
+                    : mindfulnessDuration,
                 decoration: customInputDecoration(
                   context.t.auth('mindfulnessDuration'),
                 ),
@@ -538,9 +599,9 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                       },
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.text,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 24,
+                  padding: EdgeInsets.symmetric(
+                    vertical: isCompact ? 14 : 16,
+                    horizontal: isCompact ? 16 : 24,
                   ),
                   side: const BorderSide(color: AppColors.text, width: 1.5),
                   shape: RoundedRectangleBorder(
@@ -569,14 +630,14 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: AppColors.buttonText,
-                  padding: const EdgeInsets.symmetric(
-                    vertical: 16,
-                    horizontal: 32,
+                  padding: EdgeInsets.symmetric(
+                    vertical: isCompact ? 14 : 16,
+                    horizontal: isCompact ? 24 : 32,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(15),
                   ),
-                  elevation: 5,
+                  elevation: 0,
                 ),
                 child: _isSaving
                     ? const SizedBox(
@@ -611,29 +672,31 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
     final langProvider = Provider.of<LanguageProvider>(context);
     final isSinhala = langProvider.currentLang == 'si';
 
-    return WillPopScope(
-      onWillPop: () async {
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
         if (_currentStep == 1) {
           HapticFeedback.lightImpact();
           setState(() => _currentStep = 0);
-          return false;
+          return;
         }
 
         DateTime now = DateTime.now();
         if (lastBackPressTime == null ||
             now.difference(lastBackPressTime!) > const Duration(seconds: 2)) {
           lastBackPressTime = now;
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(context.t.auth('exitRegistrationMessage')),
-              duration: const Duration(seconds: 2),
-            ),
+          AppSnackBar.info(
+            context,
+            context.t.auth('exitRegistrationMessage'),
+            duration: const Duration(seconds: 2),
           );
-          return false;
+          return;
         }
-        return true;
+        if (mounted) Navigator.of(context).pop();
       },
       child: Scaffold(
+        backgroundColor: Colors.transparent,
         body: Stack(
           children: [
             // Background image
@@ -650,7 +713,16 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
             Container(
               width: double.infinity,
               height: double.infinity,
-              color: AppColors.background.withOpacity(0.10),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    AppColors.background.withValues(alpha: 0.12),
+                    AppColors.background.withValues(alpha: 0.2),
+                  ],
+                ),
+              ),
             ),
 
             // Form Card
@@ -661,23 +733,17 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                   vertical: 40,
                 ),
                 child: Container(
-                  width: isMobile ? size.width * 0.9 : 500,
-                  padding: const EdgeInsets.all(30),
+                  width: isMobile ? size.width * 0.92 : 520,
+                  padding: EdgeInsets.all(isMobile ? 20 : 28),
                   decoration: BoxDecoration(
-                    color: AppColors.background,
-                    borderRadius: BorderRadius.circular(20),
+                    color: AppColors.surface.withValues(alpha: 0.96),
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: AppColors.border),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
-                        spreadRadius: 3,
-                        blurRadius: 15,
+                        color: Colors.black.withValues(alpha: 0.08),
+                        blurRadius: 18,
                         offset: const Offset(0, 8),
-                      ),
-                      BoxShadow(
-                        color: AppColors.primary.withOpacity(0.05),
-                        spreadRadius: -2,
-                        blurRadius: 10,
-                        offset: const Offset(-5, -5),
                       ),
                     ],
                   ),

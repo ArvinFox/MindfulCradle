@@ -30,10 +30,10 @@ class QuestionnaireAttemptCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cardBg = AppColors.cardBackground;
+    final cardBg = AppColors.surface;
     final borderColor = isCompleted
-        ? AppColors.completed.withOpacity(0.5)
-        : Colors.grey.withOpacity(0.2);
+        ? AppColors.completed.withValues(alpha: 0.5)
+        : Colors.grey.withValues(alpha: 0.2);
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
@@ -44,7 +44,7 @@ class QuestionnaireAttemptCard extends StatelessWidget {
         border: Border.all(color: borderColor, width: 1.5),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -116,7 +116,7 @@ class QuestionnaireAttemptCard extends StatelessWidget {
                         isExpanded
                             ? Icons.keyboard_arrow_up
                             : Icons.keyboard_arrow_down,
-                        color: AppColors.text.withOpacity(0.6),
+                        color: AppColors.text.withValues(alpha: 0.6),
                         size: 32,
                       ),
                     )
@@ -163,7 +163,9 @@ class QuestionnaireAttemptCard extends StatelessWidget {
                                   completedDateText!,
                                   style: GoogleFonts.roboto(
                                     fontSize: 14,
-                                    color: AppColors.text.withOpacity(0.6),
+                                    color: AppColors.text.withValues(
+                                      alpha: 0.6,
+                                    ),
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),

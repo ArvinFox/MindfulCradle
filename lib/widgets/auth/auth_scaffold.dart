@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../constants/colors.dart';
 
 class AuthScaffold extends StatelessWidget {
   final Widget child;
@@ -15,56 +14,109 @@ class AuthScaffold extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
-    final isMobile = size.width < 600;
-
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage("assets/login/app_background.png"),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            color: AppColors.background.withOpacity(0.10),
-          ),
-          Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
-              child: Container(
-                width: isMobile ? size.width * 0.9 : maxWidth,
-                padding: contentPadding,
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(20),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
-                      spreadRadius: 3,
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    ),
-                    BoxShadow(
-                      color: AppColors.primary.withOpacity(0.05),
-                      spreadRadius: -2,
-                      blurRadius: 10,
-                      offset: const Offset(-5, -5),
-                    ),
-                  ],
+      backgroundColor: const Color(0xFFF8F5F2),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final isSmall = width < 390;
+          final horizontalPadding = isSmall ? 14.0 : 20.0;
+          final verticalPadding = isSmall ? 20.0 : 32.0;
+          final cardWidth = width < 600
+              ? (width - (horizontalPadding * 2))
+              : maxWidth;
+          final adaptiveContentPadding = width < 380
+              ? const EdgeInsets.all(18)
+              : contentPadding;
+
+          return Stack(
+            children: [
+              // PNG background — full cover, falls back to gradient+blobs on error
+              Positioned.fill(
+                child: Image.asset(
+                  'assets/login/Mindful_Cradle_Login_Background.png',
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    // Fallback: soothing gradient + ambient blobs
+                    return Stack(
+                      children: [
+                        Positioned.fill(
+                          child: DecoratedBox(
+                            decoration: const BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [Color(0xFFF8F5F2), Color(0xFFF4F0EC)],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: -80,
+                          right: -60,
+                          child: Container(
+                            width: 260,
+                            height: 260,
+                            decoration: const BoxDecoration(
+                              color: Color(0x265E8C7B),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          bottom: -80,
+                          left: -60,
+                          child: Container(
+                            width: 240,
+                            height: 240,
+                            decoration: const BoxDecoration(
+                              color: Color(0x1FD4856A),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    );
+                  },
                 ),
-                child: child,
               ),
-            ),
-          ),
-        ],
+              SafeArea(
+                child: Center(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: verticalPadding,
+                    ),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxWidth: cardWidth),
+                      child: Container(
+                        width: double.infinity,
+                        padding: adaptiveContentPadding,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(24),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.07),
+                              blurRadius: 24,
+                              offset: const Offset(0, 8),
+                            ),
+                            const BoxShadow(
+                              color: Color(0x0F4E7A6A),
+                              blurRadius: 40,
+                              offset: Offset(0, 16),
+                            ),
+                          ],
+                        ),
+                        child: child,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }

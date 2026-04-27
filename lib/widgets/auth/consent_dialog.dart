@@ -40,6 +40,8 @@ class _ConsentDialogState extends State<ConsentDialog> {
   @override
   Widget build(BuildContext context) {
     final isSinhala = widget.langCode == 'si';
+    final width = MediaQuery.of(context).size.width;
+    final compact = width < 380;
 
     final title = isSinhala ? 'දත්ත හා පෞද්ගලිකත්වය' : 'Data & Privacy';
     final content = isSinhala
@@ -54,94 +56,126 @@ class _ConsentDialogState extends State<ConsentDialog> {
         ? 'මම භාවිත නියම හා පෞද්ගලිකත්ව ප්‍රතිපත්තියට එකඟ වෙමි'
         : 'I agree to the Terms & Conditions and Privacy Policy';
 
-    return AlertDialog(
-      backgroundColor: AppColors.background,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(
-        title,
-        style: GoogleFonts.poppins(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-          color: AppColors.primary,
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: width < 720 ? width - 24 : 640,
+          maxHeight: MediaQuery.of(context).size.height * 0.84,
         ),
-      ),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              content,
-              style: GoogleFonts.poppins(
-                fontSize: 14,
-                height: 1.6,
-                color: AppColors.text,
-              ),
-            ),
-            const SizedBox(height: 16),
-            CheckboxListTile(
-              value: _isChecked,
-              onChanged: (value) {
-                setState(() => _isChecked = value ?? false);
-              },
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              title: Text(
-                checkboxText,
-                style: GoogleFonts.poppins(
-                  fontSize: 13,
-                  height: 1.4,
-                  color: AppColors.text,
+        child: Container(
+          decoration: BoxDecoration(
+            color: AppColors.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: AppColors.border),
+          ),
+          child: Padding(
+            padding: EdgeInsets.all(compact ? 16 : 20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: compact ? 18 : 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.primary,
+                  ),
                 ),
-              ),
+                const SizedBox(height: 14),
+                Flexible(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          content,
+                          style: GoogleFonts.poppins(
+                            fontSize: compact ? 13 : 14,
+                            height: 1.55,
+                            color: AppColors.text,
+                          ),
+                        ),
+                        const SizedBox(height: 14),
+                        CheckboxListTile(
+                          value: _isChecked,
+                          onChanged: (value) {
+                            setState(() => _isChecked = value ?? false);
+                          },
+                          contentPadding: EdgeInsets.zero,
+                          controlAffinity: ListTileControlAffinity.leading,
+                          title: Text(
+                            checkboxText,
+                            style: GoogleFonts.poppins(
+                              fontSize: compact ? 12 : 13,
+                              height: 1.4,
+                              color: AppColors.text,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () {
+                          HapticFeedback.lightImpact();
+                          widget.onDecline();
+                        },
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          side: BorderSide(
+                            color: AppColors.error.withValues(alpha: 0.35),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: Text(
+                          declineText,
+                          style: GoogleFonts.poppins(
+                            fontSize: compact ? 13 : 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isChecked
+                            ? () {
+                                HapticFeedback.mediumImpact();
+                                widget.onAccept();
+                              }
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          foregroundColor: AppColors.buttonText,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        child: Text(
+                          acceptText,
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.poppins(
+                            fontSize: compact ? 13 : 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-      actions: [
-        // Decline button
-        TextButton(
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            widget.onDecline();
-          },
-          style: TextButton.styleFrom(
-            foregroundColor: Colors.red,
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          ),
-          child: Text(
-            declineText,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ),
-        // Accept button
-        ElevatedButton(
-          onPressed: _isChecked
-              ? () {
-                  HapticFeedback.mediumImpact();
-                  widget.onAccept();
-                }
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            foregroundColor: AppColors.buttonText,
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-          ),
-          child: Text(
-            acceptText,
-            style: GoogleFonts.poppins(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

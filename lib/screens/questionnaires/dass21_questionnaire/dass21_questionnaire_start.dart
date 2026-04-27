@@ -13,6 +13,8 @@ import '/widgets/questionnaires/questionnaire_intro_screen.dart';
 import '/widgets/questionnaires/questionnaire_marquee_title.dart';
 import '/widgets/questionnaires/questionnaire_result_tiles.dart';
 import '../../../utils/translate.dart';
+import '/widgets/app_background.dart';
+import '../../../utils/app_snackbar.dart';
 
 class DASS21QuestionnaireStartPage extends StatefulWidget {
   const DASS21QuestionnaireStartPage({super.key});
@@ -27,10 +29,6 @@ class _DASS21QuestionnaireStartPageState
   bool _initialized = false;
 
   DateTime? _lastBlockedMessageAt;
-
-  // Hint State
-  bool _showHint = false;
-  bool _navigateAfterHint = false;
 
   // Collapsed State
   final Set<int> _expandedAttempts = {};
@@ -75,7 +73,7 @@ class _DASS21QuestionnaireStartPageState
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     final titleTextStyle = GoogleFonts.poppins(
-      color: Colors.white,
+      color: AppColors.text,
       fontWeight: FontWeight.w600,
       fontSize: 20,
     );
@@ -87,130 +85,112 @@ class _DASS21QuestionnaireStartPageState
     final helperText = _helperText(isSinhala, hasInternet, hasData);
     bool showIntro = !provider.isLoading && provider.userAttempts.isEmpty;
 
-    return Stack(
-      children: [
-        Scaffold(
-          backgroundColor: AppColors.background,
-          appBar: AppBar(
-            title: QuestionnaireMarqueeTitle(
-              text: context.t.questionnaires('feelingsChecker'),
-              style: titleTextStyle,
-            ),
-            centerTitle: true,
-            backgroundColor: AppColors.primary,
-            automaticallyImplyLeading: false,
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.help_outline, color: Colors.white),
-                onPressed: () => setState(() {
-                  _showHint = true;
-                  _navigateAfterHint = false;
-                }),
-              ),
-            ],
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: QuestionnaireMarqueeTitle(
+          text: context.t.questionnaires('feelingsChecker'),
+          style: titleTextStyle,
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        surfaceTintColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.help_outline, color: AppColors.primary),
+            onPressed: () => DASS21HintOverlay.show(context, onClose: () {}),
           ),
-          body: provider.isLoading
-              ? Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      AppColors.primary,
-                    ),
-                  ),
-                )
-              : showIntro
-              ? QuestionnaireIntroScreen(
-                  title: context.t.questionnaires('welcomeDASS21'),
-                  subtitle: context.t.questionnaires(
-                    'welcomeDASS21Description',
-                  ),
-                  buttonText: context.t.questionnaires('startFeedback'),
-                  isEnabled: canStart,
-                  helperText: helperText,
-                  onStart: () {
-                    if (!canStart) {
-                      _showStartBlockedMessage(
+        ],
+      ),
+      body: AppBackground(
+        child: provider.isLoading
+            ? Center(
+                child: CircularProgressIndicator(
+                  valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
+                ),
+              )
+            : showIntro
+            ? QuestionnaireIntroScreen(
+                title: context.t.questionnaires('welcomeDASS21'),
+                subtitle: context.t.questionnaires('welcomeDASS21Description'),
+                buttonText: context.t.questionnaires('startFeedback'),
+                isEnabled: canStart,
+                helperText: helperText,
+                onStart: () {
+                  if (!canStart) {
+                    _showStartBlockedMessage(
+                      context,
+                      isSinhala,
+                      hasInternet,
+                      hasData,
+                    );
+                    return;
+                  }
+                  DASS21HintOverlay.show(
+                    context,
+                    onClose: () {
+                      _startQuestionnaire(
                         context,
-                        isSinhala,
+                        provider,
                         hasInternet,
                         hasData,
+                        isSinhala,
                       );
-                      return;
-                    }
-                    setState(() {
-                      _showHint = true;
-                      _navigateAfterHint = true;
-                    });
-                  },
-                  isMobile: isMobile,
-                )
-              : RefreshIndicator(
-                  onRefresh: () async => await provider.loadDASS21Data(context),
-                  color: AppColors.primary,
-                  child: SingleChildScrollView(
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Center(
-                          child: Text(
-                            context.t.questionnaires('yourProgress'),
-                            style: GoogleFonts.poppins(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.text,
-                            ),
+                    },
+                  );
+                },
+                isMobile: isMobile,
+              )
+            : RefreshIndicator(
+                onRefresh: () async => await provider.loadDASS21Data(context),
+                color: AppColors.primary,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Center(
+                        child: Text(
+                          context.t.questionnaires('yourProgress'),
+                          style: GoogleFonts.poppins(
+                            fontSize: 22,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.text,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Center(
-                          child: Text(
-                            context.t.questionnaires('assessmentProgress'),
-                            textAlign: TextAlign.center,
-                            style: GoogleFonts.roboto(
-                              fontSize: 14,
-                              color: AppColors.text.withOpacity(0.7),
-                            ),
+                      ),
+                      const SizedBox(height: 8),
+                      Center(
+                        child: Text(
+                          context.t.questionnaires('assessmentProgress'),
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.roboto(
+                            fontSize: 14,
+                            color: AppColors.text.withValues(alpha: 0.7),
                           ),
                         ),
-                        const SizedBox(height: 30),
+                      ),
+                      const SizedBox(height: 30),
 
-                        // --- Attempt 1 ---
-                        _buildAttemptCard(context, 1, provider, isSinhala),
+                      // --- Attempt 1 ---
+                      _buildAttemptCard(context, 1, provider, isSinhala),
 
-                        // --- Attempt 2 ---
-                        _buildAttemptCard(context, 2, provider, isSinhala),
+                      // --- Attempt 2 ---
+                      _buildAttemptCard(context, 2, provider, isSinhala),
 
-                        // --- Attempt 3 ---
-                        _buildAttemptCard(context, 3, provider, isSinhala),
+                      // --- Attempt 3 ---
+                      _buildAttemptCard(context, 3, provider, isSinhala),
 
-                        const SizedBox(height: 40),
-                      ],
-                    ),
+                      const SizedBox(height: 40),
+                    ],
                   ),
                 ),
-        ),
-
-        // Hint Overlay
-        DASS21HintOverlay(
-          visible: _showHint,
-          isMobile: isMobile,
-          onClose: () async {
-            if (mounted) setState(() => _showHint = false);
-            if (_navigateAfterHint) {
-              _navigateAfterHint = false;
-              await Future.delayed(const Duration(milliseconds: 250));
-              _startQuestionnaire(
-                context,
-                provider,
-                hasInternet,
-                hasData,
-                isSinhala,
-              );
-            }
-          },
-        ),
-      ],
+              ),
+      ),
     );
   }
 
@@ -315,10 +295,18 @@ class _DASS21QuestionnaireStartPageState
                 );
                 return;
               }
-              setState(() {
-                _showHint = true;
-                _navigateAfterHint = true;
-              });
+              DASS21HintOverlay.show(
+                context,
+                onClose: () {
+                  _startQuestionnaire(
+                    context,
+                    provider,
+                    hasInternet,
+                    hasData,
+                    isSinhala,
+                  );
+                },
+              );
             }
           : null,
       results: Column(
@@ -425,8 +413,6 @@ class _DASS21QuestionnaireStartPageState
 
     final messenger = ScaffoldMessenger.of(context);
     messenger.clearSnackBars();
-    messenger.showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red.shade600),
-    );
+    AppSnackBar.error(context, message);
   }
 }

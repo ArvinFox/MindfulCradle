@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
 
-/// Reusable progress header for achievements page
-/// Shows circular progress indicator with stats
 class AchievementProgressHeader extends StatelessWidget {
   final int unlockedCount;
   final int totalCount;
@@ -18,89 +16,106 @@ class AchievementProgressHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    double percent = totalCount == 0 ? 0 : unlockedCount / totalCount;
+    final double percent = totalCount == 0 ? 0 : unlockedCount / totalCount;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(30),
-          bottomRight: Radius.circular(30),
+        gradient: const LinearGradient(
+          colors: [AppColors.heroGradientStart, AppColors.heroGradientMid],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: AppColors.primary.withOpacity(0.3),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
+            color: AppColors.primary.withOpacity(0.28),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
           ),
         ],
       ),
       child: Row(
         children: [
+          // Circular progress ring
           Stack(
             alignment: Alignment.center,
             children: [
               SizedBox(
-                width: 70,
-                height: 70,
+                width: 74,
+                height: 74,
                 child: CircularProgressIndicator(
                   value: percent,
-                  backgroundColor: Colors.white.withOpacity(0.3),
+                  backgroundColor: Colors.white.withOpacity(0.25),
                   valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
-                  strokeWidth: 8,
+                  strokeWidth: 7,
+                  strokeCap: StrokeCap.round,
                 ),
               ),
-              Text(
-                "${(percent * 100).toInt()}%",
-                style: GoogleFonts.poppins(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+              Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    "${(percent * 100).toInt()}%",
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 17,
+                      height: 1.1,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(width: 20),
+          const SizedBox(width: 18),
 
-          // Text Info
+          // Stats text
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isSinhala ? "ඔබේ එකතුව" : "Your Collection",
+                  isSinhala ? 'ඔබේ ජයග්‍රහණ' : 'Your Achievements',
                   style: GoogleFonts.poppins(
-                    color: Colors.white.withOpacity(0.9),
-                    fontSize: 14,
+                    color: Colors.white.withOpacity(0.82),
+                    fontSize: 13,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: 2),
                 Text(
-                  "$unlockedCount / $totalCount ${isSinhala ? 'සම්පූර්ණයි' : 'Unlocked'}",
+                  '$unlockedCount / $totalCount',
                   style: GoogleFonts.poppins(
                     color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 28,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                  ),
+                ),
+                Text(
+                  isSinhala ? 'අගුළු ඇරුණු' : 'Unlocked',
+                  style: GoogleFonts.roboto(
+                    color: Colors.white.withOpacity(0.72),
+                    fontSize: 12,
                   ),
                 ),
               ],
             ),
           ),
 
-          // Trophy Icon
+          // Trophy badge
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: Colors.white.withOpacity(0.18),
+              borderRadius: BorderRadius.circular(14),
             ),
             child: const Icon(
-              Icons.emoji_events,
+              Icons.emoji_events_rounded,
               color: Colors.white,
-              size: 32,
+              size: 30,
             ),
           ),
         ],

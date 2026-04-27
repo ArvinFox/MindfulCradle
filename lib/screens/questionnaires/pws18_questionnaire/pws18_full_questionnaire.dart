@@ -13,6 +13,8 @@ import '../../../providers/achievement_provider.dart';
 import '/widgets/questionnaires/questionnaire_question_card.dart';
 import '../../../widgets/connectivity_banner.dart';
 import '../../../providers/connectivity_provider.dart';
+import '../../../utils/app_snackbar.dart';
+import '/widgets/app_background.dart';
 import '../../../utils/translate.dart';
 
 class PWS18FullQuestionnairePage extends StatefulWidget {
@@ -34,7 +36,6 @@ class _PWS18FullQuestionnairePageState
   int _pageIndex = 0;
   final int _perPage = 6;
   late final LanguageProvider _langProvider;
-  bool _hintVisible = false;
   bool _attemptedSubmit = false;
 
   @override
@@ -123,15 +124,11 @@ class _PWS18FullQuestionnairePageState
       _showScoresDialog(scores);
     } catch (e) {
       if (kDebugMode) debugPrint('Error saving questionnaire.');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _currentLang == 'si'
-                ? 'දෝෂයක් ඇතිවිය. නැවත උත්සාහ කරන්න.'
-                : 'Error submitting answers. Try again.',
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
+      AppSnackBar.error(
+        context,
+        _currentLang == 'si'
+            ? 'දෝෂයක් ඇතිවිය. නැවත උත්සාහ කරන්න.'
+            : 'Error submitting answers. Try again.',
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -181,7 +178,7 @@ class _PWS18FullQuestionnairePageState
         children: [
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(color: Colors.black.withOpacity(0.1)),
+            child: Container(color: Colors.black.withValues(alpha: 0.1)),
           ),
           Center(
             child: ConstrainedBox(
@@ -219,10 +216,10 @@ class _PWS18FullQuestionnairePageState
                         margin: const EdgeInsets.only(bottom: 14),
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: AppColors.primary.withOpacity(0.1),
+                          color: AppColors.primary.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(14),
                           border: Border.all(
-                            color: AppColors.primary.withOpacity(0.3),
+                            color: AppColors.primary.withValues(alpha: 0.3),
                             width: 1.2,
                           ),
                         ),
@@ -235,7 +232,7 @@ class _PWS18FullQuestionnairePageState
                                 style: GoogleFonts.poppins(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w600,
-                                  color: AppColors.text.withOpacity(0.9),
+                                  color: AppColors.text.withValues(alpha: 0.9),
                                 ),
                               ),
                             ),
@@ -246,7 +243,7 @@ class _PWS18FullQuestionnairePageState
                                 vertical: 6,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.2),
+                                color: AppColors.primary.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
                                   color: AppColors.primary,
@@ -329,231 +326,230 @@ class _PWS18FullQuestionnairePageState
           backgroundColor: AppColors.background,
           appBar: AppBar(
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios),
-              color: Colors.white,
+              icon: Icon(Icons.arrow_back_ios),
+              color: AppColors.primary,
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
               context.t.questionnaires('happinessChecker'),
               style: GoogleFonts.poppins(
-                color: Colors.white,
+                color: AppColors.text,
                 fontWeight: FontWeight.w600,
                 fontSize: isMobile ? 18 : 20,
               ),
             ),
-            backgroundColor: AppColors.primary,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
             centerTitle: true,
           ),
-          body: _loading
-              ? Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                )
-              : Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    children: [
-                      // Progress header
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '${context.t.questionnaires('questions')}: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} ${context.t.questionnaires('questionsOf')} $totalQuestions',
-                              style: GoogleFonts.poppins(
-                                color: AppColors.text.withOpacity(0.7),
-                                fontWeight: FontWeight.w500,
-                                fontSize: isMobile ? 14 : 15,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: LinearProgressIndicator(
-                                value:
-                                    (_pageIndex + 1) /
-                                    (totalPages == 0 ? 1 : totalPages),
-                                color: AppColors.primary,
-                                backgroundColor: AppColors.primary.withOpacity(
-                                  0.2,
-                                ),
-                                minHeight: 8,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Questions List
-                      Expanded(
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: _questionsForPage(_pageIndex).length,
-                          itemBuilder: (context, idx) {
-                            final q = _questionsForPage(_pageIndex)[idx];
-                            final qId = q['id'] as int;
-                            final bool isMissing =
-                                _attemptedSubmit &&
-                                provider.responses[qId - 1] == null;
-
-                            return QuestionnaireQuestionCard(
-                              questionId: qId,
-                              questionText: q['question'],
-                              options: _options,
-                              selectedValue: provider.responses[qId - 1],
-                              onAnswerSelected: (intVal) {
-                                provider.setAnswer(qId, intVal);
-                                setState(() => _hintVisible = false);
-                              },
-                              isMissing: isMissing,
-                              isMobile: isMobile,
-                              missingText:
-                                  '* ${context.t.questionnaires('required')}',
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      if (disableSubmit)
+          body: AppBackground(
+            child: _loading
+                ? Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      children: [
+                        // Progress header
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 12),
-                          child: ConnectivityBanner(
-                            useSafeArea: false,
-                            showShadow: false,
-                            borderRadius: BorderRadius.circular(12),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${context.t.questionnaires('questions')}: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} ${context.t.questionnaires('questionsOf')} $totalQuestions',
+                                style: GoogleFonts.poppins(
+                                  color: AppColors.text.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: isMobile ? 14 : 15,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: LinearProgressIndicator(
+                                  value:
+                                      (_pageIndex + 1) /
+                                      (totalPages == 0 ? 1 : totalPages),
+                                  color: AppColors.primary,
+                                  backgroundColor: AppColors.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  minHeight: 8,
+                                ),
+                              ),
+                            ],
                           ),
                         ),
+                        const SizedBox(height: 8),
+                        // Questions List
+                        Expanded(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: _questionsForPage(_pageIndex).length,
+                            itemBuilder: (context, idx) {
+                              final q = _questionsForPage(_pageIndex)[idx];
+                              final qId = q['id'] as int;
+                              final bool isMissing =
+                                  _attemptedSubmit &&
+                                  provider.responses[qId - 1] == null;
 
-                      // IMPROVED BUTTON LAYOUT ---
-                      Row(
-                        children: [
-                          FloatingActionButton(
-                            mini: true,
-                            backgroundColor: AppColors.primary,
-                            onPressed: () =>
-                                setState(() => _hintVisible = true),
-                            elevation: 0,
-                            child: const Icon(
-                              Icons.help_outline,
-                              color: AppColors.buttonText,
+                              return QuestionnaireQuestionCard(
+                                questionId: qId,
+                                questionText: q['question'],
+                                options: _options,
+                                selectedValue: provider.responses[qId - 1],
+                                onAnswerSelected: (intVal) {
+                                  provider.setAnswer(qId, intVal);
+                                },
+                                isMissing: isMissing,
+                                isMobile: isMobile,
+                                missingText:
+                                    '* ${context.t.questionnaires('required')}',
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (disableSubmit)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: ConnectivityBanner(
+                              useSafeArea: false,
+                              showShadow: false,
+                              borderRadius: BorderRadius.circular(12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 16),
 
-                          // Previous Button (Only show if > Page 0)
-                          if (_pageIndex > 0) ...[
+                        // IMPROVED BUTTON LAYOUT ---
+                        Row(
+                          children: [
+                            FloatingActionButton(
+                              mini: true,
+                              backgroundColor: AppColors.primary,
+                              onPressed: () => PWS18HintOverlay.show(
+                                context,
+                                onClose: () {},
+                              ),
+                              elevation: 0,
+                              child: Icon(
+                                Icons.help_outline,
+                                color: AppColors.buttonText,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+
+                            // Previous Button (Only show if > Page 0)
+                            if (_pageIndex > 0) ...[
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _submitting
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _pageIndex -= 1;
+                                            _attemptedSubmit = false;
+                                          });
+                                          _scrollToTop();
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.tileInactive,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: Text(
+                                    context.t.questionnaires('previous'),
+                                    style: GoogleFonts.poppins(
+                                      color: AppColors.text,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: isMobile ? 15 : 17,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Gap between buttons
+                              const SizedBox(width: 16),
+                            ] else
+                              // Push Next button to right on Page 0 without stretching
+                              const Spacer(),
+
+                            // Next / Submit Button
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: _submitting
+                                onPressed: (_submitting || disableSubmit)
                                     ? null
                                     : () {
-                                        setState(() {
-                                          _pageIndex -= 1;
-                                          _attemptedSubmit = false;
-                                        });
-                                        _scrollToTop();
+                                        if (!_pageAnswered(
+                                          provider,
+                                          _pageIndex,
+                                        )) {
+                                          setState(
+                                            () => _attemptedSubmit = true,
+                                          );
+                                          AppSnackBar.warning(
+                                            context,
+                                            context.t.questionnaires(
+                                              'pleaseAnswerAll',
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        setState(
+                                          () => _attemptedSubmit = false,
+                                        );
+                                        if (_pageIndex < totalPages - 1) {
+                                          setState(() => _pageIndex += 1);
+                                          _scrollToTop();
+                                        } else {
+                                          _submitAll(provider);
+                                        }
                                       },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.tileInactive,
+                                  backgroundColor: AppColors.primary,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 16,
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                   ),
-                                  elevation: 0,
                                 ),
                                 child: Text(
-                                  context.t.questionnaires('previous'),
+                                  _pageIndex < totalPages - 1
+                                      ? context.t.questionnaires('next')
+                                      : context.t.questionnaires('submit'),
                                   style: GoogleFonts.poppins(
-                                    color: AppColors.text,
+                                    color: Colors.white,
                                     fontWeight: FontWeight.w600,
                                     fontSize: isMobile ? 15 : 17,
                                   ),
                                 ),
                               ),
                             ),
-                            // Gap between buttons
-                            const SizedBox(width: 16),
-                          ] else
-                            // Push Next button to right on Page 0 without stretching
-                            const Spacer(),
-
-                          // Next / Submit Button
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: (_submitting || disableSubmit)
-                                  ? null
-                                  : () {
-                                      if (!_pageAnswered(
-                                        provider,
-                                        _pageIndex,
-                                      )) {
-                                        setState(() => _attemptedSubmit = true);
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              context.t.questionnaires(
-                                                'pleaseAnswerAll',
-                                              ),
-                                            ),
-                                            backgroundColor:
-                                                Colors.orangeAccent,
-                                          ),
-                                        );
-                                        return;
-                                      }
-                                      setState(() => _attemptedSubmit = false);
-                                      if (_pageIndex < totalPages - 1) {
-                                        setState(() => _pageIndex += 1);
-                                        _scrollToTop();
-                                      } else {
-                                        _submitAll(provider);
-                                      }
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Text(
-                                _pageIndex < totalPages - 1
-                                    ? context.t.questionnaires('next')
-                                    : context.t.questionnaires('submit'),
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: isMobile ? 15 : 17,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
                   ),
-                ),
+          ),
         ),
-        PWS18HintOverlay(
-          visible: _hintVisible,
-          isMobile: MediaQuery.of(context).size.width < 600,
-          onClose: () => setState(() => _hintVisible = false),
-        ),
+
         if (_submitting)
           Container(
             color: AppColors.background,

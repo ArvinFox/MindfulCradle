@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -14,6 +15,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/achievement_provider.dart';
 import '../../utils/translate.dart';
 import '../../utils/app_snackbar.dart';
+import '../../widgets/app_background.dart';
 import 'chat_history_screen.dart';
 
 class ChatBotPage extends StatefulWidget {
@@ -27,6 +29,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChatHistoryService _chatHistoryService = ChatHistoryService();
+  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Map<String, String>> messages = [];
   bool _isTyping = false;
   bool _isInitializing = false;
@@ -43,6 +46,10 @@ class _ChatBotPageState extends State<ChatBotPage> {
   // Streaming state
   bool _isStreaming = false;
   int _streamingMessageIndex = -1;
+
+  // History pane state
+  List<ChatSession> _historyPaneSessions = [];
+  bool _isLoadingPane = false;
 
   // Crisis detection keywords
   static const List<String> _crisisKeywordsEn = [
@@ -261,18 +268,87 @@ class _ChatBotPageState extends State<ChatBotPage> {
   }
 
   Future<void> _viewChatHistory() async {
-    final selectedSessionId = await Navigator.push<String>(
-      context,
-      MaterialPageRoute(builder: (_) => const ChatHistoryScreen()),
-    );
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.user?.id;
 
-    if (selectedSessionId != null && selectedSessionId != _currentSessionId) {
-      setState(() {
-        _isLoadingHistory = true;
-      });
-      await _loadOrCreateSession(sessionId: selectedSessionId);
-    }
+    // Show the pane immediately (with loading state), then fetch
+    final fetchFuture = userId != null
+        ? _chatHistoryService.getChatSessions(userId)
+        : Future.value(<ChatSession>[]);
+
+    if (mounted) setState(() => _isLoadingPane = true);
+
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'history',
+      barrierColor: Colors.black.withValues(alpha: 0.35),
+      transitionDuration: const Duration(milliseconds: 260),
+      transitionBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(-1, 0),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+        child: child,
+      ),
+      pageBuilder: (dialogCtx, _, __) {
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: FutureBuilder<List<ChatSession>>(
+            future: fetchFuture,
+            builder: (ctx, snap) {
+              final sessions = snap.data ?? [];
+              final isLoading = snap.connectionState != ConnectionState.done;
+              if (snap.hasData && mounted) {
+                _historyPaneSessions = sessions;
+                _isLoadingPane = false;
+              }
+              return _HistoryPane(
+                sessions: sessions,
+                isLoading: isLoading,
+                currentSessionId: _currentSessionId,
+                currentLang: _currentLang,
+                onSelect: (session) async {
+                  Navigator.of(dialogCtx).pop();
+                  if (session.id != _currentSessionId) {
+                    setState(() => _isLoadingHistory = true);
+                    await _loadOrCreateSession(sessionId: session.id);
+                  }
+                },
+                onDelete: (session) async {
+                  if (userId == null) return;
+                  await _chatHistoryService.deleteChatSession(
+                    userId: userId,
+                    sessionId: session.id,
+                  );
+                  if (session.id == _currentSessionId) {
+                    Navigator.of(dialogCtx).pop();
+                    setState(() {
+                      messages.clear();
+                      _currentSessionId = null;
+                      _isNewSession = true;
+                      _isLoadingHistory = true;
+                    });
+                    await _initializeChat();
+                  } else {
+                    final updated = await _chatHistoryService.getChatSessions(
+                      userId,
+                    );
+                    if (mounted) setState(() => _historyPaneSessions = updated);
+                  }
+                },
+              );
+            },
+          ),
+        );
+      },
+    );
   }
+
+  Future<void> _deleteSessionFromPane(ChatSession session) async {}
+
+  Widget _buildHistoryDrawer() =>
+      const SizedBox.shrink(); // unused – kept for safety
 
   Future<void> _initRagService() async {
     setState(() {
@@ -600,65 +676,41 @@ class _ChatBotPageState extends State<ChatBotPage> {
         ],
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      body: Stack(
-        children: [
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [Color(0xFFF8F5F2), Color(0xFFF4F0EC)],
-                ),
-              ),
+      body: AppBackground(
+        overlayOpacity: 0.85,
+        child: Column(
+          children: [
+            Expanded(
+              child: messages.isEmpty
+                  ? _buildEmptyState(isMobile)
+                  : ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: messages.length + (_isTyping ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (_isTyping && index == messages.length) {
+                          return _buildBotTypingIndicator();
+                        }
+                        final msg = messages[index];
+                        if (msg["role"] == "crisis") {
+                          return _buildCrisisCard(isMobile);
+                        }
+                        final isUser = msg["role"] == "user";
+                        final isStreamingMsg =
+                            _isStreaming && index == _streamingMessageIndex;
+                        return _buildChatBubble(
+                          msg["text"]!,
+                          isUser,
+                          isMobile,
+                          isStreaming: isStreamingMsg,
+                        );
+                      },
+                    ),
             ),
-          ),
-          Positioned(
-            top: -40,
-            right: -30,
-            child: Container(
-              width: 160,
-              height: 160,
-              decoration: BoxDecoration(
-                color: AppColors.heroGradientMid.withValues(alpha: 0.16),
-                shape: BoxShape.circle,
-              ),
-            ),
-          ),
-          Column(
-            children: [
-              Expanded(
-                child: messages.isEmpty
-                    ? _buildEmptyState(isMobile)
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: messages.length + (_isTyping ? 1 : 0),
-                        itemBuilder: (context, index) {
-                          if (_isTyping && index == messages.length) {
-                            return _buildBotTypingIndicator();
-                          }
-                          final msg = messages[index];
-                          if (msg["role"] == "crisis") {
-                            return _buildCrisisCard(isMobile);
-                          }
-                          final isUser = msg["role"] == "user";
-                          final isStreamingMsg =
-                              _isStreaming && index == _streamingMessageIndex;
-                          return _buildChatBubble(
-                            msg["text"]!,
-                            isUser,
-                            isMobile,
-                            isStreaming: isStreamingMsg,
-                          );
-                        },
-                      ),
-              ),
-              _buildInputArea(isMobile),
-            ],
-          ),
-        ],
+            _buildInputArea(isMobile),
+          ],
+        ),
       ),
     );
   }
@@ -1112,8 +1164,15 @@ class _ChatBotPageState extends State<ChatBotPage> {
   }
 
   Widget _buildInputArea(bool isMobile) {
+    final bottomInset = MediaQuery.of(context).padding.bottom;
+    // Nav bar visual height (pill) + its bottom margin + system safe area
+    const double navBarVisualHeight = 90.0;
+    const double navBarBottomMargin = 12.0;
+    final double extraBottom = bottomInset > 0
+        ? navBarVisualHeight + navBarBottomMargin
+        : navBarVisualHeight + navBarBottomMargin;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + extraBottom),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1226,6 +1285,203 @@ class _StreamingCursorState extends State<_StreamingCursor>
         decoration: BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(1),
+        ),
+      ),
+    );
+  }
+}
+
+// ── History side pane ─────────────────────────────────────────────────────────
+
+class _HistoryPane extends StatelessWidget {
+  final List<ChatSession> sessions;
+  final bool isLoading;
+  final String? currentSessionId;
+  final String currentLang;
+  final void Function(ChatSession) onSelect;
+  final void Function(ChatSession) onDelete;
+
+  const _HistoryPane({
+    required this.sessions,
+    required this.isLoading,
+    required this.currentSessionId,
+    required this.currentLang,
+    required this.onSelect,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSinhala = currentLang == 'si';
+    final paneWidth = MediaQuery.of(context).size.width * 0.82;
+
+    return SizedBox(
+      width: paneWidth,
+      height: double.infinity,
+      child: Material(
+        color: Colors.white,
+        elevation: 16,
+        child: SafeArea(
+          child: Column(
+            children: [
+              // Header
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 14, 8, 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.history_rounded,
+                        color: AppColors.primary,
+                        size: 18,
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      isSinhala ? 'චැට් ඉතිහාසය' : 'Chat History',
+                      style: GoogleFonts.poppins(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.text,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.close_rounded,
+                        color: AppColors.text,
+                      ),
+                      onPressed: () => Navigator.of(context).pop(),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              // Content
+              Expanded(
+                child: isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                        ),
+                      )
+                    : sessions.isEmpty
+                    ? Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              size: 48,
+                              color: AppColors.textMuted.withValues(alpha: 0.5),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              isSinhala ? 'ඉතිහාසයක් නැත' : 'No history yet',
+                              style: GoogleFonts.poppins(
+                                fontSize: 14,
+                                color: AppColors.textMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: sessions.length,
+                        itemBuilder: (_, index) {
+                          final session = sessions[index];
+                          final isActive = session.id == currentSessionId;
+                          return Material(
+                            color: isActive
+                                ? AppColors.primary.withValues(alpha: 0.07)
+                                : Colors.transparent,
+                            child: InkWell(
+                              onTap: () => onSelect(session),
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 36,
+                                      height: 36,
+                                      decoration: BoxDecoration(
+                                        color: isActive
+                                            ? AppColors.primary.withValues(
+                                                alpha: 0.18,
+                                              )
+                                            : AppColors.primary.withValues(
+                                                alpha: 0.08,
+                                              ),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: const Icon(
+                                        Icons.chat_bubble_rounded,
+                                        size: 17,
+                                        color: AppColors.primary,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            session.title,
+                                            style: GoogleFonts.poppins(
+                                              fontSize: 13,
+                                              fontWeight: isActive
+                                                  ? FontWeight.w600
+                                                  : FontWeight.w500,
+                                              color: AppColors.text,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          Text(
+                                            DateFormat(
+                                              'MMM d, h:mm a',
+                                            ).format(session.updatedAt),
+                                            style: GoogleFonts.roboto(
+                                              fontSize: 11,
+                                              color: AppColors.textMuted,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    IconButton(
+                                      icon: Icon(
+                                        Icons.delete_outline_rounded,
+                                        size: 18,
+                                        color: Colors.red.withValues(
+                                          alpha: 0.70,
+                                        ),
+                                      ),
+                                      onPressed: () => onDelete(session),
+                                      visualDensity: VisualDensity.compact,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          ),
         ),
       ),
     );

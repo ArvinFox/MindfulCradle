@@ -25,171 +25,167 @@ class AchievementsPage extends StatelessWidget {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => DraggableScrollableSheet(
-        initialChildSize: 0.55,
-        minChildSize: 0.40,
-        maxChildSize: 0.80,
-        builder: (_, scrollController) => Container(
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(bottom: MediaQuery.of(ctx).viewInsets.bottom),
+        child: Container(
           decoration: const BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
           ),
-          child: SingleChildScrollView(
-            controller: scrollController,
-            child: Column(
-              children: [
-                // Drag handle
-                const SizedBox(height: 12),
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey[300],
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Drag handle
+              const SizedBox(height: 12),
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey[300],
+                  borderRadius: BorderRadius.circular(2),
                 ),
-                const SizedBox(height: 20),
-                // Gradient icon area
-                Container(
-                  width: double.infinity,
-                  margin: const EdgeInsets.symmetric(horizontal: 24),
-                  padding: const EdgeInsets.symmetric(vertical: 28),
-                  decoration: BoxDecoration(
-                    gradient: isUnlocked
-                        ? LinearGradient(
-                            colors: [c, cLight],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          )
-                        : const LinearGradient(
-                            colors: [Color(0xFFE0E0E0), Color(0xFFCCCCCC)],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
+              ),
+              const SizedBox(height: 20),
+              // Gradient icon area
+              Container(
+                width: double.infinity,
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                padding: const EdgeInsets.symmetric(vertical: 28),
+                decoration: BoxDecoration(
+                  gradient: isUnlocked
+                      ? LinearGradient(
+                          colors: [c, cLight],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : const LinearGradient(
+                          colors: [Color(0xFFE0E0E0), Color(0xFFCCCCCC)],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                  borderRadius: BorderRadius.circular(20),
+                  boxShadow: isUnlocked
+                      ? [
+                          BoxShadow(
+                            color: c.withOpacity(0.35),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
                           ),
-                    borderRadius: BorderRadius.circular(20),
-                    boxShadow: isUnlocked
-                        ? [
-                            BoxShadow(
-                              color: c.withOpacity(0.35),
-                              blurRadius: 20,
-                              offset: const Offset(0, 8),
-                            ),
-                          ]
-                        : null,
-                  ),
-                  child: Column(
-                    children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.22),
-                          shape: BoxShape.circle,
-                          border: Border.all(
-                            color: Colors.white.withOpacity(0.55),
-                            width: 2.5,
-                          ),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.white.withOpacity(0.25),
-                              blurRadius: 16,
-                              spreadRadius: 1,
-                            ),
-                          ],
-                        ),
-                        child: Icon(
-                          isUnlocked
-                              ? achievement.icon
-                              : Icons.lock_outline_rounded,
-                          size: 38,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                      Text(
-                        isUnlocked
-                            ? (isSinhala ? 'ලැබිණි ✓' : 'Earned ✓')
-                            : (isSinhala ? 'අගුළු දමා ඇත' : 'Locked'),
-                        style: GoogleFonts.poppins(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white.withOpacity(0.85),
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                    ],
-                  ),
+                        ]
+                      : null,
                 ),
-                const SizedBox(height: 24),
-                // Title
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
-                  child: Text(
-                    isSinhala ? achievement.titleSi : achievement.titleEn,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.poppins(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.text,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                // Description
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 28),
-                  child: Text(
-                    isSinhala
-                        ? achievement.descriptionSi
-                        : achievement.descriptionEn,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.roboto(
-                      fontSize: 15,
-                      color: AppColors.textMuted,
-                      height: 1.6,
-                    ),
-                  ),
-                ),
-                if (!isUnlocked) ...[
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 28),
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5F5F5),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFFE0E0E0)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.info_outline_rounded,
-                            size: 18,
-                            color: Color(0xFFAAAAAA),
-                          ),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              isSinhala
-                                  ? 'මෙය අගුළු හැරීමට ${achievement.descriptionSi}'
-                                  : 'To unlock: ${achievement.descriptionEn}',
-                              style: GoogleFonts.roboto(
-                                fontSize: 13,
-                                color: const Color(0xFF888888),
-                                height: 1.5,
-                              ),
-                            ),
+                        color: Colors.white.withOpacity(0.22),
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.55),
+                          width: 2.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.white.withOpacity(0.25),
+                            blurRadius: 16,
+                            spreadRadius: 1,
                           ),
                         ],
                       ),
+                      child: Icon(
+                        isUnlocked
+                            ? achievement.icon
+                            : Icons.lock_outline_rounded,
+                        size: 38,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      isUnlocked
+                          ? (isSinhala ? 'ලැබිණි ✓' : 'Earned ✓')
+                          : (isSinhala ? 'අගුළු දමා ඇත' : 'Locked'),
+                      style: GoogleFonts.poppins(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white.withOpacity(0.85),
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              // Title
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Text(
+                  isSinhala ? achievement.titleSi : achievement.titleEn,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.poppins(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.text,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Description
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 28),
+                child: Text(
+                  isSinhala
+                      ? achievement.descriptionSi
+                      : achievement.descriptionEn,
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.roboto(
+                    fontSize: 15,
+                    color: AppColors.textMuted,
+                    height: 1.6,
+                  ),
+                ),
+              ),
+              if (!isUnlocked) ...[
+                const SizedBox(height: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 28),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF5F5F5),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFFE0E0E0)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.info_outline_rounded,
+                          size: 18,
+                          color: Color(0xFFAAAAAA),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            isSinhala
+                                ? 'මෙය අගුළු හැරීමට ${achievement.descriptionSi}'
+                                : 'To unlock: ${achievement.descriptionEn}',
+                            style: GoogleFonts.roboto(
+                              fontSize: 13,
+                              color: const Color(0xFF888888),
+                              height: 1.5,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                ],
-                const SizedBox(height: 36),
+                ),
               ],
-            ),
+              const SizedBox(height: 30),
+            ],
           ),
         ),
       ),

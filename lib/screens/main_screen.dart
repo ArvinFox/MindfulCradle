@@ -42,6 +42,14 @@ class _MainScreenState extends State<MainScreen> {
       DeviceOrientation.portraitDown,
     ]);
 
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+    SystemChrome.setSystemUIOverlayStyle(
+      const SystemUiOverlayStyle(
+        systemNavigationBarColor: Colors.transparent,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
+    );
+
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await NotificationService().requestPermissions();
     });
@@ -244,9 +252,13 @@ class _MainScreenState extends State<MainScreen> {
         SystemNavigator.pop();
       },
       child: Scaffold(
-        backgroundColor: AppColors.background,
+        backgroundColor: Colors.transparent,
+        extendBody: true,
         body: Stack(
           children: [
+            const Positioned.fill(
+              child: ColoredBox(color: AppColors.background),
+            ),
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 280),
               child: _pages[_currentIndex],

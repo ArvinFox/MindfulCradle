@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:mamamind/constants/app_config.dart';
 import 'package:mamamind/constants/colors.dart';
 import 'package:mamamind/providers/auth_provider.dart';
+import 'package:mamamind/providers/dass21_provider.dart';
 import 'package:mamamind/providers/journal_provider.dart';
 import 'package:mamamind/providers/language_provider.dart';
 import 'package:mamamind/providers/mood_provider.dart';
@@ -16,10 +17,12 @@ import 'package:mamamind/utils/app_snackbar.dart';
 import 'package:mamamind/widgets/video_tile.dart';
 import '../../services/promotion_service.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../profile/notification_settings_screen.dart';
 import '../journal/journal_list_screen.dart';
 import '../mood/mood_tracker_screen.dart';
+import 'questionnaires.dart';
 import '../../widgets/app_background.dart';
 
 class HomePage extends StatefulWidget {
@@ -33,6 +36,7 @@ class _HomePageState extends State<HomePage> {
   bool _loading = true;
   bool _compactTiles = true;
   bool _promoShown = false;
+  bool _moodPromptShown = false;
   late VoidCallback _authListener;
 
   @override
@@ -79,8 +83,68 @@ class _HomePageState extends State<HomePage> {
     if (mounted) {
       setState(() => _loading = false);
       _schedulePromotion();
+      _scheduleMoodPrompt();
     }
   }
+
+  // ─── Warm mood prompt (fires ~3 s after home loads) ──────────────────
+
+  void _scheduleMoodPrompt() {
+    Future.delayed(const Duration(seconds: 3), _maybeTriggerMoodPrompt);
+  }
+
+  Future<void> _maybeTriggerMoodPrompt() async {
+    if (!mounted || _moodPromptShown) return;
+
+    // Wait for mood data to finish loading (up to 5 s).
+    final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+    var waited = 0;
+    while (moodProvider.loading && waited < 5000) {
+      await Future.delayed(const Duration(milliseconds: 100));
+      waited += 100;
+      if (!mounted) return;
+    }
+
+    // Skip once — the very first session right after user registration.
+    final prefs = await SharedPreferences.getInstance();
+    if (prefs.getBool('skip_mood_prompt_once') == true) {
+      await prefs.remove('skip_mood_prompt_once');
+      return;
+    }
+
+    if (!mounted || moodProvider.hasCheckedInToday) return;
+
+    _moodPromptShown = true;
+    // Suppress the regular mood promotion for this session so we don't
+    // double-nudge the user.
+    await PromotionService.markShown(PromotionService.typeMood);
+    await _showWarmMoodPrompt();
+  }
+
+  Future<void> _showWarmMoodPrompt() async {
+    if (!mounted) return;
+    final isSinhala =
+        Provider.of<LanguageProvider>(context, listen: false).currentLang ==
+        'si';
+    final videoUser = Provider.of<VideoProvider>(context, listen: false).user;
+    final firstName = videoUser != null ? _firstName(videoUser.fullName) : '';
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _WarmMoodPrompt(
+        isSinhala: isSinhala,
+        firstName: firstName,
+        onLogMood: () {
+          Navigator.of(context).pop();
+          showMoodCheckInDialog(context);
+        },
+      ),
+    );
+  }
+
+  // ──────────────────────────────────────────────────────────────────────
 
   void _schedulePromotion() {
     // Show a gentle nudge after a random 15–30s delay — only once per session.
@@ -101,6 +165,10 @@ class _HomePageState extends State<HomePage> {
       hasMoodToday: moodProvider.hasCheckedInToday,
       hasJournalEntry: journalProvider.entries.isNotEmpty,
       hasMeditationProgress: _completedCount(videoProvider) > 0,
+      hasEvaluation: Provider.of<DASS21Provider>(
+        context,
+        listen: false,
+      ).userAttempts.isNotEmpty,
     );
     if (type == null || !mounted) return;
 
@@ -162,6 +230,12 @@ class _HomePageState extends State<HomePage> {
           duration: const Duration(seconds: 4),
         );
         break;
+      case PromotionService.typeEvaluation:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const QuestionnaireMainPage()),
+        );
+        break;
     }
   }
 
@@ -206,6 +280,26 @@ class _HomePageState extends State<HomePage> {
           message: msgs[rng.nextInt(msgs.length)],
           color: const Color(0xFFE28E28),
           actionLabel: isSinhala ? 'සටහන් කරන්න' : 'Log My Mood',
+        );
+
+      case PromotionService.typeEvaluation:
+        final evalMsgs = isSinhala
+            ? [
+                'ඔබේ සෞඛ්‍ය ගමන ගැන සරල ඇගයීමක් ලබා ගන්න',
+                'කෙටි ඇගයීමකින් ඔබේ දියුණුව දැන ගන්න',
+                'ඔබ ගැනම කෙටි ඇගයීමක් ලබා ගැනීම ඔබේ සෞඛ්‍යයට ප්‍රයෝජනවත්',
+              ]
+            : [
+                'A gentle check on how you\'ve been feeling lately',
+                'See how you\'re progressing — it only takes a moment',
+                'A little self-reflection can go a long way',
+              ];
+        return _PromoContentData(
+          emoji: '🌿',
+          title: isSinhala ? 'ඔබ ගැන ඇගයීමක්?' : 'A little check-in?',
+          message: evalMsgs[rng.nextInt(evalMsgs.length)],
+          color: const Color(0xFF7B68EE),
+          actionLabel: isSinhala ? 'ඇගයීමට යමු' : 'Let\'s See',
         );
 
       default: // typeMeditation
@@ -362,6 +456,7 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
       body: AppBackground(
+        overlayOpacity: 0.72,
         child: RefreshIndicator(
           color: AppColors.primary,
           onRefresh: _refreshHome,
@@ -391,37 +486,54 @@ class _HomePageState extends State<HomePage> {
               ),
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 8),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              context.t.home('meditationSessions'),
-                              style: GoogleFonts.poppins(
-                                fontSize: 20,
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.text,
-                                height: 1.2,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              context.t.home('selectSession'),
-                              style: GoogleFonts.roboto(
-                                fontSize: 13,
-                                color: AppColors.textMuted,
-                              ),
-                            ),
-                          ],
+                  padding: const EdgeInsets.fromLTRB(18, 18, 18, 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(18),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      _buildLayoutToggle(),
-                    ],
+                      ],
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                context.t.home('meditationSessions'),
+                                style: GoogleFonts.poppins(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.text,
+                                  height: 1.2,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                context.t.home('selectSession'),
+                                style: GoogleFonts.roboto(
+                                  fontSize: 13,
+                                  color: AppColors.textMuted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        _buildLayoutToggle(),
+                      ],
+                    ),
                   ),
                 ),
               ),
@@ -1029,6 +1141,143 @@ class _PromotionDialog extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Warm mood prompt ───────────────────────────────────────────────────────
+
+/// A welcoming bottom-sheet that appears ~3 s after the home page loads when
+/// the user hasn't logged their mood today.  Skipped on the very first session
+/// right after completing user registration.
+class _WarmMoodPrompt extends StatelessWidget {
+  final bool isSinhala;
+  final String firstName;
+  final VoidCallback onLogMood;
+
+  const _WarmMoodPrompt({
+    required this.isSinhala,
+    required this.firstName,
+    required this.onLogMood,
+  });
+
+  String _greeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) {
+      return isSinhala ? 'සුභ උදෑසනක් ☀️' : 'Good morning ☀️';
+    } else if (hour < 17) {
+      return isSinhala ? 'සුභ දහවලක් 🌤️' : 'Good afternoon 🌤️';
+    } else {
+      return isSinhala ? 'සුභ සන්ධ්‍යාවක් 🌙' : 'Good evening 🌙';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final greeting = _greeting();
+    final name = firstName.isNotEmpty ? '$firstName!' : '';
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        padding: EdgeInsets.fromLTRB(
+          24,
+          16,
+          24,
+          24 + MediaQuery.viewPaddingOf(context).bottom,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Drag handle
+            Container(
+              width: 40,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 20),
+              decoration: BoxDecoration(
+                color: Colors.grey[300],
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            // Emoji icon
+            Container(
+              width: 68,
+              height: 68,
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3E0),
+                borderRadius: BorderRadius.circular(22),
+              ),
+              child: const Center(
+                child: Text('🌸', style: TextStyle(fontSize: 34)),
+              ),
+            ),
+            const SizedBox(height: 18),
+            // Greeting headline
+            Text(
+              name.isNotEmpty ? '$greeting $name' : greeting,
+              style: GoogleFonts.poppins(
+                fontSize: 21,
+                fontWeight: FontWeight.w700,
+                color: AppColors.text,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 10),
+            // Body copy
+            Text(
+              isSinhala
+                  ? 'ඔබ අද කෙසේ ද? ඔබේ දිනය ලිඛිතව සටහන් කිරීමෙන් ගර්භනී කාලය හරහා ඔබේ මනෝ සෞඛ්‍ය ගමන නිරීක්ෂණය කරන්න. 💚'
+                  : 'How are you feeling today? A quick check-in helps you track your emotional wellbeing throughout your pregnancy journey. 💚',
+              style: GoogleFonts.roboto(
+                fontSize: 14,
+                color: AppColors.textMuted,
+                height: 1.65,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 26),
+            // Primary action
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                onPressed: onLogMood,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.primary,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+                child: Text(
+                  isSinhala ? 'මනෝ තත්ත්වය සටහන් කරන්න' : 'Log My Mood',
+                  style: GoogleFonts.poppins(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            // Dismiss
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              style: TextButton.styleFrom(
+                foregroundColor: AppColors.textMuted,
+                padding: const EdgeInsets.symmetric(vertical: 10),
+              ),
+              child: Text(
+                isSinhala ? 'පසුව කරන්නම්' : 'Maybe later',
+                style: GoogleFonts.roboto(fontSize: 14),
+              ),
+            ),
+          ],
         ),
       ),
     );

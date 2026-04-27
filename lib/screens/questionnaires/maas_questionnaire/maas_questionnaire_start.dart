@@ -87,6 +87,7 @@ class _MAASQuestionnaireStartPageState
         ],
       ),
       body: AppBackground(
+        useGradient: true,
         child: provider.isLoading
             ? Center(
                 child: CircularProgressIndicator(
@@ -166,7 +167,7 @@ class _MAASQuestionnaireStartPageState
                       // Attempt 3
                       _buildAttemptCard(context, 3, provider, isSinhala),
 
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 100),
                     ],
                   ),
                 ),

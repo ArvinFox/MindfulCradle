@@ -157,6 +157,11 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
         ? mindfulnessMap[mindfulnessDuration] ?? ''
         : null;
 
+    // Perform all async/Firestore/prefs work WITHOUT touching BuildContext
+    // inside the try-catch. Any exception thrown here will be stored and
+    // handled after the finally block, avoiding silent swallowing of errors
+    // that previously caused the "nothing happens" intermittent bug.
+    Object? saveError;
     try {
       await userDoc.set({
         'age': int.tryParse(ageController.text) ?? 0,
@@ -170,31 +175,39 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
         'practicedMindfulness': practicedMindfulness,
         'mindfulnessDuration': mindfulnessToSave,
         'isUserRegistrationComplete': true,
+        'isTutorialDone': false,
         'registrationDate': FieldValue.serverTimestamp(),
       }, SetOptions(merge: true));
 
-      if (!mounted) return;
-
-      AppSnackBar.success(context, context.t.auth('saveSuccess'));
-
-      // Mark that the very next home-page session should skip the mood
-      // prompt — the user has just completed registration and doesn't need
-      // an immediate check-in nudge.
+      // Prefs writes — also inside try so they're rolled back on failure
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('tutorial_done', false);
       await prefs.setBool('skip_mood_prompt_once', true);
-
-      if (!mounted) return;
-      // Navigate to main screen
-      Navigator.of(
-        context,
-      ).pushNamedAndRemoveUntil('/main-screen', (route) => false);
     } catch (e) {
-      if (!mounted) return;
-      HapticFeedback.vibrate();
-      AppSnackBar.error(context, context.t.auth('saveError') + e.toString());
+      saveError = e;
     } finally {
+      // Reset loading state unconditionally so the button is always re-enabled
       if (mounted) setState(() => _isSaving = false);
     }
+
+    // All async work is done. Now use BuildContext safely — one mounted check,
+    // no more async gaps, no risk of exceptions silently stopping navigation.
+    if (!mounted) return;
+
+    if (saveError != null) {
+      HapticFeedback.vibrate();
+      AppSnackBar.error(
+        context,
+        context.t.auth('saveError') + saveError.toString(),
+      );
+      return;
+    }
+
+    // Navigate to main screen — the coach-mark tutorial will automatically
+    // appear as an overlay once MainScreen detects tutorial_done = false.
+    Navigator.of(
+      context,
+    ).pushNamedAndRemoveUntil('/main-screen', (route) => false);
   }
 
   void _showConfirmationDialog() {
@@ -725,14 +738,83 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                     ),
                   ],
                 ),
-                child: Form(
-                  key: _formKey,
-                  child: AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 300),
-                    child: _currentStep == 0
-                        ? _buildPage1(context, isMobile)
-                        : _buildPage2(context, isMobile, isSinhala),
-                  ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Language toggle row (same logic as login page)
+                    Row(
+                      children: [
+                        const Spacer(),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: AppColors.inputBackground.withValues(
+                              alpha: 0.30,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.30),
+                            ),
+                          ),
+                          child: DropdownButtonHideUnderline(
+                            child: DropdownButton<String>(
+                              value: context.t.common(
+                                context.isEnglish ? 'english' : 'sinhala',
+                              ),
+                              style: GoogleFonts.roboto(
+                                fontSize: 14,
+                                color: AppColors.text,
+                                fontWeight: FontWeight.w500,
+                              ),
+                              iconEnabledColor: AppColors.text,
+                              items: [
+                                DropdownMenuItem(
+                                  value: context.t.common('english'),
+                                  child: Text(
+                                    context.t.common('english'),
+                                    style: const TextStyle(
+                                      color: AppColors.text,
+                                    ),
+                                  ),
+                                ),
+                                DropdownMenuItem(
+                                  value: context.t.common('sinhala'),
+                                  child: Text(
+                                    context.t.common('sinhala'),
+                                    style: const TextStyle(
+                                      color: AppColors.text,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                              onChanged: (val) {
+                                if (val == null) return;
+                                langProvider.setLanguage(
+                                  val == context.t.common('english')
+                                      ? 'en'
+                                      : 'si',
+                                );
+                              },
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    Form(
+                      key: _formKey,
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        child: _currentStep == 0
+                            ? _buildPage1(context, isMobile)
+                            : _buildPage2(context, isMobile, isSinhala),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),

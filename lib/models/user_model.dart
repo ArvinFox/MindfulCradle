@@ -8,6 +8,7 @@ class UserModel {
   final int totalSessionTime;
   final int videoWatchTime;
   final bool isUserRegistrationComplete;
+  final bool isTutorialDone;
 
   UserModel({
     required this.id,
@@ -19,6 +20,7 @@ class UserModel {
     required this.totalSessionTime,
     required this.videoWatchTime,
     required this.isUserRegistrationComplete,
+    this.isTutorialDone = true,
   });
 
   factory UserModel.newUser({
@@ -35,6 +37,7 @@ class UserModel {
       totalSessionTime: 0,
       videoWatchTime: 0,
       isUserRegistrationComplete: false,
+      isTutorialDone: false,
     );
   }
 
@@ -53,14 +56,17 @@ class UserModel {
 
     return UserModel(
       id: docId,
-      fullName: map['fullName'] ?? '',
-      email: map['email'] ?? '',
+      fullName: map['fullName'] as String? ?? '',
+      email: map['email'] as String? ?? '',
       photoUrl: map['photoUrl'] as String?,
       achievements: List<String>.from(map['achievements'] ?? []),
       unlockedVideos: List<int>.from(map['unlockedVideos'] ?? []),
-      totalSessionTime: map['totalSessionTime'] ?? 0,
+      totalSessionTime: map['totalSessionTime'] as int? ?? 0,
       videoWatchTime: resolvedWatchTime,
-      isUserRegistrationComplete: map['isUserRegistrationComplete'] ?? false,
+      isUserRegistrationComplete:
+          map['isUserRegistrationComplete'] as bool? ?? false,
+      // Default true for existing users who don't have this field yet
+      isTutorialDone: map['isTutorialDone'] as bool? ?? true,
     );
   }
 
@@ -74,6 +80,7 @@ class UserModel {
       'totalSessionTime': totalSessionTime,
       'videoWatchTime': videoWatchTime,
       'isUserRegistrationComplete': isUserRegistrationComplete,
+      'isTutorialDone': isTutorialDone,
     };
   }
 
@@ -87,6 +94,7 @@ class UserModel {
     int? totalSessionTime,
     int? videoWatchTime,
     bool? isUserRegistrationComplete,
+    bool? isTutorialDone,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -99,6 +107,7 @@ class UserModel {
       videoWatchTime: videoWatchTime ?? this.videoWatchTime,
       isUserRegistrationComplete:
           isUserRegistrationComplete ?? this.isUserRegistrationComplete,
+      isTutorialDone: isTutorialDone ?? this.isTutorialDone,
     );
   }
 }

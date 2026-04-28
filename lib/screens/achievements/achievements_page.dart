@@ -184,7 +184,7 @@ class AchievementsPage extends StatelessWidget {
                   ),
                 ),
               ],
-              const SizedBox(height: 30),
+              const SizedBox(height: 50),
             ],
           ),
         ),
@@ -269,7 +269,7 @@ class AchievementsPage extends StatelessWidget {
               ),
               Expanded(
                 child: GridView.builder(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 120),
                   physics: const BouncingScrollPhysics(),
                   gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
                     crossAxisCount: 2,

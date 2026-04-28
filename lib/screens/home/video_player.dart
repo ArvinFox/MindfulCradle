@@ -5,11 +5,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
 import '../../models/video_model.dart';
 import '../../providers/video_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../providers/achievement_provider.dart';
+import '../../widgets/app_background.dart';
 import '../../widgets/connectivity_banner.dart';
 
 class YouTubeVideoPlayerPage extends StatefulWidget {
@@ -212,7 +214,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
   }
 
   /// Handles exiting: Saves progress -> Resets Orientation -> Checks Achievements -> Pops
-  Future<void> _handleExit({bool isSystemBack = false}) async {
+  Future<void> _handleExit() async {
     if (_isDisposing) return; // Prevent multiple exit calls
 
     // Make video player invisible immediately and pause playback
@@ -239,10 +241,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
       listen: false,
     );
 
-    if (!isSystemBack) {
-      // Navigate immediately without delay
-      Navigator.of(context).pop();
-    }
+    Navigator.of(context).pop();
 
     // Trigger Pending Dialogs (shows on the home screen) - do this after navigation
     achProvider.showPendingAchievements(context);
@@ -272,7 +271,7 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
           _controller.toggleFullScreenMode();
           return;
         }
-        await _handleExit(isSystemBack: true);
+        await _handleExit();
       },
       child: YoutubePlayerBuilder(
         player: YoutubePlayer(
@@ -291,19 +290,17 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                   elevation: 0,
                   leading: IconButton(
                     icon: const Icon(
-                      Icons.arrow_back_ios,
+                      Icons.arrow_back_ios_rounded,
                       color: AppColors.text,
                     ),
                     onPressed: () async {
-                      await _handleExit(isSystemBack: false);
+                      await _handleExit();
                     },
                   ),
 
                   title: Text(
-                    langProvider.currentLang == "si"
-                        ? widget.video.titleSi
-                        : widget.video.title,
-                    style: TextStyle(
+                    isSinhala ? widget.video.titleSi : widget.video.title,
+                    style: GoogleFonts.poppins(
                       color: AppColors.text,
                       fontWeight: FontWeight.w700,
                       fontSize: isCompact ? 17 : 19,
@@ -313,215 +310,237 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
                   ),
                   centerTitle: true,
                 ),
-                body: Column(
-                  children: [
-                    // Video Player Area - Make invisible during exit to prevent artifacts
-                    Opacity(opacity: _isExiting ? 0.0 : 1.0, child: player),
+                body: AppBackground(
+                  child: Column(
+                    children: [
+                      // Video Player Area - Make invisible during exit to prevent artifacts
+                      Opacity(opacity: _isExiting ? 0.0 : 1.0, child: player),
 
-                    // Fixed Progress Bar
-                    Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: isCompact ? 14 : 20,
-                        vertical: isCompact ? 12 : 16,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(20),
-                        child: Container(
-                          height: isCompact ? 20 : 24,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary.withValues(alpha: 0.25),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Stack(
-                            children: [
-                              FractionallySizedBox(
-                                alignment: Alignment.centerLeft,
-                                widthFactor: progress,
-                                child: Container(
-                                  decoration: BoxDecoration(
+                      // Progress bar
+                      Padding(
+                        padding: EdgeInsets.fromLTRB(
+                          isCompact ? 16 : 20,
+                          isCompact ? 12 : 16,
+                          isCompact ? 16 : 20,
+                          0,
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  isSinhala ? 'ප්‍රගතිය' : 'Progress',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.textMuted,
+                                  ),
+                                ),
+                                Text(
+                                  '${(progress * 100).toStringAsFixed(0)}%',
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
                                     color: AppColors.primary,
-                                    borderRadius: const BorderRadius.all(
-                                      Radius.circular(20),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: LinearProgressIndicator(
+                                value: progress,
+                                minHeight: isCompact ? 8 : 10,
+                                backgroundColor: AppColors.primary.withValues(
+                                  alpha: 0.15,
+                                ),
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppColors.primary,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Instructions & Hints
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: EdgeInsets.fromLTRB(
+                            isCompact ? 16 : 20,
+                            isCompact ? 16 : 20,
+                            isCompact ? 16 : 20,
+                            isCompact ? 24 : 40,
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              // Section: Instructions
+                              Text(
+                                isSinhala ? 'උපදෙස්' : 'Instructions',
+                                style: GoogleFonts.poppins(
+                                  fontSize: isCompact ? 17 : 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.text,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: EdgeInsets.all(isCompact ? 14 : 16),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                  border: Border.all(color: AppColors.border),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withValues(
+                                        alpha: 0.04,
+                                      ),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      isSinhala
+                                          ? 'Mindful Cradle යනු ගැබ්ණි මව්වරුන් සඳහා නිර්මාණය කළ මනෝනිබඳ යෙදුමකි. මෙය ඔබගේ මනස හා ශරීරය සන්සුන් තත්ත්වයක තබා ගැනීමට උපකාරී වේ.'
+                                          : 'Mindful Cradle is a mindful app designed for pregnant mothers. It helps you stay calm and emotionally balanced during your pregnancy.',
+                                      style: GoogleFonts.roboto(
+                                        fontSize: 14,
+                                        height: 1.6,
+                                        color: AppColors.text,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 12),
+                                    ...(isSinhala
+                                            ? [
+                                                'සන්සුන් ස්ථානයක වාඩි වන්න.',
+                                                'හුස්ම ගැනීම මත අවධානය යොමු කරන්න.',
+                                                "හිතාමතා අරමුණක් තබා ගන්න — 'මම සහ මගේ බිළිඳා සුරක්ෂිතයි.'",
+                                                'මෘදු සංගීතයක් අසන්න.',
+                                                'මනස විවේකයෙන් තබා ගැනීමට මෙම වීඩියෝව භාවිතා කරන්න.',
+                                              ]
+                                            : [
+                                                'Sit comfortably in a quiet space.',
+                                                'Gently focus on your breath.',
+                                                "Set a kind intention — 'My baby and I are safe and peaceful.'",
+                                                'Play relaxing background music.',
+                                                'Use this video to remain mindful and relaxed.',
+                                              ])
+                                        .map(
+                                          (line) => Padding(
+                                            padding: const EdgeInsets.only(
+                                              bottom: 6,
+                                            ),
+                                            child: Row(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                Text(
+                                                  '🌸 ',
+                                                  style: GoogleFonts.roboto(
+                                                    fontSize: 14,
+                                                    height: 1.6,
+                                                  ),
+                                                ),
+                                                Expanded(
+                                                  child: Text(
+                                                    line,
+                                                    style: GoogleFonts.roboto(
+                                                      fontSize: 14,
+                                                      height: 1.6,
+                                                      color: AppColors.text,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                  ],
+                                ),
+                              ),
+
+                              SizedBox(height: isCompact ? 20 : 24),
+
+                              // Section: Hints
+                              Text(
+                                isSinhala ? 'උපදේශන සටහන්' : 'Mindfulness Hint',
+                                style: GoogleFonts.poppins(
+                                  fontSize: isCompact ? 17 : 18,
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.text,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              if (_currentHint.isNotEmpty)
+                                AnimatedOpacity(
+                                  opacity: _hintVisible ? 1.0 : 0.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  child: Container(
+                                    padding: EdgeInsets.all(
+                                      isCompact ? 14 : 16,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.06,
+                                      ),
+                                      borderRadius: BorderRadius.circular(16),
+                                      border: Border.all(
+                                        color: AppColors.primary.withValues(
+                                          alpha: 0.20,
+                                        ),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primary.withValues(
+                                              alpha: 0.12,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                          child: const Icon(
+                                            Icons.psychology_outlined,
+                                            color: AppColors.primary,
+                                            size: 20,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: Text(
+                                            _currentHint,
+                                            style: GoogleFonts.roboto(
+                                              fontSize: isCompact ? 14 : 15,
+                                              height: 1.6,
+                                              color: AppColors.text,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ),
-                              ),
-                              Center(
-                                child: Text(
-                                  '${(progress * 100).toStringAsFixed(0)}%',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: isCompact ? 11 : 12,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
                       ),
-                    ),
-
-                    // Instructions & Hints
-                    Expanded(
-                      child: Stack(
-                        children: [
-                          Positioned.fill(
-                            child: Opacity(
-                              opacity: 0.12,
-                              child: Image.asset(
-                                'assets/video_player/video_player_background.png',
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          SingleChildScrollView(
-                            padding: EdgeInsets.symmetric(
-                              horizontal: isCompact ? 14 : 20,
-                              vertical: isCompact ? 12 : 16,
-                            ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isSinhala ? "උපදෙස්:" : "Instructions:",
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 19 : 22,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                Container(
-                                  padding: EdgeInsets.all(isCompact ? 12 : 16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withValues(alpha: 0.75),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.25,
-                                      ),
-                                      width: 1.0,
-                                    ),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: AppColors.primary.withValues(
-                                          alpha: 0.10,
-                                        ),
-                                        blurRadius: 10,
-                                        offset: const Offset(0, 5),
-                                      ),
-                                    ],
-                                  ),
-                                  child: isSinhala
-                                      ? RichText(
-                                          text: TextSpan(
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              height: 1.6,
-                                              color: AppColors.text,
-                                            ),
-                                            children: [
-                                              TextSpan(
-                                                text:
-                                                    "Mindful Cradle යනු ගැබ්ණි මව්වරුන් සඳහා නිර්මාණය කළ මනෝනිබඳ යෙදුමකි. මෙය ඔබගේ මනස හා ශරීරය සන්සුන් තත්ත්වයක තබා ගැනීමට උපකාරී වේ.\n\n",
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const TextSpan(
-                                                text:
-                                                    "🌸 සන්සුන් ස්ථානයක වාඩි වන්න.\n🌸 හුස්ම ගැනීම මත අවධානය යොමු කරන්න.\n🌸 හිතාමතා අරමුණක් තබා ගන්න — “මම සහ මගේ බිළිඳා සුරක්ෂිතයි.”\n🌸 මෘදු සංගීතයක් අසන්න.\n🌸 මනස විවේකයෙන් තබා ගැනීමට මෙම වීඩියෝව භාවිතා කරන්න.",
-                                              ),
-                                            ],
-                                          ),
-                                        )
-                                      : RichText(
-                                          text: TextSpan(
-                                            style: const TextStyle(
-                                              fontSize: 15,
-                                              height: 1.6,
-                                              color: AppColors.text,
-                                            ),
-                                            children: [
-                                              TextSpan(
-                                                text:
-                                                    "Mindful Cradle is a mindful app designed for pregnant mothers. It helps you stay calm and emotionally balanced during your pregnancy.\n\n",
-                                                style: const TextStyle(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              const TextSpan(
-                                                text:
-                                                    "🌸 Sit comfortably in a quiet space.\n🌸 Gently focus on your breath.\n🌸 Set a kind intention — 'My baby and I are safe and peaceful.'\n🌸 Play relaxing background music.\n🌸 Use this video to remain mindful and relaxed.",
-                                              ),
-                                            ],
-                                          ),
-                                        ),
-                                ),
-                                const SizedBox(height: 30),
-                                Text(
-                                  isSinhala ? "උපදේශන සටහන්:" : "Hints:",
-                                  style: TextStyle(
-                                    fontSize: isCompact ? 19 : 22,
-                                    fontWeight: FontWeight.w600,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                                const SizedBox(height: 12),
-                                if (_currentHint.isNotEmpty)
-                                  AnimatedOpacity(
-                                    opacity: _hintVisible ? 1.0 : 0.0,
-                                    duration: const Duration(milliseconds: 300),
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withValues(
-                                          alpha: 0.12,
-                                        ),
-                                        border: Border.all(
-                                          color: AppColors.primary.withValues(
-                                            alpha: 0.30,
-                                          ),
-                                          width: 1.0,
-                                        ),
-                                        borderRadius: BorderRadius.circular(16),
-                                      ),
-                                      padding: EdgeInsets.all(
-                                        isCompact ? 14 : 18,
-                                      ),
-                                      child: Row(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          const Icon(
-                                            Icons.psychology_outlined,
-                                            color: AppColors.primary,
-                                            size: 24,
-                                          ),
-                                          const SizedBox(width: 12),
-                                          Expanded(
-                                            child: Text(
-                                              _currentHint,
-                                              style: TextStyle(
-                                                fontSize: isCompact ? 14 : 16,
-                                                height: 1.5,
-                                                color: Colors.black87,
-                                                fontStyle: FontStyle.italic,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                SizedBox(height: isCompact ? 24 : 40),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
               const Positioned(

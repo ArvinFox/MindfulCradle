@@ -28,6 +28,10 @@ import '../../widgets/app_background.dart';
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
+  /// GlobalKey for the notification icon button in the AppBar.
+  /// Used by the coach-mark tutorial to spotlight this icon.
+  static final notificationIconKey = GlobalKey();
+
   @override
   State<HomePage> createState() => _HomePageState();
 }
@@ -82,8 +86,14 @@ class _HomePageState extends State<HomePage> {
 
     if (mounted) {
       setState(() => _loading = false);
-      _schedulePromotion();
-      _scheduleMoodPrompt();
+      // Don't show promotions or mood prompts until the in-app tutorial
+      // has been completed or skipped by the user.
+      final prefs = await SharedPreferences.getInstance();
+      final tutorialDone = prefs.getBool('tutorial_done') ?? true;
+      if (tutorialDone) {
+        _schedulePromotion();
+        _scheduleMoodPrompt();
+      }
     }
   }
 
@@ -95,6 +105,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _maybeTriggerMoodPrompt() async {
     if (!mounted || _moodPromptShown) return;
+    // Re-check at fire time — tutorial may have been activated after scheduling.
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('tutorial_done') ?? true)) return;
 
     // Wait for mood data to finish loading (up to 5 s).
     final moodProvider = Provider.of<MoodProvider>(context, listen: false);
@@ -106,7 +119,6 @@ class _HomePageState extends State<HomePage> {
     }
 
     // Skip once — the very first session right after user registration.
-    final prefs = await SharedPreferences.getInstance();
     if (prefs.getBool('skip_mood_prompt_once') == true) {
       await prefs.remove('skip_mood_prompt_once');
       return;
@@ -154,6 +166,9 @@ class _HomePageState extends State<HomePage> {
 
   Future<void> _triggerPromotion() async {
     if (!mounted || _promoShown) return;
+    // Re-check at fire time — tutorial may have been activated after scheduling.
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('tutorial_done') ?? true)) return;
     final moodProvider = Provider.of<MoodProvider>(context, listen: false);
     final journalProvider = Provider.of<JournalProvider>(
       context,
@@ -428,6 +443,7 @@ class _HomePageState extends State<HomePage> {
         iconTheme: const IconThemeData(color: AppColors.text),
         actions: [
           IconButton(
+            key: HomePage.notificationIconKey,
             icon: const Icon(Icons.notifications_none_rounded),
             tooltip: context.t.notifications('notificationSettings'),
             onPressed: () {

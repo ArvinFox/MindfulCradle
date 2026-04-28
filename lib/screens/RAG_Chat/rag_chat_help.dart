@@ -6,6 +6,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:mamamind/services/rag_service.dart';
 import 'package:mamamind/services/chat_history_service.dart';
@@ -16,7 +17,6 @@ import '../../providers/achievement_provider.dart';
 import '../../utils/translate.dart';
 import '../../utils/app_snackbar.dart';
 import '../../widgets/app_background.dart';
-import 'chat_history_screen.dart';
 
 class ChatBotPage extends StatefulWidget {
   const ChatBotPage({super.key});
@@ -29,7 +29,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final ChatHistoryService _chatHistoryService = ChatHistoryService();
-  final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   List<Map<String, String>> messages = [];
   bool _isTyping = false;
   bool _isInitializing = false;
@@ -46,10 +45,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
   // Streaming state
   bool _isStreaming = false;
   int _streamingMessageIndex = -1;
-
-  // History pane state
-  List<ChatSession> _historyPaneSessions = [];
-  bool _isLoadingPane = false;
 
   // Crisis detection keywords
   static const List<String> _crisisKeywordsEn = [
@@ -110,7 +105,29 @@ class _ChatBotPageState extends State<ChatBotPage> {
   Future<void> _initializeChat() async {
     await _initRagService();
 
-    // Add welcome message in-memory only (no Firebase save yet)
+    if (!mounted) return;
+
+    // Check if the user was redirected here from the wellness support dialog.
+    // If so, replace the standard welcome message with a warm, personalised
+    // AI greeting. The trigger is cleared immediately after reading so it
+    // cannot be replayed.
+    final prefs = await SharedPreferences.getInstance();
+    final wellnessTrigger = prefs.getString('wellness_trigger');
+    final wellnessTriggerLang =
+        prefs.getString('wellness_trigger_lang') ?? 'en';
+    if (wellnessTrigger != null) {
+      await prefs.remove('wellness_trigger');
+      await prefs.remove('wellness_trigger_lang');
+      if (mounted && _ragInitError == null) {
+        setState(() {
+          _isLoadingHistory = false;
+        });
+        await _sendWellnessTrigger(wellnessTrigger, wellnessTriggerLang);
+        return;
+      }
+    }
+
+    // Standard welcome message (no wellness trigger).
     if (mounted && _ragInitError == null && messages.isEmpty) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted) return;
@@ -132,6 +149,116 @@ class _ChatBotPageState extends State<ChatBotPage> {
     } else {
       setState(() {
         _isLoadingHistory = false;
+      });
+    }
+  }
+
+  /// Sends a hidden context prompt to the AI and shows its caring response as
+  /// the opening message.  The user never sees the hidden trigger text — only
+  /// the AI's warm greeting is displayed.
+  ///
+  /// [level]  - 'crisis' or 'distress' (from wellness dialog detection)
+  /// [lang]   - 'en' or 'si'
+  Future<void> _sendWellnessTrigger(String level, String lang) async {
+    if (_ragService == null) return;
+    final bool isCrisis = level == 'crisis';
+    final bool isSinhala = lang == 'si';
+
+    final String languageHint = isSinhala
+        ? 'Please reply in Sinhala (Sinhalese script).'
+        : 'Please reply in English.';
+
+    // This text is sent to the AI as context but is NOT shown to the user.
+    final String wellnessContext = isCrisis
+        ? 'IMPORTANT CONTEXT (do NOT reveal this to the user): The user has just been '
+              'identified as being in emotional crisis or having expressed suicidal or '
+              'self-harm thoughts. They have been redirected to this chat for support. '
+              'Open with a genuinely warm, caring greeting. Acknowledge that you are here '
+              'for them, that they are not alone, and gently invite them to share whatever '
+              'is on their mind. Be especially compassionate and non-judgmental. '
+              'Only bring up Sri Lankan helplines (National Mental Health Helpline 1926, '
+              'CCC Mental Health Helpline 1333, Sumithrayo 0112682535) if it feels natural '
+              'and supportive to do so.'
+        : 'IMPORTANT CONTEXT (do NOT reveal this to the user): The user has been feeling '
+              'emotionally low or stressed. They have been redirected to this chat for '
+              'support. Open with a warm, caring greeting and gently check in on how they '
+              'are feeling today. Make them feel heard, supported, and not alone. '
+              'Be uplifting and compassionate.';
+
+    // A minimal hidden user "message" — never shown in the UI.
+    final String hiddenQuery = isSinhala
+        ? 'ආයුබෝවන්, මමට ටිකක් කතා කරන්ට ඕනෑ'
+        : 'Hi, I needed someone to talk to';
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userName = authProvider.user?.fullName;
+
+    setState(() {
+      _isLoadingHistory = false;
+      _isTyping = true;
+    });
+
+    try {
+      final fullResponseBuffer = StringBuffer();
+      bool isFirstChunk = true;
+
+      await for (final chunk in _ragService!.answerStream(
+        hiddenQuery,
+        languageHint: languageHint,
+        userName: userName,
+        crisisExtra: wellnessContext,
+      )) {
+        if (!mounted) return;
+        fullResponseBuffer.write(chunk);
+        final currentText = fullResponseBuffer.toString();
+
+        if (isFirstChunk) {
+          isFirstChunk = false;
+          setState(() {
+            _isTyping = false;
+            _isStreaming = true;
+            _streamingMessageIndex = messages.length;
+            messages = List.from(messages)
+              ..add({"role": "bot", "text": currentText});
+          });
+        } else {
+          setState(() {
+            messages = List.from(messages)
+              ..[_streamingMessageIndex] = {"role": "bot", "text": currentText};
+          });
+        }
+        _scrollToBottom();
+      }
+
+      if (!mounted) return;
+      final finalText = fullResponseBuffer.toString();
+      setState(() {
+        _isStreaming = false;
+        if (_streamingMessageIndex >= 0 &&
+            _streamingMessageIndex < messages.length) {
+          messages = List.from(messages)
+            ..[_streamingMessageIndex] = {"role": "bot", "text": finalText};
+        }
+        _streamingMessageIndex = -1;
+      });
+      _scrollToBottom();
+      // Not saved to history — treated as the welcome message equivalent.
+    } catch (e) {
+      if (kDebugMode) debugPrint('[WellnessTrigger] AI greeting failed: $e');
+      if (!mounted) return;
+      // Fallback: show a hardcoded caring message
+      setState(() {
+        _isTyping = false;
+        _isStreaming = false;
+        _streamingMessageIndex = -1;
+        if (messages.isEmpty) {
+          messages.add({
+            "role": "bot",
+            "text": isSinhala
+                ? "ආයුබෝවන්! ඔබ ගැන මට ගැඹුරු සැලකිල්ලක් ඇත. ඔබ තනිව නොවේ — මමත් ඔබ සමඟ සිටිමි. ඔබට කේ දෙයකද කතා කරන්ට?"
+                : "Hello, I'm so glad you're here. You're not alone — I'm here with you. Please feel free to share whatever is on your mind. 💚",
+          });
+        }
       });
     }
   }
@@ -276,8 +403,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
         ? _chatHistoryService.getChatSessions(userId)
         : Future.value(<ChatSession>[]);
 
-    if (mounted) setState(() => _isLoadingPane = true);
-
+    if (!mounted) return;
     await showGeneralDialog<void>(
       context: context,
       barrierDismissible: true,
@@ -299,10 +425,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
             builder: (ctx, snap) {
               final sessions = snap.data ?? [];
               final isLoading = snap.connectionState != ConnectionState.done;
-              if (snap.hasData && mounted) {
-                _historyPaneSessions = sessions;
-                _isLoadingPane = false;
-              }
               return _HistoryPane(
                 sessions: sessions,
                 isLoading: isLoading,
@@ -322,19 +444,16 @@ class _ChatBotPageState extends State<ChatBotPage> {
                     sessionId: session.id,
                   );
                   if (session.id == _currentSessionId) {
-                    Navigator.of(dialogCtx).pop();
-                    setState(() {
-                      messages.clear();
-                      _currentSessionId = null;
-                      _isNewSession = true;
-                      _isLoadingHistory = true;
-                    });
-                    await _initializeChat();
-                  } else {
-                    final updated = await _chatHistoryService.getChatSessions(
-                      userId,
-                    );
-                    if (mounted) setState(() => _historyPaneSessions = updated);
+                    if (dialogCtx.mounted) Navigator.of(dialogCtx).pop();
+                    if (mounted) {
+                      setState(() {
+                        messages.clear();
+                        _currentSessionId = null;
+                        _isNewSession = true;
+                        _isLoadingHistory = true;
+                      });
+                      await _initializeChat();
+                    }
                   }
                 },
               );
@@ -344,11 +463,6 @@ class _ChatBotPageState extends State<ChatBotPage> {
       },
     );
   }
-
-  Future<void> _deleteSessionFromPane(ChatSession session) async {}
-
-  Widget _buildHistoryDrawer() =>
-      const SizedBox.shrink(); // unused – kept for safety
 
   Future<void> _initRagService() async {
     setState(() {
@@ -448,7 +562,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
           _isNewSession = true;
 
           // Unlock chat_companion on first ever chat session
-          if (context.mounted) {
+          if (mounted) {
             final achievementProvider = Provider.of<AchievementProvider>(
               context,
               listen: false,
@@ -458,7 +572,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
               'chat_companion',
               showUI: false,
             );
-            achievementProvider.showPendingAchievements(context);
+            if (mounted) achievementProvider.showPendingAchievements(context);
           }
 
           // Save welcome message first (if exists)
@@ -681,7 +795,7 @@ class _ChatBotPageState extends State<ChatBotPage> {
         child: Column(
           children: [
             Expanded(
-              child: messages.isEmpty
+              child: (messages.isEmpty && !_isTyping)
                   ? _buildEmptyState(isMobile)
                   : ListView.builder(
                       controller: _scrollController,
@@ -1164,15 +1278,15 @@ class _ChatBotPageState extends State<ChatBotPage> {
   }
 
   Widget _buildInputArea(bool isMobile) {
-    final bottomInset = MediaQuery.of(context).padding.bottom;
-    // Nav bar visual height (pill) + its bottom margin + system safe area
-    const double navBarVisualHeight = 90.0;
-    const double navBarBottomMargin = 12.0;
-    final double extraBottom = bottomInset > 0
-        ? navBarVisualHeight + navBarBottomMargin
-        : navBarVisualHeight + navBarBottomMargin;
+    // MainScreen uses extendBody: true, so Flutter's Scaffold already folds
+    // the floating nav bar height into MediaQuery.padding.bottom for all body
+    // children. We only add a small aesthetic gap on top of that.
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+    const double gap = 12.0;
+    final double extraBottom = bottomPadding + gap;
+
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 12, 16, 12 + extraBottom),
+      padding: EdgeInsets.fromLTRB(16, 12, 16, extraBottom),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
@@ -1469,7 +1583,53 @@ class _HistoryPane extends StatelessWidget {
                                           alpha: 0.70,
                                         ),
                                       ),
-                                      onPressed: () => onDelete(session),
+                                      onPressed: () async {
+                                        final confirmed = await showDialog<bool>(
+                                          context: context,
+                                          builder: (ctx) => AlertDialog(
+                                            title: Text(
+                                              isSinhala
+                                                  ? 'සංවාදය මකන්නද?'
+                                                  : 'Delete Chat?',
+                                              style: GoogleFonts.poppins(
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                            content: Text(
+                                              isSinhala
+                                                  ? 'මෙම සංවාදය ස්ථිරවම මකා දමනු ලැබේ.'
+                                                  : 'This conversation will be permanently deleted.',
+                                              style: GoogleFonts.roboto(),
+                                            ),
+                                            actions: [
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, false),
+                                                child: Text(
+                                                  isSinhala
+                                                      ? 'අවලංගු'
+                                                      : 'Cancel',
+                                                ),
+                                              ),
+                                              TextButton(
+                                                onPressed: () =>
+                                                    Navigator.pop(ctx, true),
+                                                style: TextButton.styleFrom(
+                                                  foregroundColor: Colors.red,
+                                                ),
+                                                child: Text(
+                                                  isSinhala
+                                                      ? 'මකන්න'
+                                                      : 'Delete',
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                        if (confirmed == true) {
+                                          onDelete(session);
+                                        }
+                                      },
                                       visualDensity: VisualDensity.compact,
                                     ),
                                   ],

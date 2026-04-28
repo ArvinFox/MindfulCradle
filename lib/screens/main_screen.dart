@@ -68,6 +68,7 @@ class _MainScreenState extends State<MainScreen> {
   Timer? _idleTimer;
   bool _promoShowing = false;
   bool _videoPlayerOpen = false;
+  String? _lastPromoType;
 
   // GlobalKeys for each nav-bar item — used by the tutorial spotlight.
   final _navKey0 = GlobalKey(); // Home
@@ -135,6 +136,7 @@ class _MainScreenState extends State<MainScreen> {
         context,
         listen: false,
       ).userAttempts.isNotEmpty,
+      lastShownType: _lastPromoType,
     );
     if (!mounted) return;
     if (type == null) {
@@ -143,13 +145,16 @@ class _MainScreenState extends State<MainScreen> {
       return;
     }
 
+    _lastPromoType = type;
     _promoShowing = true;
     await PromotionService.markShown(type);
-    await _showPromotionDialog(type);
-
-    // Promo dismissed — restart idle timer from scratch.
-    _promoShowing = false;
-    _onUserActivity();
+    try {
+      await _showPromotionDialog(type);
+    } finally {
+      // Always reset — even if the dialog throws or is dismissed unexpectedly.
+      _promoShowing = false;
+      _onUserActivity();
+    }
   }
 
   int _completedVideoCount(VideoProvider provider) {
@@ -170,23 +175,15 @@ class _MainScreenState extends State<MainScreen> {
         'si';
     final content = _promoContent(type, isSinhala);
 
-    await showGeneralDialog<void>(
+    await showModalBottomSheet<void>(
       context: context,
-      barrierDismissible: true,
-      barrierLabel: '',
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
       barrierColor: Colors.black.withValues(alpha: 0.32),
-      transitionDuration: const Duration(milliseconds: 360),
-      transitionBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 1),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-        child: child,
-      ),
-      pageBuilder: (ctx, _, __) => PromoBottomCard(
+      builder: (_) => PromoBottomCard(
         data: content,
         onAction: () {
-          Navigator.of(ctx).pop();
+          Navigator.of(context).pop();
           _handlePromoAction(type);
         },
       ),

@@ -15,11 +15,14 @@ class PromotionService {
   /// Picks a random promotion type to show.
   ///
   /// [hasMoodToday] - user already logged mood today (skip mood promo).
+  /// [lastShownType] - the most recently shown type; excluded so the same
+  ///   promo is never shown twice in a row (unless it is the only option).
   static Future<String?> pickPromotion({
     required bool hasMoodToday,
     required bool hasJournalEntry,
     required bool hasMeditationProgress,
     bool hasEvaluation = false,
+    String? lastShownType,
   }) async {
     final candidates = <String>[];
 
@@ -29,6 +32,11 @@ class PromotionService {
     candidates.add(typeJournal);
     candidates.add(typeMeditation);
     candidates.add(typeEvaluation);
+
+    // Avoid repeating the same type back-to-back (only if other options exist).
+    if (lastShownType != null && candidates.length > 1) {
+      candidates.remove(lastShownType);
+    }
 
     return candidates[Random().nextInt(candidates.length)];
   }

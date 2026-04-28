@@ -14,17 +14,13 @@ class AchievementModel {
   factory AchievementModel.fromMap(Map<String, dynamic> map, String docId) {
     return AchievementModel(
       id: docId,
-      title: map['title'] ?? '',
-      description: map['description'] ?? '',
-      icon: map['icon'] ?? '⭐',
+      title: map['title'] as String? ?? '',
+      description: map['description'] as String? ?? '',
+      icon: map['icon'] as String? ?? '⭐',
     );
   }
 
   Map<String, dynamic> toMap() {
-    return {
-      'title': title,
-      'description': description,
-      'icon': icon,
-    };
+    return {'title': title, 'description': description, 'icon': icon};
   }
 }

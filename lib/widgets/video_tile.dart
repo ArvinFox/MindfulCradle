@@ -344,7 +344,7 @@ class VideoTile extends StatelessWidget {
                     Text(
                       'Session ${sessionIndex + 1}',
                       style: GoogleFonts.roboto(
-                        fontSize: 10.5,
+                        fontSize: 13,
                         color: palette[0],
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.3,
@@ -357,7 +357,7 @@ class VideoTile extends StatelessWidget {
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: GoogleFonts.poppins(
-                      fontSize: 13.5,
+                      fontSize: 16,
                       fontWeight: FontWeight.w600,
                       color: isLocked
                           ? const Color(0xFFAAAAAA)
@@ -372,14 +372,14 @@ class VideoTile extends StatelessWidget {
                         isLocked
                             ? Icons.lock_outline_rounded
                             : Icons.play_circle_outline_rounded,
-                        size: 13,
+                        size: 15,
                         color: isLocked ? const Color(0xFFAAAAAA) : palette[0],
                       ),
                       const SizedBox(width: 4),
                       Text(
                         isLocked ? 'Locked' : 'Tap to play',
                         style: GoogleFonts.roboto(
-                          fontSize: 11.5,
+                          fontSize: 13.5,
                           color: isLocked
                               ? const Color(0xFFAAAAAA)
                               : palette[0],

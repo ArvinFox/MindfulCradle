@@ -25,10 +25,10 @@ class UserProgressModel {
 
   factory UserProgressModel.fromMap(Map<String, dynamic> map) {
     return UserProgressModel(
-      userId: map['userId'] ?? '',
-      videoId: map['videoId'] ?? '',
-      progress: (map['progress'] ?? 0.0).toDouble(),
-      completed: map['completed'] ?? false,
+      userId: map['userId'] as String? ?? '',
+      videoId: map['videoId'] as String? ?? '',
+      progress: (map['progress'] as num?)?.toDouble() ?? 0.0,
+      completed: map['completed'] as bool? ?? false,
     );
   }
 

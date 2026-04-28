@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../constants/colors.dart';
+import '../widgets/gradient_button.dart';
 import '../services/crisis_detection_service.dart';
 
 /// The action the user chose in the wellness support sheet.
@@ -162,28 +163,26 @@ class _CrisisSheet extends StatelessWidget {
             // Chat with Companion
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton.icon(
+              child: GradientButton.icon(
                 onPressed: () {
                   HapticFeedback.lightImpact();
                   Navigator.of(context).pop(WellnessAction.chat);
                 },
-                icon: const Icon(Icons.chat_bubble_outline_rounded, size: 20),
+                icon: const Icon(
+                  Icons.chat_bubble_outline_rounded,
+                  size: 20,
+                  color: Colors.white,
+                ),
                 label: Text(
                   si ? 'AI සහකාරයා සමඟ කතා කරන්න' : 'Chat with our Companion',
                   style: GoogleFonts.poppins(
                     fontWeight: FontWeight.w600,
                     fontSize: 15,
+                    color: Colors.white,
                   ),
                 ),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  elevation: 0,
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 15),
+                borderRadius: BorderRadius.circular(14),
               ),
             ),
             const SizedBox(height: 10),

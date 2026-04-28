@@ -1,11 +1,9 @@
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mamamind/constants/app_config.dart';
 import 'package:mamamind/constants/colors.dart';
 import 'package:mamamind/providers/auth_provider.dart';
-import 'package:mamamind/providers/dass21_provider.dart';
 import 'package:mamamind/providers/journal_provider.dart';
 import 'package:mamamind/providers/language_provider.dart';
 import 'package:mamamind/providers/mood_provider.dart';
@@ -22,8 +20,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../profile/notification_settings_screen.dart';
 import '../journal/journal_list_screen.dart';
 import '../mood/mood_tracker_screen.dart';
-import 'questionnaires.dart';
 import '../../widgets/app_background.dart';
+import 'package:mamamind/widgets/gradient_button.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -39,7 +37,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool _loading = true;
   bool _compactTiles = true;
-  bool _promoShown = false;
   bool _moodPromptShown = false;
   late VoidCallback _authListener;
 
@@ -91,13 +88,12 @@ class _HomePageState extends State<HomePage> {
       final prefs = await SharedPreferences.getInstance();
       final tutorialDone = prefs.getBool('tutorial_done') ?? true;
       if (tutorialDone) {
-        _schedulePromotion();
         _scheduleMoodPrompt();
       }
     }
   }
 
-  // ─── Warm mood prompt (fires ~3 s after home loads) ──────────────────
+  // ─── Warm mood prompt (fires ~3 s after home loads) ─────────────────
 
   void _scheduleMoodPrompt() {
     Future.delayed(const Duration(seconds: 3), _maybeTriggerMoodPrompt);
@@ -157,187 +153,6 @@ class _HomePageState extends State<HomePage> {
   }
 
   // ──────────────────────────────────────────────────────────────────────
-
-  void _schedulePromotion() {
-    // Show a gentle nudge after a random 15–30s delay — only once per session.
-    final delayMs = 15000 + Random().nextInt(15000);
-    Future.delayed(Duration(milliseconds: delayMs), _triggerPromotion);
-  }
-
-  Future<void> _triggerPromotion() async {
-    if (!mounted || _promoShown) return;
-    // Re-check at fire time — tutorial may have been activated after scheduling.
-    final prefs = await SharedPreferences.getInstance();
-    if (!(prefs.getBool('tutorial_done') ?? true)) return;
-    final moodProvider = Provider.of<MoodProvider>(context, listen: false);
-    final journalProvider = Provider.of<JournalProvider>(
-      context,
-      listen: false,
-    );
-    final videoProvider = Provider.of<VideoProvider>(context, listen: false);
-
-    final type = await PromotionService.pickPromotion(
-      hasMoodToday: moodProvider.hasCheckedInToday,
-      hasJournalEntry: journalProvider.entries.isNotEmpty,
-      hasMeditationProgress: _completedCount(videoProvider) > 0,
-      hasEvaluation: Provider.of<DASS21Provider>(
-        context,
-        listen: false,
-      ).userAttempts.isNotEmpty,
-    );
-    if (type == null || !mounted) return;
-
-    _promoShown = true;
-    await PromotionService.markShown(type);
-    await _showPromotionDialog(type);
-  }
-
-  Future<void> _showPromotionDialog(String type) async {
-    if (!mounted) return;
-    final isSinhala =
-        Provider.of<LanguageProvider>(context, listen: false).currentLang ==
-        'si';
-    final content = _promoContent(type, isSinhala);
-
-    await showGeneralDialog<void>(
-      context: context,
-      barrierDismissible: true,
-      barrierLabel: '',
-      barrierColor: Colors.black.withValues(alpha: 0.32),
-      transitionDuration: const Duration(milliseconds: 360),
-      transitionBuilder: (_, anim, __, child) => SlideTransition(
-        position: Tween<Offset>(
-          begin: const Offset(0, 1),
-          end: Offset.zero,
-        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
-        child: child,
-      ),
-      pageBuilder: (ctx, _, __) => _PromotionDialog(
-        content: content,
-        onAction: () {
-          Navigator.of(ctx).pop();
-          _handlePromoAction(type);
-        },
-      ),
-    );
-  }
-
-  void _handlePromoAction(String type) {
-    if (!mounted) return;
-    switch (type) {
-      case PromotionService.typeJournal:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const JournalListScreen()),
-        );
-        break;
-      case PromotionService.typeMood:
-        showMoodCheckInDialog(context);
-        break;
-      case PromotionService.typeMeditation:
-        // Meditation sessions are already on the home page — show a brief hint.
-        AppSnackBar.info(
-          context,
-          Provider.of<LanguageProvider>(context, listen: false).currentLang ==
-                  'si'
-              ? 'ක්ෂය-ශෛලී ධ්‍යාන සැසි ඉහළින් ඇත 🧘‍♀️'
-              : 'Meditation sessions are right below — give one a try! 🧘‍♀️',
-          duration: const Duration(seconds: 4),
-        );
-        break;
-      case PromotionService.typeEvaluation:
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const QuestionnaireMainPage()),
-        );
-        break;
-    }
-  }
-
-  _PromoContentData _promoContent(String type, bool isSinhala) {
-    final rng = Random();
-    switch (type) {
-      case PromotionService.typeJournal:
-        final msgs = isSinhala
-            ? [
-                'ලිවීම ආතතිය අඩු කිරීමට උදව් කරයි',
-                'ඔබේ හැඟීම් සඟරාවේ සටහන් කරන්න',
-                'ලිපි කිහිපයක් ඔබේ මනෝ සෞඛ්‍යය වැඩිදියුණු කරයි',
-              ]
-            : [
-                'Writing just a few lines can ease anxiety',
-                'Your thoughts deserve a safe space',
-                'A few words a day keeps stress away',
-              ];
-        return _PromoContentData(
-          emoji: '📖',
-          title: isSinhala ? 'සඟරාව ලියන්නද?' : 'Time to journal?',
-          message: msgs[rng.nextInt(msgs.length)],
-          color: const Color(0xFF2D9D78),
-          actionLabel: isSinhala ? 'ලිවීමට යමු' : 'Let\'s Write',
-        );
-
-      case PromotionService.typeMood:
-        final msgs = isSinhala
-            ? [
-                'ඔබ අද කෙසේ ද? ඔබේ දිනය සටහන් කරන්න',
-                'ඔබේ හැඟීම් නිරීක්ෂණය ගර්භනී කාලය සඳහා ඉතා වැදගත්',
-                'ඔබේ මනෝ ගමන ලිඛිත ලෙස නිරීක්ෂණය කරන්න',
-              ]
-            : [
-                'How are you feeling right now?',
-                'Tracking your mood supports your wellbeing',
-                'Don\'t forget your daily mood check-in!',
-              ];
-        return _PromoContentData(
-          emoji: '🌸',
-          title: isSinhala ? 'මනෝ සටහනක්?' : 'Mood check-in!',
-          message: msgs[rng.nextInt(msgs.length)],
-          color: const Color(0xFFE28E28),
-          actionLabel: isSinhala ? 'සටහන් කරන්න' : 'Log My Mood',
-        );
-
-      case PromotionService.typeEvaluation:
-        final evalMsgs = isSinhala
-            ? [
-                'ඔබේ සෞඛ්‍ය ගමන ගැන සරල ඇගයීමක් ලබා ගන්න',
-                'කෙටි ඇගයීමකින් ඔබේ දියුණුව දැන ගන්න',
-                'ඔබ ගැනම කෙටි ඇගයීමක් ලබා ගැනීම ඔබේ සෞඛ්‍යයට ප්‍රයෝජනවත්',
-              ]
-            : [
-                'A gentle check on how you\'ve been feeling lately',
-                'See how you\'re progressing — it only takes a moment',
-                'A little self-reflection can go a long way',
-              ];
-        return _PromoContentData(
-          emoji: '🌿',
-          title: isSinhala ? 'ඔබ ගැන ඇගයීමක්?' : 'A little check-in?',
-          message: evalMsgs[rng.nextInt(evalMsgs.length)],
-          color: const Color(0xFF7B68EE),
-          actionLabel: isSinhala ? 'ඇගයීමට යමු' : 'Let\'s See',
-        );
-
-      default: // typeMeditation
-        final msgs = isSinhala
-            ? [
-                'මිනිත්තු 5ක ධ්‍යානයක් ඔබේ දිනය සතුටකින් ආරම්භ කරයි',
-                'ශ්වාසය ගෙන ඔබේ ශරීරය සන්සුන් කරන්න',
-                'ධ්‍යාන සැසියකට ඔබේ ශරීරය ඉල්ලා සිටියි',
-              ]
-            : [
-                'A 5-minute meditation can transform your day',
-                'Take a mindful moment just for you',
-                'Your body is asking for a peaceful pause',
-              ];
-        return _PromoContentData(
-          emoji: '🧘‍♀️',
-          title: isSinhala ? 'ධ්‍යාන කරන්නද?' : 'Time to meditate?',
-          message: msgs[rng.nextInt(msgs.length)],
-          color: AppColors.primary,
-          actionLabel: isSinhala ? 'ධ්‍යානයට යමු' : 'Let\'s Meditate',
-        );
-    }
-  }
 
   @override
   void dispose() {
@@ -983,186 +798,6 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-// ── Promotion helpers ──────────────────────────────────────────────────────
-
-class _PromoContentData {
-  final String emoji;
-  final String title;
-  final String message;
-  final Color color;
-  final String actionLabel;
-
-  const _PromoContentData({
-    required this.emoji,
-    required this.title,
-    required this.message,
-    required this.color,
-    required this.actionLabel,
-  });
-}
-
-/// Gentle floating card that nudges the user toward a feature.
-/// Appears at the bottom of the screen without blocking the content above.
-class _PromotionDialog extends StatelessWidget {
-  final _PromoContentData content;
-  final VoidCallback onAction;
-
-  const _PromotionDialog({required this.content, required this.onAction});
-
-  @override
-  Widget build(BuildContext context) {
-    return Align(
-      alignment: Alignment.bottomCenter,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          20,
-          0,
-          20,
-          28 + MediaQuery.viewPaddingOf(context).bottom,
-        ),
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(26),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.14),
-                  blurRadius: 28,
-                  offset: const Offset(0, 10),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.fromLTRB(20, 14, 20, 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Drag handle
-                Container(
-                  width: 34,
-                  height: 3,
-                  decoration: BoxDecoration(
-                    color: AppColors.border,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Icon bubble
-                    Container(
-                      width: 54,
-                      height: 54,
-                      decoration: BoxDecoration(
-                        color: content.color.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: Center(
-                        child: Text(
-                          content.emoji,
-                          style: const TextStyle(fontSize: 28),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 14),
-                    // Text
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            content.title,
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w700,
-                              color: AppColors.text,
-                            ),
-                          ),
-                          const SizedBox(height: 3),
-                          Text(
-                            content.message,
-                            style: GoogleFonts.roboto(
-                              fontSize: 13,
-                              color: AppColors.textMuted,
-                              height: 1.45,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Close
-                    GestureDetector(
-                      onTap: () => Navigator.of(context).pop(),
-                      child: Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: Icon(
-                          Icons.close_rounded,
-                          size: 20,
-                          color: AppColors.textMuted.withValues(alpha: 0.5),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 18),
-                // Buttons
-                Row(
-                  children: [
-                    Expanded(
-                      child: TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        style: TextButton.styleFrom(
-                          foregroundColor: AppColors.textMuted,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          'Skip',
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w500,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      flex: 2,
-                      child: ElevatedButton(
-                        onPressed: onAction,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: content.color,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 13),
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: Text(
-                          content.actionLabel,
-                          style: GoogleFonts.poppins(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 // ── Warm mood prompt ───────────────────────────────────────────────────────
 
 /// A welcoming bottom-sheet that appears ~3 s after the home page loads when
@@ -1261,21 +896,16 @@ class _WarmMoodPrompt extends StatelessWidget {
             // Primary action
             SizedBox(
               width: double.infinity,
-              child: FilledButton(
+              child: GradientButton(
                 onPressed: onLogMood,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                ),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                borderRadius: BorderRadius.circular(14),
                 child: Text(
                   isSinhala ? 'මනෝ තත්ත්වය සටහන් කරන්න' : 'Log My Mood',
                   style: GoogleFonts.poppins(
                     fontSize: 15,
                     fontWeight: FontWeight.w600,
+                    color: Colors.white,
                   ),
                 ),
               ),

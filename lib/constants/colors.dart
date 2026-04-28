@@ -1,24 +1,24 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand and primary palette — sage green for calm, nature, wellness
-  static const Color primary = Color(0xFF5A7F72);
-  static const Color primaryLight = Color(0xFF7CA698);
-  static const Color primaryDark = Color(0xFF3D5F52);
+  // Brand and primary palette — lavender-purple from the app logo
+  static const Color primary = Color(0xFF7B5AA8);
+  static const Color primaryLight = Color(0xFF9B7DC4);
+  static const Color primaryDark = Color(0xFF5A3F88);
 
-  // Accent — dusty peach, evoking warmth and nurturing for maternal context
-  static const Color accent = Color(0xFFD4856A);
+  // Accent — periwinkle blue from the logo's headphones
+  static const Color accent = Color(0xFF6BAED0);
 
-  // Soft peachy blush — used for highlights and special UI moments
-  static const Color rose = Color(0xFFE8B09A);
+  // Soft lavender — used for highlights and special UI moments
+  static const Color rose = Color(0xFFC9A8E0);
 
-  // Surface and text palette — warm ivory tones
-  static const Color background = Color(0xFFFBF8F5);
+  // Surface and text palette — warm lavender-tinted ivory tones
+  static const Color background = Color(0xFFFAF8FD);
   static const Color surface = Color(0xFFFFFFFF);
-  static const Color surfaceVariant = Color(0xFFF2EDE8);
-  static const Color text = Color(0xFF1F2933);
-  static const Color textMuted = Color(0xFF52606D);
-  static const Color border = Color(0xFFD6CFC8);
+  static const Color surfaceVariant = Color(0xFFF2EAF9);
+  static const Color text = Color(0xFF1F2033);
+  static const Color textMuted = Color(0xFF5A5272);
+  static const Color border = Color(0xFFD8CEE8);
 
   // Feedback colors — used in UI indicators
   static const Color success = Color(0xFF2D7D5E);
@@ -33,12 +33,12 @@ class AppColors {
   static const Color snackInfo = Color(0xFF1A5290);
   static const Color snackNeutral = Color(0xFF2D3748);
 
-  // Home screen hero gradient — sage to light sage
-  static const Color heroGradientStart = Color(0xFF4E7A6A);
-  static const Color heroGradientMid = Color(0xFF5E8C7B);
-  static const Color heroGradientEnd = Color(0xFFA8C8BE);
-  static const Color progressTrack = Color(0xFFDCE8E4);
-  static const Color progressValue = Color(0xFFD4856A);
+  // Home screen hero gradient — deep lavender to soft lavender
+  static const Color heroGradientStart = Color(0xFF6A48A0);
+  static const Color heroGradientMid = Color(0xFF7D5EB8);
+  static const Color heroGradientEnd = Color(0xFFC4ACD8);
+  static const Color progressTrack = Color(0xFFE4D8F4);
+  static const Color progressValue = Color(0xFF6BAED0);
 
   static const List<Color> sessionAccentPalette = [
     Color(0xFF2B7CD3),

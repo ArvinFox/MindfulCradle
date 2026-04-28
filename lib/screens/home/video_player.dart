@@ -13,6 +13,7 @@ import '../../providers/language_provider.dart';
 import '../../providers/achievement_provider.dart';
 import '../../widgets/app_background.dart';
 import '../../widgets/connectivity_banner.dart';
+import '../main_screen.dart';
 
 class YouTubeVideoPlayerPage extends StatefulWidget {
   final VideoModel video;
@@ -72,6 +73,9 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     _controller.addListener(_youtubeListener);
     _startProgressTimer();
     _loadHints();
+
+    // Pause idle-based promotions while the user is watching a video.
+    MainScreen.setVideoPlayerOpen(true);
   }
 
   Future<void> _loadHints() async {
@@ -209,6 +213,9 @@ class _YouTubeVideoPlayerPageState extends State<YouTubeVideoPlayerPage>
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     // Ensure bars are visible when leaving
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+
+    // Resume idle-based promotions now that the video player is closing.
+    MainScreen.setVideoPlayerOpen(false);
 
     super.dispose();
   }

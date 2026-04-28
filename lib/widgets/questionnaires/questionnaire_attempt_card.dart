@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
+import '../gradient_button.dart';
 
 class QuestionnaireAttemptCard extends StatelessWidget {
   final int attemptNumber;
@@ -121,18 +122,13 @@ class QuestionnaireAttemptCard extends StatelessWidget {
                       ),
                     )
                   else if (!isLocked)
-                    ElevatedButton(
+                    GradientButton(
                       onPressed: onStart,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
                       ),
+                      borderRadius: BorderRadius.circular(12),
                       child: Text(
                         isSinhala ? 'අරඹන්න' : 'Start',
                         style: GoogleFonts.poppins(

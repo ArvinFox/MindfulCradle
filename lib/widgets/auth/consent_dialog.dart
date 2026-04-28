@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
+import '../gradient_button.dart';
 
 /// GDPR Consent Dialog
 /// Displays data collection information and requires user consent
@@ -144,27 +145,22 @@ class _ConsentDialogState extends State<ConsentDialog> {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: ElevatedButton(
+                      child: GradientButton(
                         onPressed: _isChecked
                             ? () {
                                 HapticFeedback.mediumImpact();
                                 widget.onAccept();
                               }
                             : null,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          foregroundColor: AppColors.buttonText,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        borderRadius: BorderRadius.circular(12),
                         child: Text(
                           acceptText,
                           textAlign: TextAlign.center,
                           style: GoogleFonts.poppins(
                             fontSize: compact ? 13 : 14,
                             fontWeight: FontWeight.w600,
+                            color: Colors.white,
                           ),
                         ),
                       ),

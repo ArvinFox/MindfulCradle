@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -5,15 +7,23 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:marquee/marquee.dart';
 import 'package:mamamind/screens/RAG_Chat/rag_chat_help.dart';
 import 'package:mamamind/services/notification_service.dart';
+import 'package:mamamind/services/promotion_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/dass21_provider.dart';
+import '../../providers/journal_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../providers/mood_provider.dart';
+import '../../providers/video_provider.dart';
 import '../../utils/app_snackbar.dart';
 import '../../widgets/connectivity_banner.dart';
+import '../../widgets/promo_bottom_card.dart';
 import '../../widgets/tutorial/coach_mark_tutorial.dart';
+import 'journal/journal_list_screen.dart';
+import 'mood/mood_tracker_screen.dart';
 import 'achievements/achievements_page.dart';
 import 'home/home_page.dart';
 import 'home/questionnaires.dart';
@@ -26,14 +36,38 @@ class MainScreen extends StatefulWidget {
 
   const MainScreen({super.key, this.initialTab = 0});
 
+  /// Switch the active tab from anywhere in the widget tree without pushing
+  /// a new route (avoids rendering tabs outside the MainScreen scaffold).
+  static void switchToTab(int index) {
+    _MainScreenState._instance?._switchTab(index);
+  }
+
+  /// Call from the video player's [initState]/[dispose] to pause/resume
+  /// the idle-based promo timer while the user is watching a session.
+  static void setVideoPlayerOpen(bool open) {
+    _MainScreenState._instance?._onVideoPlayerStateChanged(open);
+  }
+
   @override
   State<MainScreen> createState() => _MainScreenState();
 }
 
 class _MainScreenState extends State<MainScreen> {
+  /// Single active instance — used by [MainScreen.switchToTab] and
+  /// [MainScreen.setVideoPlayerOpen].
+  static _MainScreenState? _instance;
+
   late int _currentIndex;
   DateTime? _lastBackPressTime;
   bool _tutorialActive = false;
+
+  // ── Idle-based promotion system ──────────────────────────────────────
+  /// 2-minute idle threshold before showing a promo.
+  static const _idleThreshold = Duration(minutes: 2);
+
+  Timer? _idleTimer;
+  bool _promoShowing = false;
+  bool _videoPlayerOpen = false;
 
   // GlobalKeys for each nav-bar item — used by the tutorial spotlight.
   final _navKey0 = GlobalKey(); // Home
@@ -52,9 +86,230 @@ class _MainScreenState extends State<MainScreen> {
     ProfilePage(),
   ];
 
+  void _switchTab(int index) {
+    if (mounted) setState(() => _currentIndex = index.clamp(0, 4));
+  }
+
+  // ── Idle timer helpers ──────────────────────────────────────────────
+
+  /// Resets the idle timer on every user touch. Called by the [Listener]
+  /// wrapping the main scaffold.
+  void _onUserActivity() {
+    if (_promoShowing || _videoPlayerOpen || _tutorialActive) return;
+    _idleTimer?.cancel();
+    _idleTimer = Timer(_idleThreshold, _onIdle);
+  }
+
+  void _onVideoPlayerStateChanged(bool open) {
+    _videoPlayerOpen = open;
+    if (open) {
+      // Pause the idle timer while the video player is open.
+      _idleTimer?.cancel();
+    } else {
+      // Restart timer when returning from the video player.
+      _onUserActivity();
+    }
+  }
+
+  Future<void> _onIdle() async {
+    if (!mounted || _promoShowing || _videoPlayerOpen || _tutorialActive) {
+      return;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    if (!(prefs.getBool('tutorial_done') ?? true)) return;
+    if (!mounted) return;
+
+    final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+    final journalProvider = Provider.of<JournalProvider>(
+      context,
+      listen: false,
+    );
+    final videoProvider = Provider.of<VideoProvider>(context, listen: false);
+
+    final type = await PromotionService.pickPromotion(
+      hasMoodToday: moodProvider.hasCheckedInToday,
+      hasJournalEntry: journalProvider.entries.isNotEmpty,
+      hasMeditationProgress: _completedVideoCount(videoProvider) > 0,
+      hasEvaluation: Provider.of<DASS21Provider>(
+        context,
+        listen: false,
+      ).userAttempts.isNotEmpty,
+    );
+    if (!mounted) return;
+    if (type == null) {
+      // No eligible type right now — retry after the normal idle period.
+      _onUserActivity();
+      return;
+    }
+
+    _promoShowing = true;
+    await PromotionService.markShown(type);
+    await _showPromotionDialog(type);
+
+    // Promo dismissed — restart idle timer from scratch.
+    _promoShowing = false;
+    _onUserActivity();
+  }
+
+  int _completedVideoCount(VideoProvider provider) {
+    int count = 0;
+    for (final video in provider.videos) {
+      final watched = provider.userProgress[video.id] ?? 0;
+      if (watched >= ((video.duration * 0.9).ceil())) count++;
+    }
+    return count;
+  }
+
+  // ── Promotion dialog ────────────────────────────────────────────────
+
+  Future<void> _showPromotionDialog(String type) async {
+    if (!mounted) return;
+    final isSinhala =
+        Provider.of<LanguageProvider>(context, listen: false).currentLang ==
+        'si';
+    final content = _promoContent(type, isSinhala);
+
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '',
+      barrierColor: Colors.black.withValues(alpha: 0.32),
+      transitionDuration: const Duration(milliseconds: 360),
+      transitionBuilder: (_, anim, __, child) => SlideTransition(
+        position: Tween<Offset>(
+          begin: const Offset(0, 1),
+          end: Offset.zero,
+        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOutCubic)),
+        child: child,
+      ),
+      pageBuilder: (ctx, _, __) => PromoBottomCard(
+        data: content,
+        onAction: () {
+          Navigator.of(ctx).pop();
+          _handlePromoAction(type);
+        },
+      ),
+    );
+  }
+
+  void _handlePromoAction(String type) {
+    if (!mounted) return;
+    switch (type) {
+      case PromotionService.typeJournal:
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const JournalListScreen()),
+        );
+        break;
+      case PromotionService.typeMood:
+        showMoodCheckInDialog(context);
+        break;
+      case PromotionService.typeMeditation:
+        AppSnackBar.info(
+          context,
+          Provider.of<LanguageProvider>(context, listen: false).currentLang ==
+                  'si'
+              ? 'ක්ෂය-ශෛලී ධ්‍යාන සැසි ඉහළින් ඇත 🧘‍♀️'
+              : 'Meditation sessions are right below — give one a try! 🧘‍♀️',
+          duration: const Duration(seconds: 4),
+        );
+        break;
+      case PromotionService.typeEvaluation:
+        _switchTab(1);
+        break;
+    }
+  }
+
+  PromoCardData _promoContent(String type, bool isSinhala) {
+    final rng = Random();
+    switch (type) {
+      case PromotionService.typeJournal:
+        final msgs = isSinhala
+            ? [
+                'ලිවීම ආතතිය අඩු කිරීමට උදව් කරයි',
+                'ඔබේ හැඟීම් සඟරාවේ සටහන් කරන්න',
+                'ලිපි කිහිපයක් ඔබේ මනෝ සෞඛ්‍යය වැඩිදියුණු කරයි',
+              ]
+            : [
+                'Writing just a few lines can ease anxiety',
+                'Your thoughts deserve a safe space',
+                'A few words a day keeps stress away',
+              ];
+        return PromoCardData(
+          emoji: '📖',
+          title: isSinhala ? 'සඟරාව ලියන්නද?' : 'Time to journal?',
+          message: msgs[rng.nextInt(msgs.length)],
+          color: const Color(0xFF2D9D78),
+          actionLabel: isSinhala ? 'ලිවීමට යමු' : "Let's Write",
+        );
+
+      case PromotionService.typeMood:
+        final msgs = isSinhala
+            ? [
+                'ඔබ අද කෙසේ ද? ඔබේ දිනය සටහන් කරන්න',
+                'ඔබේ හැඟීම් නිරීක්ෂණය ගර්භනී කාලය සඳහා ඉතා වැදගත්',
+                'ඔබේ මනෝ ගමන ලිඛිත ලෙස නිරීක්ෂණය කරන්න',
+              ]
+            : [
+                'How are you feeling right now?',
+                'Tracking your mood supports your wellbeing',
+                "Don't forget your daily mood check-in!",
+              ];
+        return PromoCardData(
+          emoji: '🌸',
+          title: isSinhala ? 'මනෝ සටහනක්?' : 'Mood check-in!',
+          message: msgs[rng.nextInt(msgs.length)],
+          color: const Color(0xFFE28E28),
+          actionLabel: isSinhala ? 'සටහන් කරන්න' : 'Log My Mood',
+        );
+
+      case PromotionService.typeEvaluation:
+        final evalMsgs = isSinhala
+            ? [
+                'ඔබේ සෞඛ්‍ය ගමන ගැන සරල ඇගයීමක් ලබා ගන්න',
+                'කෙටි ඇගයීමකින් ඔබේ දියුණුව දැන ගන්න',
+                'ඔබ ගැනම කෙටි ඇගයීමක් ලබා ගැනීම ඔබේ සෞඛ්‍යයට ප්‍රයෝජනවත්',
+              ]
+            : [
+                "A gentle check on how you've been feeling lately",
+                "See how you're progressing — it only takes a moment",
+                'A little self-reflection can go a long way',
+              ];
+        return PromoCardData(
+          emoji: '🌿',
+          title: isSinhala ? 'ඔබ ගැන ඇගයීමක්?' : 'A little check-in?',
+          message: evalMsgs[rng.nextInt(evalMsgs.length)],
+          color: const Color(0xFF7B68EE),
+          actionLabel: isSinhala ? 'ඇගයීමට යමු' : "Let's See",
+        );
+
+      default: // typeMeditation
+        final msgs = isSinhala
+            ? [
+                'මිනිත්තු 5ක ධ්‍යානයක් ඔබේ දිනය සතුටකින් ආරම්භ කරයි',
+                'ශ්වාසය ගෙන ඔබේ ශරීරය සන්සුන් කරන්න',
+                'ධ්‍යාන සැසියකට ඔබේ ශරීරය ඉල්ලා සිටියි',
+              ]
+            : [
+                'A 5-minute meditation can transform your day',
+                'Take a mindful moment just for you',
+                'Your body is asking for a peaceful pause',
+              ];
+        return PromoCardData(
+          emoji: '🧘‍♀️',
+          title: isSinhala ? 'ධ්‍යාන කරන්නද?' : 'Time to meditate?',
+          message: msgs[rng.nextInt(msgs.length)],
+          color: AppColors.primary,
+          actionLabel: isSinhala ? 'ධ්‍යානයට යමු' : "Let's Meditate",
+        );
+    }
+  }
+
   @override
   void initState() {
     super.initState();
+    _instance = this;
     _currentIndex = widget.initialTab.clamp(0, 4);
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.portraitUp,
@@ -102,12 +357,17 @@ class _MainScreenState extends State<MainScreen> {
       if (!tutorialDone && mounted) {
         _buildTutorialSteps();
         setState(() => _tutorialActive = true);
+      } else if (mounted) {
+        // Tutorial already done — start the idle-based promo timer.
+        _onUserActivity();
       }
     });
   }
 
   @override
   void dispose() {
+    _idleTimer?.cancel();
+    _instance = null;
     SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     super.dispose();
   }
@@ -218,8 +478,8 @@ class _MainScreenState extends State<MainScreen> {
       // 9 — Done (no spotlight)
       const TutorialStep(
         switchToTab: 0,
-        titleEn: "You're all set! 🚀",
-        titleSi: 'ඔබ සූදානම්! 🚀',
+        titleEn: "You're all set!",
+        titleSi: 'ඔබ සූදානම්!',
         descEn:
             "Your mindfulness journey starts now. Everything is here whenever you need it. Enjoy Mindful Cradle!",
         descSi:
@@ -450,27 +710,30 @@ class _MainScreenState extends State<MainScreen> {
           // ── Main app ──────────────────────────────────────────
           AbsorbPointer(
             absorbing: _tutorialActive,
-            child: Scaffold(
-              backgroundColor: Colors.transparent,
-              extendBody: true,
-              body: Stack(
-                children: [
-                  const Positioned.fill(
-                    child: ColoredBox(color: AppColors.background),
-                  ),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 280),
-                    child: _pages[_currentIndex],
-                  ),
-                  const Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    child: ConnectivityBanner(),
-                  ),
-                ],
+            child: Listener(
+              onPointerDown: (_) => _onUserActivity(),
+              child: Scaffold(
+                backgroundColor: Colors.transparent,
+                extendBody: true,
+                body: Stack(
+                  children: [
+                    const Positioned.fill(
+                      child: ColoredBox(color: AppColors.background),
+                    ),
+                    AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 280),
+                      child: _pages[_currentIndex],
+                    ),
+                    const Positioned(
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      child: ConnectivityBanner(),
+                    ),
+                  ],
+                ),
+                bottomNavigationBar: _buildBottomNavigationBar(isSinhala),
               ),
-              bottomNavigationBar: _buildBottomNavigationBar(isSinhala),
             ),
           ),
 
@@ -479,10 +742,16 @@ class _MainScreenState extends State<MainScreen> {
             CoachMarkTutorial(
               steps: _tutorialSteps,
               onTabSwitch: (idx) => setState(() => _currentIndex = idx),
-              onDone: () => setState(() => _tutorialActive = false),
+              onDone: () {
+                setState(() => _tutorialActive = false);
+                // Tutorial just completed — start the idle promo timer.
+                _onUserActivity();
+              },
             ),
         ],
       ),
     );
   }
 }
+
+// ── _PromotionDialog and _PromoContentData moved to lib/widgets/promo_bottom_card.dart ──

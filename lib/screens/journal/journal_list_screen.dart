@@ -269,32 +269,42 @@ class _JournalListScreenState extends State<JournalListScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           isSinhala ? 'ලිපිය මකන්නද?' : 'Delete Entry?',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppColors.error,
+          ),
         ),
         content: Text(
           isSinhala
               ? 'මෙම ලිපිය ස්ථිරව ඉවත් කෙරේ.'
               : 'This entry will be permanently removed.',
-          style: GoogleFonts.roboto(),
+          style: GoogleFonts.poppins(fontSize: 14, color: AppColors.text),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               isSinhala ? 'අවලංගු' : 'Cancel',
-              style: const TextStyle(color: AppColors.textMuted),
+              style: GoogleFonts.poppins(),
             ),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () {
               Navigator.pop(ctx);
               provider.delete(userId: userId, entryId: entry.id);
             },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
             child: Text(
               isSinhala ? 'මකන්න' : 'Delete',
-              style: const TextStyle(color: AppColors.error),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
             ),
           ),
         ],

@@ -53,23 +53,38 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Text(
           context.t.chat('deleteChat'),
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+          style: GoogleFonts.poppins(
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+            color: AppColors.error,
+          ),
         ),
         content: Text(
           context.t.chat('deleteChatConfirm'),
-          style: GoogleFonts.roboto(),
+          style: GoogleFonts.poppins(fontSize: 14, color: AppColors.text),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text(context.t.common('cancel')),
+            child: Text(
+              context.t.common('cancel'),
+              style: GoogleFonts.poppins(),
+            ),
           ),
-          TextButton(
+          ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: TextButton.styleFrom(foregroundColor: Colors.red),
-            child: Text(context.t.common('delete')),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: Text(
+              context.t.common('delete'),
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
           ),
         ],
       ),

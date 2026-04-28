@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:mamamind/screens/RAG_Chat/rag_chat_help.dart';
 import 'package:mamamind/screens/home/questionnaires.dart';
+import 'package:mamamind/screens/tutorial/app_tutorial_screen.dart';
 import '../screens/home/video_player.dart';
 import '../screens/home/home_page.dart';
 import '../screens/main_screen.dart';
@@ -12,6 +13,7 @@ class HomeRoutes {
   static Map<String, WidgetBuilder> routes = {
     '/main-screen': (context) => const MainScreen(),
     '/home': (context) => const HomePage(),
+    '/tutorial': (context) => const AppTutorialScreen(),
     '/questionnaire': (context) => const QuestionnaireMainPage(),
     '/chat': (context) => const ChatBotPage(),
     '/gdpr-account': (context) => const GDPRAccountScreen(),

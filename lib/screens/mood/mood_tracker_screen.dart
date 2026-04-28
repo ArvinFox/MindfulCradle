@@ -1,16 +1,21 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/colors.dart';
 import '../../models/mood_entry.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/achievement_provider.dart';
 import '../../providers/mood_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../screens/main_screen.dart';
+import '../../services/crisis_detection_service.dart';
 import '../../utils/app_snackbar.dart';
 import '../../widgets/app_background.dart';
+import '../../widgets/wellness_support_dialog.dart';
 
 class MoodTrackerScreen extends StatefulWidget {
   const MoodTrackerScreen({super.key});
@@ -188,7 +193,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
                       child: Padding(
                         padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
                         child: Text(
-                          isSinhala ? 'ගත දවස් 30' : 'Last 30 Days',
+                          isSinhala ? 'පසු වූ දවස් 30' : 'Last 30 Days',
                           style: GoogleFonts.poppins(
                             fontSize: 16,
                             fontWeight: FontWeight.w700,
@@ -270,7 +275,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
                   children: [
                     Text(
                       isSinhala
-                          ? 'අද ඔබ කෙසේ ද?'
+                          ? 'අද ඔබට කෙසේ ද?'
                           : 'How are you feeling today?',
                       style: GoogleFonts.poppins(
                         fontSize: 16,
@@ -352,7 +357,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isSinhala ? 'අද ඔබ දැනෙනවා' : "Today you're feeling",
+                  isSinhala ? 'අද ඔබ' : "Today you're feeling",
                   style: GoogleFonts.roboto(
                     fontSize: 12,
                     color: AppColors.textMuted,
@@ -502,7 +507,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            isSinhala ? 'සතිය දළ විශ්ලේෂණය' : 'Weekly Overview',
+            isSinhala ? 'සතිය තුළ දළ විශ්ලේෂණය' : 'Weekly Overview',
             style: GoogleFonts.poppins(
               fontSize: 13,
               fontWeight: FontWeight.w600,
@@ -587,18 +592,18 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
     final color = _moodColor(entry.moodIndex);
     final months = isSinhala
         ? [
-            'ජන',
-            'පෙබ',
-            'මාර්',
-            'අප්‍ර',
+            'ජනවාරි',
+            'පෙබරවාරි',
+            'මාර්තු',
+            'අප්‍රේල්',
             'මැයි',
             'ජූනි',
             'ජූලි',
-            'අගෝ',
-            'සැප්',
-            'ඔක්',
-            'නොව',
-            'දෙස',
+            'අගෝස්තු',
+            'සැප්තැම්බර්',
+            'ඔක්තෝබර්',
+            'නොවැම්බර්',
+            'දෙසැම්බර්',
           ]
         : [
             'Jan',
@@ -850,6 +855,8 @@ Future<void> showMoodCheckInDialog(BuildContext context) async {
   final authProvider = Provider.of<AuthProvider>(context, listen: false);
   final userId = authProvider.user?.id ?? '';
 
+  CrisisLevel? detectedLevel;
+
   await showModalBottomSheet(
     context: context,
     isScrollControlled: true,
@@ -858,8 +865,56 @@ Future<void> showMoodCheckInDialog(BuildContext context) async {
       isSinhala: isSinhala,
       moodProvider: moodProvider,
       userId: userId,
+      onSaved: (level) => detectedLevel = level,
     ),
   );
+
+  // Show wellness support after the mood sheet fully dismisses.
+  if (detectedLevel != null &&
+      detectedLevel != CrisisLevel.none &&
+      context.mounted) {
+    final action = await WellnessSupportDialog.show(
+      context,
+      detectedLevel!,
+      isSinhala,
+    );
+    if (!context.mounted) return;
+    switch (action) {
+      case WellnessAction.chat:
+        // Write wellness context so ChatBotPage can send a caring greeting.
+        await SharedPreferences.getInstance().then((prefs) {
+          prefs.setString(
+            'wellness_trigger',
+            detectedLevel == CrisisLevel.crisis ? 'crisis' : 'distress',
+          );
+          prefs.setString('wellness_trigger_lang', isSinhala ? 'si' : 'en');
+        });
+        if (!context.mounted) return;
+        // Navigate to MainScreen with Chat tab (index 2) active.
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 2)),
+          (route) => false,
+        );
+        break;
+      case WellnessAction.questionnaire:
+        // Navigate to MainScreen with Questionnaires tab (index 1) active.
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 1)),
+          (route) => false,
+        );
+        break;
+      case WellnessAction.meditate:
+        // Navigate to MainScreen with Home tab (index 0) active — meditation
+        // sessions are on the home page.
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 0)),
+          (route) => false,
+        );
+        break;
+      case WellnessAction.none:
+        break;
+    }
+  }
 }
 
 /// Extracted as a proper StatefulWidget so that InheritedWidget (MediaQuery)
@@ -869,10 +924,14 @@ class _MoodCheckInSheet extends StatefulWidget {
   final MoodProvider moodProvider;
   final String userId;
 
+  /// Called with the detected [CrisisLevel] just before the sheet pops.
+  final void Function(CrisisLevel)? onSaved;
+
   const _MoodCheckInSheet({
     required this.isSinhala,
     required this.moodProvider,
     required this.userId,
+    this.onSaved,
   });
 
   @override
@@ -917,7 +976,7 @@ class _MoodCheckInSheetState extends State<_MoodCheckInSheet> {
             ),
 
             Text(
-              isSinhala ? 'අද ඔබ කෙසේ ද?' : 'How are you feeling today?',
+              isSinhala ? 'අද ඔබට කෙසේ ද?' : 'How are you feeling today?',
               style: GoogleFonts.poppins(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -1019,13 +1078,63 @@ class _MoodCheckInSheetState extends State<_MoodCheckInSheet> {
                     : () async {
                         HapticFeedback.mediumImpact();
                         setState(() => _saving = true);
-                        await widget.moodProvider.addMood(
+                        final note = _noteController.text.trim().isEmpty
+                            ? null
+                            : _noteController.text.trim();
+                        final lang = widget.isSinhala ? 'si' : 'en';
+                        final String apiKey =
+                            dotenv.env['GEMINI_API_KEY'] ?? '';
+
+                        // ── Step 1: synchronous keyword check — instant,
+                        // always reliable. Baseline before any async can fail.
+                        CrisisLevel level =
+                            CrisisDetectionService.analyzeMoodEntry(
+                              _selectedIndex,
+                              note,
+                              lang,
+                            );
+
+                        // ── Step 2: kick off Firestore save AND AI detection
+                        // in parallel. Await each separately so a save failure
+                        // never kills the detection result.
+                        final saveFuture = widget.moodProvider.addMood(
                           userId: widget.userId,
                           moodIndex: _selectedIndex,
-                          note: _noteController.text.trim().isEmpty
-                              ? null
-                              : _noteController.text.trim(),
+                          note: note,
                         );
+
+                        // Only run AI if keywords haven't already flagged crisis.
+                        Future<CrisisLevel>? aiFuture;
+                        if (level != CrisisLevel.crisis && apiKey.isNotEmpty) {
+                          // Use note text if available; otherwise describe mood.
+                          final textToAnalyse =
+                              note ??
+                              (widget.isSinhala
+                                  ? 'ඉතා දුකෙන් සිටිමි'
+                                  : 'I am feeling very sad');
+                          aiFuture = CrisisDetectionService.analyzeWithAI(
+                            textToAnalyse,
+                            lang,
+                            apiKey,
+                          );
+                        }
+
+                        // Wait for save.
+                        try {
+                          await saveFuture;
+                        } catch (_) {
+                          // Save error is non-fatal — still show dialog.
+                        }
+
+                        // Wait for AI result and upgrade if more severe.
+                        if (aiFuture != null) {
+                          try {
+                            final aiLevel = await aiFuture;
+                            if (aiLevel.index > level.index) level = aiLevel;
+                          } catch (_) {
+                            // AI failed — keyword baseline is kept.
+                          }
+                        }
                         if (!mounted) return;
                         final achievementProvider =
                             Provider.of<AchievementProvider>(
@@ -1051,6 +1160,7 @@ class _MoodCheckInSheetState extends State<_MoodCheckInSheet> {
                           context,
                         );
                         if (!mounted) return;
+                        widget.onSaved?.call(level);
                         Navigator.pop(context);
                       },
                 child: _saving

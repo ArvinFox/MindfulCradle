@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/journal_provider.dart';
 import '../../providers/achievement_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../screens/main_screen.dart';
+import '../../services/crisis_detection_service.dart';
 import '../../utils/app_snackbar.dart';
 import '../../widgets/app_background.dart';
+import '../../widgets/wellness_support_dialog.dart';
 
 class JournalWriteScreen extends StatefulWidget {
   const JournalWriteScreen({super.key});
@@ -49,13 +54,52 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.user?.id ?? '';
     final lang = isSinhala ? 'si' : 'en';
+    final contentText = _contentController.text.trim();
+    final String apiKey = dotenv.env['GEMINI_API_KEY'] ?? '';
 
-    await Provider.of<JournalProvider>(context, listen: false).add(
+    // ── Step 1: synchronous keyword check — instant, always reliable.
+    // This gives a guaranteed baseline before any async operation can fail.
+    CrisisLevel crisisLevel = CrisisDetectionService.analyzeJournalText(
+      contentText,
+      lang,
+    );
+
+    // ── Step 2: kick off Firestore save AND AI detection in parallel.
+    // We do NOT use Future.wait with mixed types — await each separately
+    // so a save failure never kills the detection result.
+    final saveFuture = Provider.of<JournalProvider>(context, listen: false).add(
       userId: userId,
       title: _titleController.text.trim(),
-      content: _contentController.text.trim(),
+      content: contentText,
       language: lang,
     );
+
+    // Only run AI if keywords haven't already flagged crisis (saves tokens).
+    Future<CrisisLevel>? aiFuture;
+    if (crisisLevel != CrisisLevel.crisis && apiKey.isNotEmpty) {
+      aiFuture = CrisisDetectionService.analyzeWithAI(
+        contentText,
+        lang,
+        apiKey,
+      );
+    }
+
+    // Wait for save to complete.
+    try {
+      await saveFuture;
+    } catch (_) {
+      // Save error is non-fatal for crisis detection — continue to show dialog.
+    }
+
+    // Wait for AI result and upgrade if more severe.
+    if (aiFuture != null) {
+      try {
+        final aiLevel = await aiFuture;
+        if (aiLevel.index > crisisLevel.index) crisisLevel = aiLevel;
+      } catch (_) {
+        // AI failed — keyword baseline is kept.
+      }
+    }
 
     if (context.mounted) {
       final achievementProvider = Provider.of<AchievementProvider>(
@@ -83,13 +127,62 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
       await achievementProvider.showPendingAchievements(context);
     }
 
-    if (mounted) {
-      Navigator.pop(context);
-      AppSnackBar.success(
+    if (!mounted) return;
+
+    // Show wellness support sheet if distress/crisis content was detected.
+    // The sheet appears on top of the journal write screen; we navigate
+    // AFTER the user dismisses it so the action can influence routing.
+    if (crisisLevel != CrisisLevel.none) {
+      final action = await WellnessSupportDialog.show(
         context,
-        isSinhala ? 'ලිපිය සුරකිනු ලැබීය' : 'Entry saved',
+        crisisLevel,
+        isSinhala,
       );
+
+      if (!mounted) return;
+
+      switch (action) {
+        case WellnessAction.chat:
+          // Write wellness context so ChatBotPage can send a caring greeting.
+          await SharedPreferences.getInstance().then((prefs) {
+            prefs.setString(
+              'wellness_trigger',
+              crisisLevel == CrisisLevel.crisis ? 'crisis' : 'distress',
+            );
+            prefs.setString('wellness_trigger_lang', lang);
+          });
+          // Navigate to MainScreen with Chat tab (index 2) active.
+          if (!mounted) return;
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 2)),
+            (route) => false,
+          );
+          return;
+        case WellnessAction.questionnaire:
+          // Navigate to MainScreen with Questionnaires tab (index 1) active.
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 1)),
+            (route) => false,
+          );
+          return;
+        case WellnessAction.meditate:
+          // Navigate to MainScreen with Home tab (index 0) active — meditation
+          // sessions are on the home page.
+          Navigator.of(context).pushAndRemoveUntil(
+            MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 0)),
+            (route) => false,
+          );
+          return;
+        case WellnessAction.none:
+          break; // fall through to normal pop + snackbar
+      }
     }
+
+    Navigator.pop(context);
+    AppSnackBar.success(
+      context,
+      isSinhala ? 'ලිපිය සුරකිනු ලැබීය' : 'Entry saved',
+    );
   }
 
   @override

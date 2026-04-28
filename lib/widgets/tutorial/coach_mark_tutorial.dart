@@ -8,6 +8,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../constants/colors.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
+import '../gradient_button.dart';
 
 // ─── Step data ────────────────────────────────────────────────────────────────
 
@@ -377,16 +378,9 @@ class _CoachMarkTutorialState extends State<CoachMarkTutorial>
                 if (!isFirst) const SizedBox(width: 10),
                 Expanded(
                   flex: (isFirst || isLast) ? 1 : 2,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                    ),
+                  child: GradientButton(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    borderRadius: BorderRadius.circular(12),
                     onPressed: _finishing ? null : _next,
                     child: _finishing
                         ? const SizedBox(

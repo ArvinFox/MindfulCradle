@@ -5,6 +5,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
+import '../../widgets/gradient_button.dart';
 import '../../models/user_model.dart';
 import '../../utils/helpers.dart';
 import '../../utils/app_snackbar.dart';
@@ -348,18 +349,11 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            padding: EdgeInsets.symmetric(
-                              vertical: compact ? 12 : 14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            elevation: 0,
+                        child: GradientButton(
+                          padding: EdgeInsets.symmetric(
+                            vertical: compact ? 12 : 14,
                           ),
+                          borderRadius: BorderRadius.circular(12),
                           onPressed: () async {
                             Navigator.pop(ctx);
                             await _saveToFirebase();
@@ -448,7 +442,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.end,
           children: [
-            ElevatedButton(
+            GradientButton(
               onPressed: _isSaving
                   ? null
                   : () {
@@ -457,18 +451,11 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                         setState(() => _currentStep = 1);
                       }
                     },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: AppColors.buttonText,
-                padding: EdgeInsets.symmetric(
-                  vertical: isCompact ? 14 : 16,
-                  horizontal: isCompact ? 24 : 32,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15),
-                ),
-                elevation: 0,
+              padding: EdgeInsets.symmetric(
+                vertical: isCompact ? 14 : 16,
+                horizontal: isCompact ? 24 : 32,
               ),
+              borderRadius: BorderRadius.circular(15),
               child: Text(
                 context.t.auth('next'),
                 style: GoogleFonts.roboto(
@@ -639,7 +626,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                 ),
               ),
               const Spacer(),
-              ElevatedButton(
+              GradientButton(
                 onPressed: _isSaving
                     ? null
                     : () {
@@ -649,18 +636,11 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
                           _showConfirmationDialog();
                         }
                       },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: AppColors.buttonText,
-                  padding: EdgeInsets.symmetric(
-                    vertical: isCompact ? 14 : 16,
-                    horizontal: isCompact ? 24 : 32,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  elevation: 0,
+                padding: EdgeInsets.symmetric(
+                  vertical: isCompact ? 14 : 16,
+                  horizontal: isCompact ? 24 : 32,
                 ),
+                borderRadius: BorderRadius.circular(15),
                 child: _isSaving
                     ? const SizedBox(
                         height: 20,

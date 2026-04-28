@@ -1587,19 +1587,30 @@ class _HistoryPane extends StatelessWidget {
                                         final confirmed = await showDialog<bool>(
                                           context: context,
                                           builder: (ctx) => AlertDialog(
+                                            backgroundColor:
+                                                AppColors.background,
+                                            shape: RoundedRectangleBorder(
+                                              borderRadius:
+                                                  BorderRadius.circular(20),
+                                            ),
                                             title: Text(
                                               isSinhala
                                                   ? 'සංවාදය මකන්නද?'
                                                   : 'Delete Chat?',
                                               style: GoogleFonts.poppins(
+                                                fontSize: 20,
                                                 fontWeight: FontWeight.w600,
+                                                color: AppColors.error,
                                               ),
                                             ),
                                             content: Text(
                                               isSinhala
                                                   ? 'මෙම සංවාදය ස්ථිරවම මකා දමනු ලැබේ.'
                                                   : 'This conversation will be permanently deleted.',
-                                              style: GoogleFonts.roboto(),
+                                              style: GoogleFonts.poppins(
+                                                fontSize: 14,
+                                                color: AppColors.text,
+                                              ),
                                             ),
                                             actions: [
                                               TextButton(
@@ -1609,18 +1620,24 @@ class _HistoryPane extends StatelessWidget {
                                                   isSinhala
                                                       ? 'අවලංගු'
                                                       : 'Cancel',
+                                                  style: GoogleFonts.poppins(),
                                                 ),
                                               ),
-                                              TextButton(
+                                              ElevatedButton(
                                                 onPressed: () =>
                                                     Navigator.pop(ctx, true),
-                                                style: TextButton.styleFrom(
-                                                  foregroundColor: Colors.red,
+                                                style: ElevatedButton.styleFrom(
+                                                  backgroundColor:
+                                                      AppColors.error,
+                                                  foregroundColor: Colors.white,
                                                 ),
                                                 child: Text(
                                                   isSinhala
                                                       ? 'මකන්න'
                                                       : 'Delete',
+                                                  style: GoogleFonts.poppins(
+                                                    fontWeight: FontWeight.w600,
+                                                  ),
                                                 ),
                                               ),
                                             ],

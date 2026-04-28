@@ -72,6 +72,7 @@ class _UnlockedCard extends StatelessWidget {
           ],
         ),
         child: Stack(
+          fit: StackFit.expand,
           children: [
             // Decorative circle – top right
             Positioned(

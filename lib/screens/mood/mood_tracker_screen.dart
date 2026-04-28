@@ -15,6 +15,7 @@ import '../../screens/main_screen.dart';
 import '../../services/crisis_detection_service.dart';
 import '../../utils/app_snackbar.dart';
 import '../../widgets/app_background.dart';
+import '../../widgets/gradient_button.dart';
 import '../../widgets/wellness_support_dialog.dart';
 
 class MoodTrackerScreen extends StatefulWidget {
@@ -325,8 +326,8 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
-            color.withValues(alpha: 0.14),
-            color.withValues(alpha: 0.04),
+            color.withValues(alpha: 0.34),
+            color.withValues(alpha: 0.05),
           ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
@@ -341,7 +342,7 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
             width: 58,
             height: 58,
             decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.14),
+              color: color.withValues(alpha: 0.44),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -805,25 +806,18 @@ class _MoodTrackerScreenState extends State<MoodTrackerScreen>
               ),
             ),
             const SizedBox(height: 28),
-            ElevatedButton.icon(
+            GradientButton.icon(
               onPressed: _showCheckIn,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 28,
-                  vertical: 14,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                elevation: 0,
-              ),
-              icon: const Icon(Icons.mood_rounded),
+              icon: const Icon(Icons.mood_rounded, color: Colors.white),
               label: Text(
                 isSinhala ? 'ආරම්භ කරන්න' : 'Log First Mood',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
+              padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 14),
+              borderRadius: BorderRadius.circular(14),
             ),
           ],
         ),
@@ -1063,16 +1057,7 @@ class _MoodCheckInSheetState extends State<_MoodCheckInSheet> {
 
             SizedBox(
               width: double.infinity,
-              child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 0,
-                ),
+              child: GradientButton(
                 onPressed: _saving
                     ? null
                     : () async {

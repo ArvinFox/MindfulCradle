@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../constants/colors.dart';
 import '../providers/auth_provider.dart';
+import '../widgets/gradient_button.dart';
 
 class LogoutUtils {
   static Future<void> showLogoutDialog({
@@ -108,18 +109,11 @@ class LogoutUtils {
 
                       // Yes Button (Primary Action)
                       Expanded(
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primary,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: EdgeInsets.symmetric(
-                              vertical: compact ? 13 : 16,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                        child: GradientButton(
+                          padding: EdgeInsets.symmetric(
+                            vertical: compact ? 13 : 16,
                           ),
+                          borderRadius: BorderRadius.circular(12),
                           onPressed: () => Navigator.pop(ctx, true),
                           child: Text(
                             language == 'en' ? "Yes, Logout" : "ඔව්, පිටවෙන්න",

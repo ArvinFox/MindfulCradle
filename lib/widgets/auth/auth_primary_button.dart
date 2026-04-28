@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
+import '../gradient_button.dart';
 
 class AuthPrimaryButton extends StatelessWidget {
   final String text;
@@ -23,18 +24,10 @@ class AuthPrimaryButton extends StatelessWidget {
 
     return SizedBox(
       width: double.infinity,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: AppColors.buttonText,
-          minimumSize: const Size.fromHeight(52),
-          padding: EdgeInsets.symmetric(vertical: compact ? 14 : 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          elevation: 0,
-        ),
+      child: GradientButton(
         onPressed: onPressed,
+        padding: EdgeInsets.symmetric(vertical: compact ? 14 : 16),
+        borderRadius: BorderRadius.circular(15),
         child: isLoading
             ? const SizedBox(
                 height: 20,

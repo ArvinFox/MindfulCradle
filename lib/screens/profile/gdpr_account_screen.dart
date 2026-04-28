@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:path_provider/path_provider.dart';
 import '../../constants/colors.dart';
 import '../../utils/app_snackbar.dart';
+import '../../widgets/gradient_button.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../widgets/app_background.dart';
@@ -194,13 +195,12 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
               onPressed: () => Navigator.of(context).pop(false),
               child: Text(cancelText),
             ),
-            ElevatedButton(
+            GradientButton(
               onPressed: () => Navigator.of(context).pop(true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+              child: Text(
+                downloadText,
+                style: const TextStyle(color: Colors.white),
               ),
-              child: Text(downloadText),
             ),
           ],
         );
@@ -357,15 +357,14 @@ class _GDPRAccountScreenState extends State<GDPRAccountScreen> {
                 style: GoogleFonts.poppins(),
               ),
             ),
-            ElevatedButton(
+            GradientButton(
               onPressed: () => Navigator.of(context).pop(controller.text),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-              ),
               child: Text(
                 langCode == 'si' ? 'තහවුරු කරන්න' : 'Confirm',
-                style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],

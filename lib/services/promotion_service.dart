@@ -1,12 +1,9 @@
 import 'dart:math';
-import 'package:shared_preferences/shared_preferences.dart';
 
-/// Manages gentle, session-spaced promotional nudges for Journal, Mood, Meditation, and Evaluations.
+/// Manages promotional nudges for Journal, Mood, Meditation, and Evaluations.
 ///
-/// Rules:
-/// - Same type is not shown more than once every 45 minutes.
-/// - Only types that have not yet been completed (today) are considered.
-/// - A random candidate is picked for variety.
+/// The idle-timer in [MainScreen] controls how often promos appear (2-min idle).
+/// This service just picks which type to show.
 class PromotionService {
   PromotionService._();
 
@@ -15,54 +12,27 @@ class PromotionService {
   static const typeMeditation = 'meditation';
   static const typeEvaluation = 'evaluation';
 
-  /// 45 minutes minimum between showing the same promotion type.
-  static const _minGapMs = 45 * 60 * 1000;
-
-  /// Picks the next promotion to show, or null if nothing is needed.
+  /// Picks a random promotion type to show.
   ///
-  /// [hasMoodToday]          – user already logged mood today.
-  /// [hasJournalEntry]       – user has at least one journal entry overall.
-  /// [hasMeditationProgress] – user has completed at least one meditation.
-  /// [hasEvaluation]         – user has completed at least one evaluation.
+  /// [hasMoodToday] - user already logged mood today (skip mood promo).
   static Future<String?> pickPromotion({
     required bool hasMoodToday,
     required bool hasJournalEntry,
     required bool hasMeditationProgress,
     bool hasEvaluation = false,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    final now = DateTime.now().millisecondsSinceEpoch;
     final candidates = <String>[];
 
-    // Priority order: mood (daily check-in) > journal > meditation > evaluation.
-    if (!hasMoodToday && _canShow(prefs, typeMood, now)) {
-      candidates.add(typeMood);
-    }
-    if (!hasJournalEntry && _canShow(prefs, typeJournal, now)) {
-      candidates.add(typeJournal);
-    }
-    if (!hasMeditationProgress && _canShow(prefs, typeMeditation, now)) {
-      candidates.add(typeMeditation);
-    }
-    if (!hasEvaluation && _canShow(prefs, typeEvaluation, now)) {
-      candidates.add(typeEvaluation);
-    }
+    // Mood is a daily check-in - only nudge if not done today.
+    if (!hasMoodToday) candidates.add(typeMood);
+    // All other types are always eligible - the idle timer controls frequency.
+    candidates.add(typeJournal);
+    candidates.add(typeMeditation);
+    candidates.add(typeEvaluation);
 
-    if (candidates.isEmpty) return null;
     return candidates[Random().nextInt(candidates.length)];
   }
 
-  static bool _canShow(SharedPreferences prefs, String type, int now) {
-    final last = prefs.getInt('promo_last_$type') ?? 0;
-    return (now - last) > _minGapMs;
-  }
-
-  /// Call after the dialog is displayed so we don't show it again too soon.
-  static Future<void> markShown(String type) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setInt(
-      'promo_last_$type',
-      DateTime.now().millisecondsSinceEpoch,
-    );
-  }
+  /// No-op kept for call-site compatibility.
+  static Future<void> markShown(String type) async {}
 }

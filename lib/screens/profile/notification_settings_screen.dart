@@ -6,6 +6,7 @@ import '../../constants/colors.dart';
 import '../../services/notification_service.dart';
 import '../../utils/translate.dart';
 import '../../utils/app_snackbar.dart';
+import '../../widgets/gradient_button.dart';
 import '../../widgets/app_background.dart';
 
 class NotificationSettingsScreen extends StatefulWidget {
@@ -154,17 +155,16 @@ class _NotificationSettingsScreenState
               onPressed: () => Navigator.of(context).pop(),
               child: Text('Cancel', style: TextStyle(color: Colors.grey[600])),
             ),
-            ElevatedButton(
+            GradientButton(
               onPressed: () {
                 Navigator.of(context).pop();
                 // Open app settings
                 openAppSettings();
               },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+              child: const Text(
+                'Open Settings',
+                style: TextStyle(color: Colors.white),
               ),
-              child: const Text('Open Settings'),
             ),
           ],
         );
@@ -379,30 +379,27 @@ class _NotificationSettingsScreenState
               const SizedBox(height: 22),
               SizedBox(
                 width: double.infinity,
-                child: ElevatedButton.icon(
+                child: GradientButton.icon(
                   onPressed: () {
                     if (kDebugMode) {
                       debugPrint('Enable Notifications button pressed');
                     }
                     _requestPermissions();
                   },
-                  icon: Icon(Icons.notifications_active_rounded),
+                  icon: const Icon(
+                    Icons.notifications_active_rounded,
+                    color: Colors.white,
+                  ),
                   label: Text(
                     context.t.notifications('enableNotifications'),
                     style: GoogleFonts.poppins(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: Colors.white,
                     ),
                   ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    elevation: 0,
-                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  borderRadius: BorderRadius.circular(14),
                 ),
               ),
               if (!isSinhala) ...[
@@ -595,9 +592,12 @@ class _NotificationSettingsScreenState
                             if (_schedules.isEmpty)
                               SizedBox(
                                 width: double.infinity,
-                                child: ElevatedButton.icon(
+                                child: GradientButton.icon(
                                   onPressed: _setupDefaultReminders,
-                                  icon: Icon(Icons.auto_awesome_rounded),
+                                  icon: const Icon(
+                                    Icons.auto_awesome_rounded,
+                                    color: Colors.white,
+                                  ),
                                   label: Text(
                                     context.t.notifications(
                                       'setupDefaultReminders',
@@ -605,19 +605,13 @@ class _NotificationSettingsScreenState
                                     style: GoogleFonts.poppins(
                                       fontSize: 15,
                                       fontWeight: FontWeight.w600,
+                                      color: Colors.white,
                                     ),
                                   ),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: AppColors.primary,
-                                    foregroundColor: Colors.white,
-                                    padding: const EdgeInsets.symmetric(
-                                      vertical: 16,
-                                    ),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                    ),
-                                    elevation: 0,
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16,
                                   ),
+                                  borderRadius: BorderRadius.circular(14),
                                 ),
                               ),
                             if (_schedules.isNotEmpty)

@@ -234,6 +234,7 @@ After completing all three attempts of any questionnaire, the app automatically 
 - **PWS-18 Engine** — computes per-attempt average from subscale scores and tracks each of the 6 subscales individually. Identifies the most-improved and most-declined subscale. Produces 8 outcomes including Flourishing Journey, Growing Wellbeing, Peaked Mid-Journey, Recovering Well, Stable & Flourishing, and more. Level labels per subscale (Flourishing / Developing / Needs Growth).
 
 **Verdict Model (`QuestionnaireVerdict`):**
+
 - `trendLabel` / `trendLabelSi` — short outcome label in English and Sinhala
 - `emoji` — contextual emoji for the outcome
 - `summary` / `summarySi` — multi-sentence narrative explanation in both languages
@@ -244,6 +245,7 @@ After completing all three attempts of any questionnaire, the app automatically 
 **Persistence:** Verdicts are saved to Firestore at `users/{uid}/{questionnaire}/final_verdict` after computation and loaded on subsequent visits — no recomputation required.
 
 **Verdict Card UI (on each questionnaire start page):**
+
 - Appears below the third attempt card once all attempts are complete
 - Colour-coded header gradient based on `trendCode`: green (improving), blue (stable), amber (fluctuating), red (declining)
 - Pill badge showing the verdict label

@@ -251,8 +251,10 @@ class _PWS18FullQuestionnairePageState
                       ...scores.entries.map((e) {
                         final displayKey = _getSubscaleLabel(context, e.key);
                         final color = _pws18SubscaleColor(e.value);
-                        final String levelLabel =
-                            _pws18LevelLabel(e.value, isSinhala);
+                        final String levelLabel = _pws18LevelLabel(
+                          e.value,
+                          isSinhala,
+                        );
                         return Container(
                           width: double.infinity,
                           margin: const EdgeInsets.only(bottom: 10),
@@ -368,10 +370,11 @@ class _PWS18FullQuestionnairePageState
                             padding: const EdgeInsets.symmetric(vertical: 16),
                           ),
                           onPressed: () {
-                            final achProvider = Provider.of<AchievementProvider>(
-                              context,
-                              listen: false,
-                            );
+                            final achProvider =
+                                Provider.of<AchievementProvider>(
+                                  context,
+                                  listen: false,
+                                );
                             Navigator.of(context).pop();
                             Navigator.of(context).pop();
                             achProvider.showPendingAchievements(context);

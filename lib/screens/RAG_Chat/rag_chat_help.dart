@@ -1533,7 +1533,8 @@ class _HistoryPaneState extends State<_HistoryPane> {
                         itemCount: _sessions.length,
                         itemBuilder: (_, index) {
                           final session = _sessions[index];
-                          final isActive = session.id == widget.currentSessionId;
+                          final isActive =
+                              session.id == widget.currentSessionId;
                           return Material(
                             color: isActive
                                 ? AppColors.primary.withValues(alpha: 0.07)
@@ -1665,7 +1666,9 @@ class _HistoryPaneState extends State<_HistoryPane> {
                                           ),
                                         );
                                         if (confirmed == true) {
-                                          setState(() => _sessions.remove(session));
+                                          setState(
+                                            () => _sessions.remove(session),
+                                          );
                                           widget.onDelete(session);
                                         }
                                       },

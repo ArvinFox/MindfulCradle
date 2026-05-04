@@ -16,6 +16,7 @@ import '../../../providers/connectivity_provider.dart';
 import '../../../utils/app_snackbar.dart';
 import '/widgets/app_background.dart';
 import '../../../utils/translate.dart';
+import '../../main_screen.dart';
 
 class DASS21FullQuestionnairePage extends StatefulWidget {
   const DASS21FullQuestionnairePage({super.key});
@@ -146,14 +147,33 @@ class _DASS21FullQuestionnairePageState
   }
 
   void _showScoresDialog(Map<String, int> scores) {
+    final isSinhala = _currentLang == 'si';
+    final provider = Provider.of<DASS21Provider>(context, listen: false);
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
 
-    final labelMap = {
-      'depression': context.t.questionnaires('depression'),
-      'anxiety': context.t.questionnaires('anxiety'),
-      'stress': context.t.questionnaires('stress'),
-    };
+    final depScore = scores['depression'] ?? 0;
+    final anxScore = scores['anxiety'] ?? 0;
+    final stressScore = scores['stress'] ?? 0;
+
+    final depClass =
+        provider.classifyDepression(depScore, isSinhala: isSinhala);
+    final anxClass = provider.classifyAnxiety(anxScore, isSinhala: isSinhala);
+    final stressClass =
+        provider.classifyStress(stressScore, isSinhala: isSinhala);
+
+    final bool hasConcern = _dass21IsConcerning(depClass) ||
+        _dass21IsConcerning(anxClass) ||
+        _dass21IsConcerning(stressClass);
+
+    final String headerEmoji = hasConcern ? '💙' : '🌿';
+    final String headerMsg = hasConcern
+        ? (isSinhala
+            ? 'ඔබ ගෙවන කාලය ගැන අවධානය යොමු කරමු'
+            : 'Some areas need a little attention')
+        : (isSinhala
+            ? 'ඔබ ඉතා හොඳ තත්ත්වයේ සිටිනවා!'
+            : "You're doing great across all areas!");
 
     showDialog(
       context: context,
@@ -182,8 +202,10 @@ class _DASS21FullQuestionnairePageState
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Text(headerEmoji, style: const TextStyle(fontSize: 36)),
+                    const SizedBox(height: 8),
                     Text(
-                      context.t.questionnaires('finalScores'),
+                      isSinhala ? 'ඔබේ ප්‍රතිඵල' : 'Your Results',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: isSmallScreen ? 20 : 22,
@@ -191,62 +213,83 @@ class _DASS21FullQuestionnairePageState
                         color: AppColors.primary,
                       ),
                     ),
+                    const SizedBox(height: 6),
+                    Text(
+                      headerMsg,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.roboto(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
+                      ),
+                    ),
                     const SizedBox(height: 20),
-                    ...scores.entries.map((e) {
-                      final displayKey = labelMap[e.key] ?? e.key;
-                      return Container(
+                    _buildDASS21Tile(
+                      context.t.questionnaires('depression'),
+                      depClass,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildDASS21Tile(
+                      context.t.questionnaires('anxiety'),
+                      anxClass,
+                    ),
+                    const SizedBox(height: 10),
+                    _buildDASS21Tile(
+                      context.t.questionnaires('stress'),
+                      stressClass,
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      isSinhala
+                          ? '💡 අඩු ලකුණු = සෞඛ්‍ය සම්පන්නයි'
+                          : '💡 Lower scores = better mental health',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.roboto(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (hasConcern) ...[
+                      SizedBox(
                         width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 14),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.3),
-                            width: 1.2,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            size: 18,
                           ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                displayKey,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.text.withValues(alpha: 0.9),
-                                ),
-                              ),
+                          label: Text(
+                            isSinhala
+                                ? 'MindfulBot සමඟ කතා කරන්න'
+                                : 'Chat with MindfulBot',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
                             ),
-                            const SizedBox(width: 10),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.primary,
-                                  width: 1.3,
-                                ),
-                              ),
-                              child: Text(
-                                e.value.toString(),
-                                style: GoogleFonts.poppins(
-                                  fontSize: isSmallScreen ? 16 : 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(
+                              color: AppColors.primary,
+                              width: 1.5,
                             ),
-                          ],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            Navigator.popUntil(
+                              context,
+                              (route) => route.isFirst,
+                            );
+                            MainScreen.switchToTab(2);
+                          },
                         ),
-                      );
-                    }).toList(),
-                    const SizedBox(height: 28),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -284,6 +327,77 @@ class _DASS21FullQuestionnairePageState
         ],
       ),
     );
+  }
+
+  Widget _buildDASS21Tile(String label, String classification) {
+    final color = _dass21SeverityColor(classification);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: color.withValues(alpha: 0.35), width: 1.2),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              label,
+              style: GoogleFonts.poppins(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: AppColors.text,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              classification,
+              style: GoogleFonts.poppins(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _dass21SeverityColor(String classification) {
+    if (classification.contains('Normal') ||
+        classification.contains('සාමාන්‍ය')) {
+      return const Color(0xFF49AF3F);
+    }
+    if (classification.contains('Mild') || classification.contains('මදක්')) {
+      return const Color(0xFFCCAA00);
+    }
+    if (classification.contains('Moderate') ||
+        classification.contains('මධ්‍යම')) {
+      return const Color(0xFFFFA500);
+    }
+    if (classification.contains('Severe') ||
+        classification.contains('දරුණු')) {
+      return const Color(0xFFE76565);
+    }
+    return const Color(0xFFC73030);
+  }
+
+  bool _dass21IsConcerning(String classification) {
+    return classification.contains('Moderate') ||
+        classification.contains('Severe') ||
+        classification.contains('Extremely') ||
+        classification.contains('මධ්‍යම') ||
+        classification.contains('දරුණු') ||
+        classification.contains('අතිශය');
   }
 
   @override

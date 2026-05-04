@@ -15,6 +15,8 @@ import '/widgets/questionnaires/questionnaire_result_tiles.dart';
 import '../../../utils/translate.dart';
 import '/widgets/app_background.dart';
 import '../../../utils/app_snackbar.dart';
+import '../../../services/questionnaire_verdict_service.dart'
+    show QuestionnaireVerdict;
 
 class DASS21QuestionnaireStartPage extends StatefulWidget {
   const DASS21QuestionnaireStartPage({super.key});
@@ -185,6 +187,14 @@ class _DASS21QuestionnaireStartPageState
 
                       // --- Attempt 3 ---
                       _buildAttemptCard(context, 3, provider, isSinhala),
+
+                      // Final Verdict (only when all 3 attempts done)
+                      if (provider.finalVerdict != null)
+                        _buildFinalVerdictCard(
+                          context,
+                          provider.finalVerdict!,
+                          isSinhala,
+                        ),
 
                       const SizedBox(height: 100),
                     ],
@@ -363,6 +373,185 @@ class _DASS21QuestionnaireStartPageState
         ],
       ),
     );
+  }
+
+  // ─── Final Verdict Card ───────────────────────────────────────────────────
+
+  Widget _buildFinalVerdictCard(
+    BuildContext context,
+    QuestionnaireVerdict verdict,
+    bool isSinhala,
+  ) {
+    final headerColor = _verdictColor(verdict.trendCode);
+    final dateStr = DateFormat('MMM d, yyyy').format(verdict.computedAt);
+    final label = isSinhala ? verdict.trendLabelSi : verdict.trendLabel;
+    final summaryText = isSinhala ? verdict.summarySi : verdict.summary;
+    final insights = isSinhala
+        ? verdict.subscaleInsightsSi
+        : verdict.subscaleInsights;
+    final insightsHeader = isSinhala
+        ? 'යටි-ශ්‍රේණි විශ්ලේෂණය'
+        : 'Subscale Insights';
+    final headerTitle = isSinhala
+        ? '${verdict.emoji}  අවසාන ප්‍රතිඵල විශ්ලේෂණය'
+        : '${verdict.emoji}  Final Result Analysis';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: headerColor.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: headerColor.withValues(alpha: 0.12),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [headerColor, headerColor.withValues(alpha: 0.75)],
+                begin: Alignment.centerLeft,
+                end: Alignment.centerRight,
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(15),
+              ),
+            ),
+            child: Text(
+              headerTitle,
+              style: GoogleFonts.poppins(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: Colors.white,
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(18),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: headerColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(
+                      color: headerColor.withValues(alpha: 0.4),
+                    ),
+                  ),
+                  child: Text(
+                    label,
+                    style: GoogleFonts.poppins(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                      color: headerColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  summaryText,
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    color: AppColors.text.withValues(alpha: 0.85),
+                    height: 1.55,
+                  ),
+                ),
+                if (insights.isNotEmpty) ...[
+                  const SizedBox(height: 16),
+                  Divider(color: AppColors.border, thickness: 1),
+                  const SizedBox(height: 10),
+                  Text(
+                    insightsHeader,
+                    style: GoogleFonts.poppins(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textMuted,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ...insights.entries.map((e) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(Icons.circle, size: 7, color: headerColor),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: RichText(
+                              text: TextSpan(
+                                style: GoogleFonts.roboto(
+                                  fontSize: 13,
+                                  color: AppColors.text,
+                                  height: 1.45,
+                                ),
+                                children: [
+                                  TextSpan(
+                                    text: '${e.key}: ',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  TextSpan(text: e.value),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+                const SizedBox(height: 10),
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    'Generated on $dateStr',
+                    style: GoogleFonts.roboto(
+                      fontSize: 11,
+                      color: AppColors.textMuted,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _verdictColor(String trendCode) {
+    switch (trendCode) {
+      case 'improving':
+        return AppColors.success;
+      case 'stable':
+        return AppColors.info;
+      case 'fluctuating':
+        return AppColors.warning;
+      case 'declining':
+        return AppColors.error;
+      default:
+        return AppColors.primary;
+    }
   }
 
   void _startQuestionnaire(

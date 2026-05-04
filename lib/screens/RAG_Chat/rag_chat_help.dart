@@ -1407,7 +1407,7 @@ class _StreamingCursorState extends State<_StreamingCursor>
 
 // ── History side pane ─────────────────────────────────────────────────────────
 
-class _HistoryPane extends StatelessWidget {
+class _HistoryPane extends StatefulWidget {
   final List<ChatSession> sessions;
   final bool isLoading;
   final String? currentSessionId;
@@ -1425,8 +1425,29 @@ class _HistoryPane extends StatelessWidget {
   });
 
   @override
+  State<_HistoryPane> createState() => _HistoryPaneState();
+}
+
+class _HistoryPaneState extends State<_HistoryPane> {
+  late List<ChatSession> _sessions;
+
+  @override
+  void initState() {
+    super.initState();
+    _sessions = List.of(widget.sessions);
+  }
+
+  @override
+  void didUpdateWidget(_HistoryPane old) {
+    super.didUpdateWidget(old);
+    if (old.sessions != widget.sessions) {
+      _sessions = List.of(widget.sessions);
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final isSinhala = currentLang == 'si';
+    final isSinhala = widget.currentLang == 'si';
     final paneWidth = MediaQuery.of(context).size.width * 0.82;
 
     return SizedBox(
@@ -1480,13 +1501,13 @@ class _HistoryPane extends StatelessWidget {
               const Divider(height: 1),
               // Content
               Expanded(
-                child: isLoading
+                child: widget.isLoading
                     ? const Center(
                         child: CircularProgressIndicator(
                           color: AppColors.primary,
                         ),
                       )
-                    : sessions.isEmpty
+                    : _sessions.isEmpty
                     ? Center(
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
@@ -1509,16 +1530,16 @@ class _HistoryPane extends StatelessWidget {
                       )
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: sessions.length,
+                        itemCount: _sessions.length,
                         itemBuilder: (_, index) {
-                          final session = sessions[index];
-                          final isActive = session.id == currentSessionId;
+                          final session = _sessions[index];
+                          final isActive = session.id == widget.currentSessionId;
                           return Material(
                             color: isActive
                                 ? AppColors.primary.withValues(alpha: 0.07)
                                 : Colors.transparent,
                             child: InkWell(
-                              onTap: () => onSelect(session),
+                              onTap: () => widget.onSelect(session),
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 12,
@@ -1644,7 +1665,8 @@ class _HistoryPane extends StatelessWidget {
                                           ),
                                         );
                                         if (confirmed == true) {
-                                          onDelete(session);
+                                          setState(() => _sessions.remove(session));
+                                          widget.onDelete(session);
                                         }
                                       },
                                       visualDensity: VisualDensity.compact,

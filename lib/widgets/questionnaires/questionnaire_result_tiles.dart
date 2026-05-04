@@ -129,6 +129,7 @@ class QuestionnaireCategoryTile extends StatelessWidget {
   final double? score;
   final Color tileColor;
   final String? classification;
+  final String? outOf;
 
   const QuestionnaireCategoryTile({
     super.key,
@@ -136,6 +137,7 @@ class QuestionnaireCategoryTile extends StatelessWidget {
     this.score,
     required this.tileColor,
     this.classification,
+    this.outOf,
   });
 
   @override
@@ -173,7 +175,9 @@ class QuestionnaireCategoryTile extends StatelessWidget {
           if (score != null) ...[
             const SizedBox(height: 6),
             Text(
-              score!.toStringAsFixed(2),
+              outOf != null
+                  ? '${score!.toStringAsFixed(1)} / $outOf'
+                  : score!.toStringAsFixed(2),
               style: GoogleFonts.poppins(
                 fontSize: 22,
                 fontWeight: FontWeight.w700,

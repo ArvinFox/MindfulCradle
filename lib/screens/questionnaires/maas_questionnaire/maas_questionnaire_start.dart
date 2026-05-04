@@ -302,11 +302,12 @@ class _MAASQuestionnaireStartPageState
           : null,
       results: QuestionnaireResultTile(
         title: context.t.questionnaires('mindfulnessLevel'),
-        scoreText:
-            (provider.getAttemptData(attemptNum)?['maasScore'] as num?)
-                ?.toDouble()
-                .toStringAsFixed(2) ??
-            "-",
+        scoreText: () {
+              final s = (provider.getAttemptData(attemptNum)?['maasScore']
+                      as num?)
+                  ?.toDouble();
+              return s != null ? '${s.toStringAsFixed(2)} / 6.0' : '-';
+            }(),
         classification: _translateClassification(
           (provider.getAttemptData(attemptNum)?['classification'] as String?) ??
               "-",

@@ -322,10 +322,29 @@ class _DASS21QuestionnaireStartPageState
           : null,
       results: Column(
         children: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF2B7CD3)),
+                const SizedBox(width: 6),
+                Text(
+                  isSinhala
+                      ? 'අඩු ලකුණු = සෞඛ්‍ය සම්පන්නයි'
+                      : 'Lower scores = better mental health',
+                  style: GoogleFonts.roboto(
+                    fontSize: 12,
+                    color: const Color(0xFF2B7CD3),
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          ),
           QuestionnaireResultTile(
             title: context.t.questionnaires('depression'),
             scoreText:
-                '${provider.getPastScore(attemptNum, 'depression') ?? 0}',
+                '${provider.getPastScore(attemptNum, 'depression') ?? 0} / 42',
             classification: provider.classifyDepression(
               provider.getPastScore(attemptNum, 'depression') ?? 0,
               isSinhala: isSinhala,
@@ -341,7 +360,7 @@ class _DASS21QuestionnaireStartPageState
           const SizedBox(height: 12),
           QuestionnaireResultTile(
             title: context.t.questionnaires('anxiety'),
-            scoreText: '${provider.getPastScore(attemptNum, 'anxiety') ?? 0}',
+            scoreText: '${provider.getPastScore(attemptNum, 'anxiety') ?? 0} / 42',
             classification: provider.classifyAnxiety(
               provider.getPastScore(attemptNum, 'anxiety') ?? 0,
               isSinhala: isSinhala,
@@ -357,7 +376,7 @@ class _DASS21QuestionnaireStartPageState
           const SizedBox(height: 12),
           QuestionnaireResultTile(
             title: context.t.questionnaires('stress'),
-            scoreText: '${provider.getPastScore(attemptNum, 'stress') ?? 0}',
+            scoreText: '${provider.getPastScore(attemptNum, 'stress') ?? 0} / 42',
             classification: provider.classifyStress(
               provider.getPastScore(attemptNum, 'stress') ?? 0,
               isSinhala: isSinhala,

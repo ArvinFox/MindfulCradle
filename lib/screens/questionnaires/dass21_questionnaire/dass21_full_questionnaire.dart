@@ -265,8 +265,8 @@ class _DASS21FullQuestionnairePageState
                           ),
                           label: Text(
                             isSinhala
-                                ? 'MindfulBot සමඟ කතා කරන්න'
-                                : 'Chat with MindfulBot',
+                                ? 'Mindful Companion සමඟ කතා කරන්න'
+                                : 'Chat with Mindful Companion',
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,

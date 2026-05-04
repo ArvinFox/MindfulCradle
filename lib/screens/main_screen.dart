@@ -211,7 +211,7 @@ class _MainScreenState extends State<MainScreen> {
             context,
             Provider.of<LanguageProvider>(context, listen: false).currentLang ==
                     'si'
-                ? 'ක්ෂය-ශෛලී ධ්‍යාන සැසි ඉහළින් ඇත 🧘‍♀️'
+                ? 'සියලු භාවනා සැසි පහළ ඇත! 🧘‍♀️'
                 : 'Meditation sessions are right below — give one a try! 🧘‍♀️',
             duration: const Duration(seconds: 4),
           );
@@ -240,7 +240,7 @@ class _MainScreenState extends State<MainScreen> {
               ];
         return PromoCardData(
           emoji: '📖',
-          title: isSinhala ? 'සඟරාව ලියන්නද?' : 'Time to journal?',
+          title: isSinhala ? 'සඟරාව ලියමුද?' : 'Time to journal?',
           message: msgs[rng.nextInt(msgs.length)],
           color: const Color(0xFF2D9D78),
           actionLabel: isSinhala ? 'ලිවීමට යමු' : "Let's Write",
@@ -260,7 +260,7 @@ class _MainScreenState extends State<MainScreen> {
               ];
         return PromoCardData(
           emoji: '🌸',
-          title: isSinhala ? 'මනෝ සටහනක්?' : 'Mood check-in!',
+          title: isSinhala ? 'අද ඔබට කෙසේද?' : 'Mood check-in!',
           message: msgs[rng.nextInt(msgs.length)],
           color: const Color(0xFFE28E28),
           actionLabel: isSinhala ? 'සටහන් කරන්න' : 'Log My Mood',
@@ -289,9 +289,9 @@ class _MainScreenState extends State<MainScreen> {
       default: // typeMeditation
         final msgs = isSinhala
             ? [
-                'මිනිත්තු 5ක ධ්‍යානයක් ඔබේ දිනය සතුටකින් ආරම්භ කරයි',
-                'ශ්වාසය ගෙන ඔබේ ශරීරය සන්සුන් කරන්න',
-                'ධ්‍යාන සැසියකට ඔබේ ශරීරය ඉල්ලා සිටියි',
+                'මිනිත්තු 5ක භාවනාවක් ඔබේ දිනය සතුටකින් ආරම්භ කරයි',
+                'හොදින් හුස්ම ගෙන ඔබේ ශරීරය සන්සුන් කරන්න',
+                'භාවනා සැසියකට ඔබේ සහභාගී වන්න',
               ]
             : [
                 'A 5-minute meditation can transform your day',
@@ -300,10 +300,10 @@ class _MainScreenState extends State<MainScreen> {
               ];
         return PromoCardData(
           emoji: '🧘‍♀️',
-          title: isSinhala ? 'ධ්‍යාන කරන්නද?' : 'Time to meditate?',
+          title: isSinhala ? 'භාවනා කරමුද?' : 'Time to meditate?',
           message: msgs[rng.nextInt(msgs.length)],
           color: AppColors.primary,
-          actionLabel: isSinhala ? 'ධ්‍යානයට යමු' : "Let's Meditate",
+          actionLabel: isSinhala ? 'භාවනාට යමු' : "Let's Meditate",
         );
     }
   }

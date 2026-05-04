@@ -203,14 +203,19 @@ class _MainScreenState extends State<MainScreen> {
         showMoodCheckInDialog(context);
         break;
       case PromotionService.typeMeditation:
-        AppSnackBar.info(
-          context,
-          Provider.of<LanguageProvider>(context, listen: false).currentLang ==
-                  'si'
-              ? 'ක්ෂය-ශෛලී ධ්‍යාන සැසි ඉහළින් ඇත 🧘‍♀️'
-              : 'Meditation sessions are right below — give one a try! 🧘‍♀️',
-          duration: const Duration(seconds: 4),
-        );
+        _switchTab(0);
+        // Brief delay so the home tab finishes rendering before the toast appears.
+        Future.delayed(const Duration(milliseconds: 350), () {
+          if (!mounted) return;
+          AppSnackBar.info(
+            context,
+            Provider.of<LanguageProvider>(context, listen: false).currentLang ==
+                    'si'
+                ? 'ක්ෂය-ශෛලී ධ්‍යාන සැසි ඉහළින් ඇත 🧘‍♀️'
+                : 'Meditation sessions are right below — give one a try! 🧘‍♀️',
+            duration: const Duration(seconds: 4),
+          );
+        });
         break;
       case PromotionService.typeEvaluation:
         _switchTab(1);

@@ -221,13 +221,51 @@ A Flutter-based maternal mental health companion app targeting pregnant and post
 - Attempt history
 - Unlocks **Happiness Seeker** achievement on first completion
 
+### Analytical Final Verdict System (3-Attempt Analysis)
+
+After completing all three attempts of any questionnaire, the app automatically generates a personalised analytical verdict — not just an average, but a trend-based analysis of the user's psychological journey.
+
+**Verdict Engines (one per questionnaire):**
+
+- **DASS-21 Engine** — maps raw scores to severity indices (0–4 per subscale), computes a composite delta across attempts, and classifies into 7 outcomes: Strong Improvement, Gradual Improvement, Stable & Healthy, Stable — Needs Support, Mixed Progress, Slight Fluctuation, Needs Attention. Per-subscale trend phrases describe whether each dimension improved, worsened, peaked then improved, or stayed stable.
+
+- **MAAS Engine** — analyses per-step deltas and overall score arc to produce 8 outcomes: Consistent Growth, Late Bloomer, Steady Improvement, Consistently Mindful, Remarkable Recovery, Consistent Decline, Overall Decline, Developing Awareness. Includes class labels (High / Average / Low) at each data point.
+
+- **PWS-18 Engine** — computes per-attempt average from subscale scores and tracks each of the 6 subscales individually. Identifies the most-improved and most-declined subscale. Produces 8 outcomes including Flourishing Journey, Growing Wellbeing, Peaked Mid-Journey, Recovering Well, Stable & Flourishing, and more. Level labels per subscale (Flourishing / Developing / Needs Growth).
+
+**Verdict Model (`QuestionnaireVerdict`):**
+- `trendLabel` / `trendLabelSi` — short outcome label in English and Sinhala
+- `emoji` — contextual emoji for the outcome
+- `summary` / `summarySi` — multi-sentence narrative explanation in both languages
+- `subscaleInsights` / `subscaleInsightsSi` — per-subscale trend descriptions in both languages
+- `trendCode` — machine-readable code: `improving` | `stable` | `fluctuating` | `declining`
+- `computedAt` — timestamp of generation
+
+**Persistence:** Verdicts are saved to Firestore at `users/{uid}/{questionnaire}/final_verdict` after computation and loaded on subsequent visits — no recomputation required.
+
+**Verdict Card UI (on each questionnaire start page):**
+- Appears below the third attempt card once all attempts are complete
+- Colour-coded header gradient based on `trendCode`: green (improving), blue (stable), amber (fluctuating), red (declining)
+- Pill badge showing the verdict label
+- Full narrative summary paragraph
+- Expandable subscale insights section with bullet list
+- "Generated on [date]" footer
+
+**Bilingual support:** All verdict text (labels, summaries, subscale insights) is pre-computed in both English and Sinhala at verdict creation time and stored in Firestore. The displayed language switches automatically with the app language — no runtime translation API needed.
+
+### Classification Labels on Start Page Score Tiles
+
+- Each attempt's result tile on the questionnaire start page now shows a word-based severity/level label below the numeric score (e.g. "Moderate", "Flourishing", "High")
+- Labels use the same classification logic as the full result screen
+- Consistent across DASS-21 (per-subscale severity), MAAS (class label), and PWS-18 (level label)
+
 ### Common Questionnaire Features
 
 - Offline guard: shows connectivity warning if no internet
 - Rate limiting: prevents re-attempting too soon
 - Animated intro screen before each questionnaire
 - Marquee scrolling title for long questionnaire names
-- Result tiles with colour-coded severity indicators
+- Result tiles with colour-coded severity indicators and word-based classification labels
 
 ---
 

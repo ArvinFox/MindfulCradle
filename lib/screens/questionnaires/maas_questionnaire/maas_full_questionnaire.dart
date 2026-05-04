@@ -16,6 +16,7 @@ import '../../../providers/connectivity_provider.dart';
 import '../../../utils/app_snackbar.dart';
 import '/widgets/app_background.dart';
 import '../../../utils/translate.dart';
+import '../../main_screen.dart';
 
 class MAASFullQuestionnairePage extends StatefulWidget {
   const MAASFullQuestionnairePage({super.key});
@@ -154,8 +155,20 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
 
   // DIALOG LOGIC
   void _showResultDialog(double score, String classification) {
+    final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
+    final bool isHighMindfulness = score >= 4.0;
+    final Color levelColor =
+        isHighMindfulness ? const Color(0xFF49AF3F) : const Color(0xFFFFA500);
+    final String emoji = isHighMindfulness ? '🧘' : '💙';
+    final String summaryMsg = isHighMindfulness
+        ? (isSinhala
+            ? 'ඔබ ඉතා හොඳ සිහිකල්පනාවේ සිටිනවා! දිගටම ඉදිරියට!'
+            : 'You have strong mindful awareness. Keep it up!')
+        : (isSinhala
+            ? 'සිහිකල්පනාව වර්ධනය කර ගැනීමට MindfulBot ඔබට උදව් කළ හැකිය.'
+            : 'Mindfulness takes practice. MindfulBot can help you grow.');
 
     showDialog(
       context: context,
@@ -184,8 +197,10 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Text(emoji, style: const TextStyle(fontSize: 36)),
+                    const SizedBox(height: 8),
                     Text(
-                      context.t.questionnaires('finalMindfulnessScore'),
+                      isSinhala ? 'සිහිකල්පනා ප්‍රතිඵල' : 'Mindfulness Results',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: isSmallScreen ? 20 : 22,
@@ -194,79 +209,131 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Score Section
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(14),
+                        color: levelColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3),
+                          color: levelColor.withValues(alpha: 0.35),
                           width: 1.2,
                         ),
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            context.t.questionnaires('score'),
+                            isSinhala ? 'ඔබේ ලකුණ' : 'Your Score',
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.text.withValues(alpha: 0.9),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textMuted,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Text(
-                            score.toStringAsFixed(2),
+                            '${score.toStringAsFixed(2)} / 6.0',
                             style: GoogleFonts.poppins(
-                              fontSize: isSmallScreen ? 22 : 26,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                              fontSize: isSmallScreen ? 26 : 30,
+                              fontWeight: FontWeight.w700,
+                              color: levelColor,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: score / 6.0,
+                              minHeight: 10,
+                              backgroundColor: levelColor.withValues(alpha: 0.15),
+                              valueColor:
+                                  AlwaysStoppedAnimation<Color>(levelColor),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: levelColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              classification,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    // Classification Section
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.primary.withValues(alpha: 0.3),
-                          width: 1.2,
-                        ),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            context.t.questionnaires('mindfulnessLevel'),
-                            style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.text.withValues(alpha: 0.9),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            classification,
-                            textAlign: TextAlign.start,
-                            style: GoogleFonts.poppins(
-                              fontSize: isSmallScreen ? 17 : 18,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
-                            ),
-                          ),
-                        ],
+                    const SizedBox(height: 14),
+                    Text(
+                      summaryMsg,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.roboto(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
                       ),
                     ),
-                    const SizedBox(height: 28),
+                    const SizedBox(height: 4),
+                    Text(
+                      isSinhala
+                          ? '💡 ඉහළ ලකුණු = ශ්‍රේෂ්ඨ සිහිකල්පනාව (1–6 ශ්‍රේණිය)'
+                          : '💡 Higher score = greater mindfulness (1–6 scale)',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.roboto(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (!isHighMindfulness) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            size: 18,
+                          ),
+                          label: Text(
+                            isSinhala
+                                ? 'MindfulBot සමඟ කතා කරන්න'
+                                : 'Chat with MindfulBot',
+                            style: GoogleFonts.poppins(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 14,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(
+                              color: AppColors.primary,
+                              width: 1.5,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            Navigator.popUntil(
+                              context,
+                              (route) => route.isFirst,
+                            );
+                            MainScreen.switchToTab(2);
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -278,19 +345,12 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: () {
-                          // Get Reference to Achievement Provider before popping
                           final achProvider = Provider.of<AchievementProvider>(
                             context,
                             listen: false,
                           );
-
-                          // Close Dialog
                           Navigator.of(context).pop();
-
-                          // Close Page
                           Navigator.of(context).pop();
-
-                          // Trigger the Pending Dialog on the Start Screen
                           achProvider.showPendingAchievements(context);
                         },
                         child: Text(

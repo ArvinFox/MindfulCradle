@@ -5,6 +5,7 @@ import '../models/user_model.dart';
 import '../providers/auth_provider.dart';
 import '../providers/achievement_provider.dart';
 import '../services/dass21_service.dart';
+import '../services/questionnaire_verdict_service.dart';
 import 'package:provider/provider.dart';
 
 class DASS21Provider with ChangeNotifier {
@@ -25,6 +26,9 @@ class DASS21Provider with ChangeNotifier {
   // Standard questionnaire state
   List<int?> responses = List<int?>.filled(21, null);
   bool isLoading = false;
+
+  // Final verdict (available only after all 3 attempts)
+  QuestionnaireVerdict? finalVerdict;
 
   DASS21Provider();
 
@@ -75,6 +79,23 @@ class DASS21Provider with ChangeNotifier {
       currentAttemptNumber = result.currentAttemptNumber;
       isLocked = result.isLocked;
       lockReason = result.lockReason;
+
+      if (_user != null && userAttempts.length == 3) {
+        finalVerdict = await VerdictFirestoreService.loadVerdict(
+          userId: _user!.id,
+          subcollection: 'dass21_responses',
+        );
+        if (finalVerdict == null) {
+          finalVerdict = DASS21VerdictEngine.compute(userAttempts);
+          await VerdictFirestoreService.saveVerdict(
+            userId: _user!.id,
+            subcollection: 'dass21_responses',
+            verdict: finalVerdict!,
+          );
+        }
+      } else {
+        finalVerdict = null;
+      }
     } catch (e) {
       if (kDebugMode) debugPrint("Error loading DASS data.");
     } finally {
@@ -123,6 +144,7 @@ class DASS21Provider with ChangeNotifier {
   void reset() {
     responses = List<int?>.filled(21, null);
     userAttempts.clear();
+    finalVerdict = null;
     isLoading = false;
     notifyListeners();
   }

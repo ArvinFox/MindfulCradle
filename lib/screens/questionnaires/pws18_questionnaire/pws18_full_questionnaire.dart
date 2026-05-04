@@ -16,6 +16,7 @@ import '../../../providers/connectivity_provider.dart';
 import '../../../utils/app_snackbar.dart';
 import '/widgets/app_background.dart';
 import '../../../utils/translate.dart';
+import '../../main_screen.dart';
 
 class PWS18FullQuestionnairePage extends StatefulWidget {
   const PWS18FullQuestionnairePage({super.key});
@@ -168,8 +169,33 @@ class _PWS18FullQuestionnairePageState
 
   // DIALOG LOGIC
   void _showScoresDialog(Map<String, double> scores) {
+    final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
+
+    final double avgScore = scores.isEmpty
+        ? 0
+        : scores.values.fold(0.0, (sum, v) => sum + v) / scores.length;
+    final bool needsSupport = avgScore < 4.5;
+
+    String overallEmoji;
+    String overallMsg;
+    if (avgScore >= 5.5) {
+      overallEmoji = '🌟';
+      overallMsg = isSinhala
+          ? 'ඔබේ සමස්ත සෞඛ්‍ය සම්පන්නභාවය ඉතා ඉහළ මට්ටමේ ඇත!'
+          : 'Your overall wellbeing is flourishing!';
+    } else if (avgScore >= 4.0) {
+      overallEmoji = '🌱';
+      overallMsg = isSinhala
+          ? 'ඔබ හොඳ ගමනක් යාමෙන් සිටිනවා. දිගටම ඉදිරියට!'
+          : "You're on a good path. Keep growing!";
+    } else {
+      overallEmoji = '💙';
+      overallMsg = isSinhala
+          ? 'ඔබේ සෞඛ්‍ය ගමනට MindfulBot ඔබ සමඟ සිටී'
+          : 'MindfulBot is here to support your wellbeing journey';
+    }
 
     showDialog(
       context: context,
@@ -195,112 +221,173 @@ class _PWS18FullQuestionnairePageState
                   vertical: 24,
                   horizontal: 20,
                 ),
-                content: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      context.t.questionnaires('finalScores'),
-                      textAlign: TextAlign.center,
-                      style: GoogleFonts.poppins(
-                        fontSize: isSmallScreen ? 20 : 22,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(overallEmoji, style: const TextStyle(fontSize: 36)),
+                      const SizedBox(height: 8),
+                      Text(
+                        isSinhala
+                            ? 'ඔබේ සෞඛ්‍ය ප්‍රතිඵල'
+                            : 'Your Wellbeing Results',
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.poppins(
+                          fontSize: isSmallScreen ? 20 : 22,
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.primary,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    ...scores.entries.map((e) {
-                      final displayKey = _getSubscaleLabel(context, e.key);
-
-                      return Container(
-                        width: double.infinity,
-                        margin: const EdgeInsets.only(bottom: 14),
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(
-                            color: AppColors.primary.withValues(alpha: 0.3),
-                            width: 1.2,
+                      const SizedBox(height: 6),
+                      Text(
+                        overallMsg,
+                        textAlign: TextAlign.center,
+                        style: GoogleFonts.roboto(
+                          fontSize: 13,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
+                      ...scores.entries.map((e) {
+                        final displayKey = _getSubscaleLabel(context, e.key);
+                        final color = _pws18SubscaleColor(e.value);
+                        final String levelLabel =
+                            _pws18LevelLabel(e.value, isSinhala);
+                        return Container(
+                          width: double.infinity,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 10,
                           ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                displayKey,
-                                style: GoogleFonts.poppins(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: AppColors.text.withValues(alpha: 0.9),
-                                ),
-                              ),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.08),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(
+                              color: color.withValues(alpha: 0.35),
+                              width: 1.2,
                             ),
-                            const SizedBox(width: 10),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: AppColors.primary,
-                                  width: 1.3,
-                                ),
-                              ),
-                              child: Text(
-                                e.value.toStringAsFixed(2),
-                                style: GoogleFonts.poppins(
-                                  fontSize: isSmallScreen ? 16 : 17,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    }).toList(),
-                    const SizedBox(height: 28),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        onPressed: () {
-                          // Achievement Provider Logic
-                          final achProvider = Provider.of<AchievementProvider>(
-                            context,
-                            listen: false,
-                          );
-
-                          // Close Dialog
-                          Navigator.of(context).pop();
-
-                          // Close Page
-                          Navigator.of(context).pop();
-
-                          // Trigger Pending Achievements on Start Screen
-                          achProvider.showPendingAchievements(context);
-                        },
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  displayKey,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppColors.text,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: Text(
+                                  levelLabel,
+                                  style: GoogleFonts.poppins(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      }),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 4, bottom: 16),
                         child: Text(
-                          context.t.questionnaires('ok'),
-                          style: GoogleFonts.poppins(
-                            color: AppColors.buttonText,
-                            fontWeight: FontWeight.w600,
-                            fontSize: isSmallScreen ? 15 : 16,
+                          isSinhala
+                              ? '💡 ඉහළ ලකුණු = ශ්‍රේෂ්ඨ සෞඛ්‍ය (1–7 ශ්‍රේණිය)'
+                              : '💡 Higher scores = greater wellbeing (1–7 scale)',
+                          textAlign: TextAlign.center,
+                          style: GoogleFonts.roboto(
+                            fontSize: 11,
+                            color: AppColors.textMuted,
+                            fontStyle: FontStyle.italic,
                           ),
                         ),
                       ),
-                    ),
-                  ],
+                      if (needsSupport) ...[
+                        SizedBox(
+                          width: double.infinity,
+                          child: OutlinedButton.icon(
+                            icon: const Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              size: 18,
+                            ),
+                            label: Text(
+                              isSinhala
+                                  ? 'MindfulBot සමඟ කතා කරන්න'
+                                  : 'Chat with MindfulBot',
+                              style: GoogleFonts.poppins(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 14,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.primary,
+                              side: BorderSide(
+                                color: AppColors.primary,
+                                width: 1.5,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                              Navigator.popUntil(
+                                context,
+                                (route) => route.isFirst,
+                              );
+                              MainScreen.switchToTab(2);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                      ],
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                          ),
+                          onPressed: () {
+                            final achProvider = Provider.of<AchievementProvider>(
+                              context,
+                              listen: false,
+                            );
+                            Navigator.of(context).pop();
+                            Navigator.of(context).pop();
+                            achProvider.showPendingAchievements(context);
+                          },
+                          child: Text(
+                            context.t.questionnaires('ok'),
+                            style: GoogleFonts.poppins(
+                              color: AppColors.buttonText,
+                              fontWeight: FontWeight.w600,
+                              fontSize: isSmallScreen ? 15 : 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -308,6 +395,24 @@ class _PWS18FullQuestionnairePageState
         ],
       ),
     );
+  }
+
+  Color _pws18SubscaleColor(double score) {
+    if (score >= 5.5) return const Color(0xFF49AF3F);
+    if (score >= 4.0) return const Color(0xFFCCAA00);
+    return const Color(0xFFFFA500);
+  }
+
+  String _pws18LevelLabel(double score, bool isSinhala) {
+    if (isSinhala) {
+      if (score >= 5.5) return 'ශ්‍රේෂ්ඨ';
+      if (score >= 4.0) return 'මධ්‍යම';
+      return 'දියුණු විය යුතු';
+    } else {
+      if (score >= 5.5) return 'Flourishing';
+      if (score >= 4.0) return 'Developing';
+      return 'Needs Growth';
+    }
   }
 
   @override

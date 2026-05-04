@@ -193,8 +193,8 @@ class _PWS18FullQuestionnairePageState
     } else {
       overallEmoji = '💙';
       overallMsg = isSinhala
-          ? 'ඔබේ සෞඛ්‍ය ගමනට MindfulBot ඔබ සමඟ සිටී'
-          : 'MindfulBot is here to support your wellbeing journey';
+          ? 'ඔබේ සෞඛ්‍ය ගමනට Mindful Companion ඔබ සමඟ සිටී'
+          : 'Mindful Companion is here to support your wellbeing journey';
     }
 
     showDialog(
@@ -329,8 +329,8 @@ class _PWS18FullQuestionnairePageState
                             ),
                             label: Text(
                               isSinhala
-                                  ? 'MindfulBot සමඟ කතා කරන්න'
-                                  : 'Chat with MindfulBot',
+                                  ? 'Mindful Companion සමඟ කතා කරන්න'
+                                  : 'Chat with Mindful Companion',
                               style: GoogleFonts.poppins(
                                 fontWeight: FontWeight.w600,
                                 fontSize: 14,

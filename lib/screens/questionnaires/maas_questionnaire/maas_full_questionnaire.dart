@@ -168,8 +168,8 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
               ? 'ඔබ ඉතා හොඳ සිහිකල්පනාවේ සිටිනවා! දිගටම ඉදිරියට!'
               : 'You have strong mindful awareness. Keep it up!')
         : (isSinhala
-              ? 'සිහිකල්පනාව වර්ධනය කර ගැනීමට MindfulBot ඔබට උදව් කළ හැකිය.'
-              : 'Mindfulness takes practice. MindfulBot can help you grow.');
+              ? 'සිහිකල්පනාව වර්ධනය කර ගැනීමට Mindful Companion ඔබට උදව් කළ හැකිය.'
+              : 'Mindfulness takes practice. Mindful Companion can help you grow.');
 
     showDialog(
       context: context,
@@ -308,8 +308,8 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           ),
                           label: Text(
                             isSinhala
-                                ? 'MindfulBot සමඟ කතා කරන්න'
-                                : 'Chat with MindfulBot',
+                                ? 'Mindful Companion සමඟ කතා කරන්න'
+                                : 'Chat with Mindful Companion',
                             style: GoogleFonts.poppins(
                               fontWeight: FontWeight.w600,
                               fontSize: 14,

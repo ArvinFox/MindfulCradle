@@ -224,12 +224,12 @@ class DASS21VerdictEngine {
         summary =
             'Your scores have stayed consistent but suggest some ongoing '
             'stress, anxiety, or low mood. Stability is a foundation — '
-            'consider speaking with a professional or using MindfulBot for '
+            'consider speaking with a professional or using Mindful Companion for '
             'additional support.';
         summarySi =
             'ඔබේ ලකුණු ස්ථාවරව පවතින නමුත්, යම් ප්‍රමාණයක ආතතියක්, කාංසාවක් '
             'හෝ මානසික පසුබෑමක් අඛණ්ඩව පවතින බවක් පෙන්නුම් කරයි. ස්ථාවරත්වය '
-            'හොඳ පදනමක් වුවත් — අමතර සහාය සඳහා වෘත්තිකයෙකු හමුවීම හෝ MindfulBot භාවිතා කිරීම සලකා බලන්න.';
+            'හොඳ පදනමක් වුවත් — අමතර සහාය සඳහා වෘත්තිකයෙකු හමුවීම හෝ Mindful Companion භාවිතා කිරීම සලකා බලන්න.';
       }
     } else if (overallDelta <= 2 && improvingCount >= 2) {
       trendCode = 'fluctuating';
@@ -265,12 +265,12 @@ class DASS21VerdictEngine {
       summary =
           'Your emotional distress scores have increased across the three '
           'assessments. This is a meaningful signal — please consider '
-          'reaching out to a healthcare professional or using MindfulBot for '
+          'reaching out to a healthcare professional or using Mindful Companion for '
           'support. You are not alone, and help is available.';
       summarySi =
           'ඇගයීම් තුන හරහාම ඔබේ චිත්තවේගී ආතති මට්ටම් වැඩි වී ඇත. මෙය '
           'සැලකිලිමත් විය යුතු තත්ත්වයකි — කරුණාකර සෞඛ්‍ය වෘත්තිකයෙකුගේ සහාය '
-          'ලබාගැනීමට හෝ MindfulBot වෙතින් සහාය ලබාගැනීමට සලකා බලන්න. ඔබ තනි වී නැත, ඔබට අවශ්‍ය සහාය ලබාගත හැක.';
+          'ලබාගැනීමට හෝ Mindful Companion වෙතින් සහාය ලබාගැනීමට සලකා බලන්න. ඔබ තනි වී නැත, ඔබට අවශ්‍ය සහාය ලබාගත හැක.';
     }
 
     final arrows = '(${dep[0]} → ${dep[1]} → ${dep[2]})';

@@ -326,7 +326,11 @@ class _DASS21QuestionnaireStartPageState
             padding: const EdgeInsets.only(bottom: 10),
             child: Row(
               children: [
-                const Icon(Icons.info_outline_rounded, size: 14, color: Color(0xFF2B7CD3)),
+                const Icon(
+                  Icons.info_outline_rounded,
+                  size: 14,
+                  color: Color(0xFF2B7CD3),
+                ),
                 const SizedBox(width: 6),
                 Text(
                   isSinhala
@@ -360,7 +364,8 @@ class _DASS21QuestionnaireStartPageState
           const SizedBox(height: 12),
           QuestionnaireResultTile(
             title: context.t.questionnaires('anxiety'),
-            scoreText: '${provider.getPastScore(attemptNum, 'anxiety') ?? 0} / 42',
+            scoreText:
+                '${provider.getPastScore(attemptNum, 'anxiety') ?? 0} / 42',
             classification: provider.classifyAnxiety(
               provider.getPastScore(attemptNum, 'anxiety') ?? 0,
               isSinhala: isSinhala,
@@ -376,7 +381,8 @@ class _DASS21QuestionnaireStartPageState
           const SizedBox(height: 12),
           QuestionnaireResultTile(
             title: context.t.questionnaires('stress'),
-            scoreText: '${provider.getPastScore(attemptNum, 'stress') ?? 0} / 42',
+            scoreText:
+                '${provider.getPastScore(attemptNum, 'stress') ?? 0} / 42',
             classification: provider.classifyStress(
               provider.getPastScore(attemptNum, 'stress') ?? 0,
               isSinhala: isSinhala,

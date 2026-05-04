@@ -322,7 +322,7 @@ class _PWS18QuestionnaireStartPageState
       crossAxisCount: 2,
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: 3 / 2,
+      childAspectRatio: isSinhala ? 1.1 : 1.5,
       children: provider.subscales.keys.map((key) {
         final score = scores[key];
         final displayTitle = _getSubscaleLabel(context, key);
@@ -332,6 +332,7 @@ class _PWS18QuestionnaireStartPageState
           title: displayTitle,
           score: score,
           classification: label,
+          outOf: '7',
           tileColor: score != null
               ? scoreToColorPWS18(score)
               : AppColors.tileInactive,

@@ -156,24 +156,29 @@ class _DASS21FullQuestionnairePageState
     final anxScore = scores['anxiety'] ?? 0;
     final stressScore = scores['stress'] ?? 0;
 
-    final depClass =
-        provider.classifyDepression(depScore, isSinhala: isSinhala);
+    final depClass = provider.classifyDepression(
+      depScore,
+      isSinhala: isSinhala,
+    );
     final anxClass = provider.classifyAnxiety(anxScore, isSinhala: isSinhala);
-    final stressClass =
-        provider.classifyStress(stressScore, isSinhala: isSinhala);
+    final stressClass = provider.classifyStress(
+      stressScore,
+      isSinhala: isSinhala,
+    );
 
-    final bool hasConcern = _dass21IsConcerning(depClass) ||
+    final bool hasConcern =
+        _dass21IsConcerning(depClass) ||
         _dass21IsConcerning(anxClass) ||
         _dass21IsConcerning(stressClass);
 
     final String headerEmoji = hasConcern ? '💙' : '🌿';
     final String headerMsg = hasConcern
         ? (isSinhala
-            ? 'ඔබ ගෙවන කාලය ගැන අවධානය යොමු කරමු'
-            : 'Some areas need a little attention')
+              ? 'ඔබ ගෙවන කාලය ගැන අවධානය යොමු කරමු'
+              : 'Some areas need a little attention')
         : (isSinhala
-            ? 'ඔබ ඉතා හොඳ තත්ත්වයේ සිටිනවා!'
-            : "You're doing great across all areas!");
+              ? 'ඔබ ඉතා හොඳ තත්ත්වයේ සිටිනවා!'
+              : "You're doing great across all areas!");
 
     showDialog(
       context: context,
@@ -384,8 +389,7 @@ class _DASS21FullQuestionnairePageState
         classification.contains('මධ්‍යම')) {
       return const Color(0xFFFFA500);
     }
-    if (classification.contains('Severe') ||
-        classification.contains('දරුණු')) {
+    if (classification.contains('Severe') || classification.contains('දරුණු')) {
       return const Color(0xFFE76565);
     }
     return const Color(0xFFC73030);

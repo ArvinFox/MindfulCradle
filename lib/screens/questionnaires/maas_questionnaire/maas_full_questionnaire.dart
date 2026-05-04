@@ -159,16 +159,17 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
     final bool isHighMindfulness = score >= 4.0;
-    final Color levelColor =
-        isHighMindfulness ? const Color(0xFF49AF3F) : const Color(0xFFFFA500);
+    final Color levelColor = isHighMindfulness
+        ? const Color(0xFF49AF3F)
+        : const Color(0xFFFFA500);
     final String emoji = isHighMindfulness ? '🧘' : '💙';
     final String summaryMsg = isHighMindfulness
         ? (isSinhala
-            ? 'ඔබ ඉතා හොඳ සිහිකල්පනාවේ සිටිනවා! දිගටම ඉදිරියට!'
-            : 'You have strong mindful awareness. Keep it up!')
+              ? 'ඔබ ඉතා හොඳ සිහිකල්පනාවේ සිටිනවා! දිගටම ඉදිරියට!'
+              : 'You have strong mindful awareness. Keep it up!')
         : (isSinhala
-            ? 'සිහිකල්පනාව වර්ධනය කර ගැනීමට MindfulBot ඔබට උදව් කළ හැකිය.'
-            : 'Mindfulness takes practice. MindfulBot can help you grow.');
+              ? 'සිහිකල්පනාව වර්ධනය කර ගැනීමට MindfulBot ඔබට උදව් කළ හැකිය.'
+              : 'Mindfulness takes practice. MindfulBot can help you grow.');
 
     showDialog(
       context: context,
@@ -245,9 +246,12 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                             child: LinearProgressIndicator(
                               value: score / 6.0,
                               minHeight: 10,
-                              backgroundColor: levelColor.withValues(alpha: 0.15),
-                              valueColor:
-                                  AlwaysStoppedAnimation<Color>(levelColor),
+                              backgroundColor: levelColor.withValues(
+                                alpha: 0.15,
+                              ),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                levelColor,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 10),

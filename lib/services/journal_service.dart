@@ -41,4 +41,16 @@ class JournalService {
   }) async {
     await _journalsRef(userId).doc(entryId).delete();
   }
+
+  Future<void> updateSentiment({
+    required String userId,
+    required String entryId,
+    required String sentiment,
+    required double sentimentScore,
+  }) async {
+    await _journalsRef(userId).doc(entryId).update({
+      'sentiment': sentiment,
+      'sentimentScore': sentimentScore,
+    });
+  }
 }

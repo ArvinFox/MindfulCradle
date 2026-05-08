@@ -116,6 +116,10 @@ class _MainScreenState extends State<MainScreen> {
     if (!mounted || _promoShowing || _videoPlayerOpen || _tutorialActive) {
       return;
     }
+    // Only show promotions when the main screen is the top-most route.
+    // If the user navigated to a sub-screen (journal, chat detail, etc.)
+    // the promotion should not interrupt them.
+    if (ModalRoute.of(context)?.isCurrent != true) return;
 
     final prefs = await SharedPreferences.getInstance();
     if (!(prefs.getBool('tutorial_done') ?? true)) return;

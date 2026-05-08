@@ -48,4 +48,35 @@ class JournalProvider extends ChangeNotifier {
     _entries.removeWhere((e) => e.id == entryId);
     notifyListeners();
   }
+
+  /// Updates the sentiment of a stored entry in-memory and persists to
+  /// Firestore.  Called after AI-based sentiment classification completes.
+  Future<void> updateEntrySentiment({
+    required String userId,
+    required String entryId,
+    required String sentiment,
+    required double score,
+  }) async {
+    final idx = _entries.indexWhere((e) => e.id == entryId);
+    if (idx == -1) return;
+    final old = _entries[idx];
+    _entries[idx] = JournalEntry(
+      id: old.id,
+      title: old.title,
+      content: old.content,
+      sentiment: sentiment,
+      sentimentScore: score,
+      semanticTags: old.semanticTags,
+      createdAt: old.createdAt,
+      language: old.language,
+    );
+    notifyListeners();
+    // Persist to Firestore in the background — not awaited so UI unblocks.
+    _service.updateSentiment(
+      userId: userId,
+      entryId: entryId,
+      sentiment: sentiment,
+      sentimentScore: score,
+    );
+  }
 }

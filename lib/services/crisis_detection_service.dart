@@ -158,6 +158,14 @@ class CrisisDetectionService {
     'ආශාව නැත',
   ];
 
+  // ── Regex patterns (catches crisis phrases with inserted words) ─────────
+  // e.g. "end my precious life", "end this miserable life"
+  static final _crisisEnRegex = [
+    RegExp(r'\bend\b.{0,25}\blife\b', caseSensitive: false),
+    RegExp(r'\btake\b.{0,15}\bmy\b.{0,10}\blife\b', caseSensitive: false),
+    RegExp(r'\bkill\b.{0,10}\bmyself\b', caseSensitive: false),
+  ];
+
   // ── Public API ─────────────────────────────────────────────────────────
 
   /// Analyzes a journal entry text and returns the detected [CrisisLevel].
@@ -177,6 +185,10 @@ class CrisisDetectionService {
     }
     for (final kw in _crisisSi) {
       if (text.contains(kw)) return CrisisLevel.crisis;
+    }
+    // Regex pass — catches "end my precious life" type phrases.
+    for (final pattern in _crisisEnRegex) {
+      if (pattern.hasMatch(lower)) return CrisisLevel.crisis;
     }
 
     // Layer 2 — distress keywords.
@@ -328,5 +340,118 @@ Text: "${text.length > 500 ? text.substring(0, 500) : text}"''';
     }
 
     return keywordLevel;
+  }
+
+  // ── Extended AI: crisis + sentiment in one call ────────────────────────
+
+  /// Calls Gemini to classify both **crisis level** and **sentiment** in a
+  /// single prompt, using `gemini-1.5-flash` for higher accuracy.
+  ///
+  /// Returns a named record `(crisis, sentiment, sentimentScore)`.
+  /// On any error the record has `crisis: none`, `sentiment: ''` (caller
+  /// keeps the keyword-based sentiment) and `sentimentScore: 0.0`.
+  static Future<({CrisisLevel crisis, String sentiment, double sentimentScore})>
+  analyzeWithAIExtended(
+    String text,
+    String lang,
+    String apiKey, {
+    Duration timeout = const Duration(seconds: 8),
+  }) async {
+    const fallback = (
+      crisis: CrisisLevel.none,
+      sentiment: '',
+      sentimentScore: 0.0,
+    );
+    if (apiKey.isEmpty || text.trim().isEmpty) return fallback;
+
+    final snippet = text.length > 1000 ? text.substring(0, 1000) : text;
+    final langName = lang == 'si' ? 'Sinhala' : 'English';
+
+    final prompt =
+        'You are a mental health content classifier for a pregnancy wellness '
+        'app. Analyze the journal entry written in $langName.\n\n'
+        'Reply with EXACTLY 2 lines:\n'
+        'sentiment: [positive/neutral/negative]\n'
+        'safety: [crisis/distress/none]\n\n'
+        'Definitions:\n'
+        '- sentiment positive: happy, grateful, hopeful, calm, joyful\n'
+        '- sentiment neutral: factual, mixed, or ambiguous mood\n'
+        '- sentiment negative: sad, worried, tired, frustrated, upset\n'
+        '- safety crisis: suicidal thoughts, self-harm intent, wanting to die\n'
+        '- safety distress: hopeless, worthless, feeling empty, severe sadness,'
+        ' cannot cope\n'
+        '- safety none: no serious concern\n\n'
+        'Journal entry: "$snippet"';
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse(
+              '$_geminiBaseUrl/gemini-1.5-flash:generateContent?key=$apiKey',
+            ),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({
+              'contents': [
+                {
+                  'parts': [
+                    {'text': prompt},
+                  ],
+                },
+              ],
+              'generationConfig': {'maxOutputTokens': 30, 'temperature': 0.0},
+            }),
+          )
+          .timeout(timeout);
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body) as Map<String, dynamic>;
+        final raw =
+            (data['candidates']?[0]?['content']?['parts']?[0]?['text']
+                        as String? ??
+                    '')
+                .trim()
+                .toLowerCase();
+
+        CrisisLevel crisis = CrisisLevel.none;
+        String sentiment = '';
+        double sentimentScore = 0.0;
+
+        for (final line in raw.split('\n')) {
+          final t = line.trim();
+          if (t.startsWith('safety:')) {
+            final val = t.substring('safety:'.length).trim();
+            if (val.contains('crisis')) {
+              crisis = CrisisLevel.crisis;
+            } else if (val.contains('distress')) {
+              crisis = CrisisLevel.distress;
+            }
+          } else if (t.startsWith('sentiment:')) {
+            final val = t.substring('sentiment:'.length).trim();
+            if (val.contains('positive')) {
+              sentiment = 'positive';
+              sentimentScore = 0.7;
+            } else if (val.contains('negative')) {
+              sentiment = 'negative';
+              sentimentScore = -0.7;
+            } else if (val.contains('neutral')) {
+              sentiment = 'neutral';
+              sentimentScore = 0.0;
+            }
+          }
+        }
+
+        return (
+          crisis: crisis,
+          sentiment: sentiment,
+          sentimentScore: sentimentScore,
+        );
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        debugPrint('[CrisisDetection] Extended AI failed: $e');
+      }
+    }
+
+    return fallback;
   }
 }

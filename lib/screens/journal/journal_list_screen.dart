@@ -7,10 +7,11 @@ import '../../models/journal_entry.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/journal_provider.dart';
 import '../../providers/language_provider.dart';
-import '../../utils/journal_analysis.dart';
+import '../../widgets/app_background.dart';
+import '../../widgets/journal/journal_date_filter_bar.dart';
+import '../../widgets/journal/journal_entry_card.dart';
 import 'journal_write_screen.dart';
 import 'journal_detail_screen.dart';
-import '../../widgets/app_background.dart';
 
 class JournalListScreen extends StatefulWidget {
   const JournalListScreen({super.key});
@@ -20,43 +21,126 @@ class JournalListScreen extends StatefulWidget {
 }
 
 class _JournalListScreenState extends State<JournalListScreen> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+  JournalFilterPreset _preset = JournalFilterPreset.all;
+  DateTimeRange? _customRange;
+
+  // Google Keep-inspired pastel palette — cycles by entry id hash so the
+  // same entry always gets the same colour even after re-filtering.
+  static const _palette = [
+    Color(0xFFF3E5F5), // soft lavender (brand)
+    Color(0xFFE8F5E9), // mint
+    Color(0xFFFFF8E1), // warm yellow
+    Color(0xFFE3F2FD), // sky blue
+    Color(0xFFFCE4EC), // rose pink
+    Color(0xFFE0F7FA), // teal
+    Color(0xFFF1F8E9), // lime
+    Color(0xFFFFF3E0), // peach
+  ];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) => _load());
   }
 
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
   void _load() {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userId = authProvider.user?.id;
-    if (userId != null) {
-      Provider.of<JournalProvider>(context, listen: false).load(userId);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (auth.user?.id != null) {
+      Provider.of<JournalProvider>(context, listen: false).load(auth.user!.id);
     }
+  }
+
+  Color _colorFor(JournalEntry e) =>
+      _palette[e.id.hashCode.abs() % _palette.length];
+
+  DateTimeRange? _effectiveRange() {
+    final now = DateTime.now();
+    switch (_preset) {
+      case JournalFilterPreset.today:
+        return DateTimeRange(
+          start: DateTime(now.year, now.month, now.day),
+          end: now,
+        );
+      case JournalFilterPreset.thisWeek:
+        final start = now.subtract(Duration(days: now.weekday - 1));
+        return DateTimeRange(
+          start: DateTime(start.year, start.month, start.day),
+          end: now,
+        );
+      case JournalFilterPreset.thisMonth:
+        return DateTimeRange(start: DateTime(now.year, now.month, 1), end: now);
+      case JournalFilterPreset.custom:
+        return _customRange;
+      case JournalFilterPreset.all:
+        return null;
+    }
+  }
+
+  List<JournalEntry> _filtered(List<JournalEntry> all) {
+    final range = _effectiveRange();
+    final q = _searchQuery.trim().toLowerCase();
+    return all.where((e) {
+      if (range != null) {
+        final start = DateTime(
+          range.start.year,
+          range.start.month,
+          range.start.day,
+        );
+        final end = DateTime(
+          range.end.year,
+          range.end.month,
+          range.end.day,
+          23,
+          59,
+          59,
+        );
+        if (e.createdAt.isBefore(start) || e.createdAt.isAfter(end)) {
+          return false;
+        }
+      }
+      if (q.isNotEmpty) {
+        return e.title.toLowerCase().contains(q) ||
+            e.content.toLowerCase().contains(q);
+      }
+      return true;
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final isSinhala =
         Provider.of<LanguageProvider>(context).currentLang == 'si';
-    final journalProvider = Provider.of<JournalProvider>(context);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userId = authProvider.user?.id ?? '';
+    final provider = Provider.of<JournalProvider>(context);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final userId = auth.user?.id ?? '';
+    final filtered = _filtered(provider.entries.toList());
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
+        backgroundColor: AppColors.background,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.primary),
+          icon: const Icon(
+            Icons.arrow_back_ios_rounded,
+            color: AppColors.primary,
+          ),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
           isSinhala ? 'මගේ සඟරාව' : 'My Journal',
           style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w600,
+            fontWeight: FontWeight.w700,
             fontSize: 18,
             color: AppColors.text,
           ),
@@ -64,9 +148,10 @@ class _JournalListScreenState extends State<JournalListScreen> {
         centerTitle: true,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
       ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         onPressed: () async {
           HapticFeedback.lightImpact();
           await Navigator.push(
@@ -74,188 +159,168 @@ class _JournalListScreenState extends State<JournalListScreen> {
             MaterialPageRoute(builder: (_) => const JournalWriteScreen()),
           );
         },
-        icon: const Icon(Icons.edit_rounded),
-        label: Text(
-          isSinhala ? 'නව ලිපිය' : 'New Entry',
-          style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
-        ),
+        child: const Icon(Icons.edit_rounded, size: 22),
       ),
       body: AppBackground(
-        child: journalProvider.loading
-            ? const Center(
-                child: CircularProgressIndicator(color: AppColors.primary),
-              )
-            : journalProvider.entries.isEmpty
-            ? _buildEmptyState(isSinhala)
-            : ListView.builder(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 100),
-                itemCount: journalProvider.entries.length,
-                itemBuilder: (context, index) {
-                  return _buildEntryCard(
-                    journalProvider.entries[index],
-                    isSinhala,
-                    userId,
-                    journalProvider,
-                  );
-                },
+        child: Column(
+          children: [
+            // ── Search bar ───────────────────────────────────────────────────
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: TextField(
+                controller: _searchController,
+                onChanged: (q) => setState(() => _searchQuery = q),
+                style: GoogleFonts.roboto(fontSize: 14, color: AppColors.text),
+                decoration: InputDecoration(
+                  hintText: isSinhala ? 'ලිපි සොයන්න...' : 'Search entries...',
+                  hintStyle: GoogleFonts.roboto(
+                    fontSize: 14,
+                    color: AppColors.textMuted.withValues(alpha: 0.5),
+                  ),
+                  prefixIcon: const Icon(
+                    Icons.search_rounded,
+                    color: AppColors.textMuted,
+                    size: 20,
+                  ),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(
+                            Icons.clear_rounded,
+                            size: 18,
+                            color: AppColors.textMuted,
+                          ),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: AppColors.surfaceVariant,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 0,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: AppColors.primary,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
               ),
+            ),
+
+            // ── Date filter chips ────────────────────────────────────────────
+            JournalDateFilterBar(
+              preset: _preset,
+              customRange: _customRange,
+              isSinhala: isSinhala,
+              onPresetChanged: (p) => setState(() => _preset = p),
+              onCustomRange: (r) => setState(() => _customRange = r),
+            ),
+
+            const SizedBox(height: 6),
+
+            // ── Content ──────────────────────────────────────────────────────
+            Expanded(
+              child: provider.loading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    )
+                  : provider.entries.isEmpty
+                  ? _buildEmptyState(isSinhala)
+                  : filtered.isEmpty
+                  ? _buildNoResults(isSinhala)
+                  : SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(12, 2, 12, 100),
+                      child: _buildMasonryGrid(
+                        filtered,
+                        isSinhala,
+                        userId,
+                        provider,
+                      ),
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildEntryCard(
-    JournalEntry entry,
+  Widget _buildMasonryGrid(
+    List<JournalEntry> entries,
     bool isSinhala,
     String userId,
     JournalProvider provider,
   ) {
-    final sentimentColor = _sentimentColor(entry.sentiment);
-    final sentimentEmoji = JournalAnalysis.sentimentEmoji(entry.sentiment);
-    final lang = isSinhala ? 'si' : 'en';
-    final sentimentLabel = JournalAnalysis.sentimentLabel(
-      entry.sentiment,
-      lang,
-    );
+    final left = <JournalEntry>[];
+    final right = <JournalEntry>[];
+    for (var i = 0; i < entries.length; i++) {
+      if (i.isEven) {
+        left.add(entries[i]);
+      } else {
+        right.add(entries[i]);
+      }
+    }
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        elevation: 0,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
-          onTap: () {
-            HapticFeedback.selectionClick();
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => JournalDetailScreen(entry: entry),
-              ),
-            );
-          },
-          child: Container(
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: AppColors.border),
-            ),
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        entry.title.isEmpty
-                            ? (isSinhala ? '(මාතෘකාව නැත)' : '(No title)')
-                            : entry.title,
-                        style: GoogleFonts.poppins(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 15,
-                          color: AppColors.text,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: sentimentColor.withValues(alpha: 0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        '$sentimentEmoji $sentimentLabel',
-                        style: GoogleFonts.roboto(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          color: sentimentColor,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  entry.content,
-                  style: GoogleFonts.roboto(
-                    fontSize: 13,
-                    color: AppColors.textMuted,
-                    height: 1.4,
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            children: left
+                .map(
+                  (e) => JournalEntryCard(
+                    key: ValueKey(e.id),
+                    entry: e,
+                    cardColor: _colorFor(e),
+                    isSinhala: isSinhala,
+                    onTap: () => _openDetail(e),
+                    onDelete: () =>
+                        _confirmDelete(context, e, userId, provider, isSinhala),
                   ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (entry.semanticTags.isNotEmpty) ...[
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 6,
-                    runSpacing: 4,
-                    children: entry.semanticTags.map((tag) {
-                      final labelData = JournalAnalysis.sentimentTagLabel(
-                        tag,
-                        lang,
-                      );
-                      return Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 3,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppColors.primary.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          labelData['label'] ?? tag,
-                          style: GoogleFonts.roboto(
-                            fontSize: 10,
-                            color: AppColors.primary,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                ],
-                const SizedBox(height: 10),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      _formatDate(entry.createdAt, isSinhala),
-                      style: GoogleFonts.roboto(
-                        fontSize: 11,
-                        color: AppColors.textMuted.withValues(alpha: 0.7),
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        size: 18,
-                        color: AppColors.error,
-                      ),
-                      padding: EdgeInsets.zero,
-                      constraints: const BoxConstraints(),
-                      onPressed: () => _confirmDelete(
-                        context,
-                        entry,
-                        userId,
-                        provider,
-                        isSinhala,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                )
+                .toList(),
           ),
         ),
-      ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Column(
+            children: right
+                .map(
+                  (e) => JournalEntryCard(
+                    key: ValueKey(e.id),
+                    entry: e,
+                    cardColor: _colorFor(e),
+                    isSinhala: isSinhala,
+                    onTap: () => _openDetail(e),
+                    onDelete: () =>
+                        _confirmDelete(context, e, userId, provider, isSinhala),
+                  ),
+                )
+                .toList(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _openDetail(JournalEntry entry) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => JournalDetailScreen(entry: entry)),
     );
   }
 
@@ -266,6 +331,7 @@ class _JournalListScreenState extends State<JournalListScreen> {
     JournalProvider provider,
     bool isSinhala,
   ) {
+    HapticFeedback.heavyImpact();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -274,7 +340,7 @@ class _JournalListScreenState extends State<JournalListScreen> {
         title: Text(
           isSinhala ? 'ලිපිය මකන්නද?' : 'Delete Entry?',
           style: GoogleFonts.poppins(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w600,
             color: AppColors.error,
           ),
@@ -290,7 +356,7 @@ class _JournalListScreenState extends State<JournalListScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               isSinhala ? 'අවලංගු' : 'Cancel',
-              style: GoogleFonts.poppins(),
+              style: GoogleFonts.poppins(color: AppColors.textMuted),
             ),
           ),
           ElevatedButton(
@@ -301,6 +367,9 @@ class _JournalListScreenState extends State<JournalListScreen> {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
             ),
             child: Text(
               isSinhala ? 'මකන්න' : 'Delete',
@@ -312,6 +381,8 @@ class _JournalListScreenState extends State<JournalListScreen> {
     );
   }
 
+  // ── Empty / no-results states ─────────────────────────────────────────────
+
   Widget _buildEmptyState(bool isSinhala) {
     return Center(
       child: Padding(
@@ -320,36 +391,35 @@ class _JournalListScreenState extends State<JournalListScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              width: 72,
-              height: 72,
+              width: 80,
+              height: 80,
               decoration: BoxDecoration(
                 color: AppColors.primary.withValues(alpha: 0.10),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(24),
               ),
               child: const Icon(
-                Icons.book_outlined,
-                size: 36,
+                Icons.auto_stories_rounded,
+                size: 40,
                 color: AppColors.primary,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
             Text(
-              isSinhala ? 'ඔබේ හැඟීම් ලියා ගන්න' : 'Write your first entry',
-              textAlign: TextAlign.center,
+              isSinhala ? 'ඔබේ සඟරාව ආරම්භ කරන්න' : 'Start Your Journal',
               style: GoogleFonts.poppins(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
                 color: AppColors.text,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 10),
             Text(
               isSinhala
-                  ? 'ඔබේ ගැබ් ගැනීමේ ගමනේ සිතුවිලි හා හැඟීම් සටහන් කරන්න'
-                  : 'Track your thoughts and feelings throughout your pregnancy journey',
+                  ? 'ගැබ් ගැනීමේ ගමනේ ඔබේ හැඟීම් සටහන් කරන්න'
+                  : 'Capture your thoughts and feelings throughout your pregnancy journey',
               textAlign: TextAlign.center,
               style: GoogleFonts.roboto(
-                fontSize: 13,
+                fontSize: 14,
                 color: AppColors.textMuted,
                 height: 1.5,
               ),
@@ -360,47 +430,37 @@ class _JournalListScreenState extends State<JournalListScreen> {
     );
   }
 
-  Color _sentimentColor(String sentiment) {
-    switch (sentiment) {
-      case 'positive':
-        return AppColors.success;
-      case 'negative':
-        return AppColors.error;
-      default:
-        return AppColors.textMuted;
-    }
-  }
-
-  String _formatDate(DateTime dt, bool isSinhala) {
-    final months = isSinhala
-        ? [
-            'ජනවාරි',
-            'පෙබරවාරි',
-            'මාර්තු',
-            'අප්‍රේල්',
-            'මැයි',
-            'ජූනි',
-            'ජූලි',
-            'අගෝස්තු',
-            'සැප්තැම්බර්',
-            'ඔක්තෝබර්',
-            'නොවැම්බර්',
-            'දෙසැම්බර්',
-          ]
-        : [
-            'Jan',
-            'Feb',
-            'Mar',
-            'Apr',
-            'May',
-            'Jun',
-            'Jul',
-            'Aug',
-            'Sep',
-            'Oct',
-            'Nov',
-            'Dec',
-          ];
-    return '${dt.day} ${months[dt.month - 1]} ${dt.year}';
+  Widget _buildNoResults(bool isSinhala) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.search_off_rounded,
+            size: 52,
+            color: AppColors.textMuted.withValues(alpha: 0.35),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isSinhala ? 'ලිපි හමු නොවිය' : 'No entries found',
+            style: GoogleFonts.poppins(
+              fontSize: 16,
+              color: AppColors.textMuted,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isSinhala
+                ? 'වෙනත් දිනයක් හෝ වෙනත් වචනයක් උත්සාහ කරන්න'
+                : 'Try a different date or keyword',
+            style: GoogleFonts.roboto(
+              fontSize: 13,
+              color: AppColors.textMuted.withValues(alpha: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

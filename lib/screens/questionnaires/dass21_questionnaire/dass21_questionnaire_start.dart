@@ -333,9 +333,7 @@ class _DASS21QuestionnaireStartPageState
                 ),
                 const SizedBox(width: 6),
                 Text(
-                  isSinhala
-                      ? 'අඩු ලකුණු = සෞඛ්‍ය සම්පන්නයි'
-                      : 'Lower scores = better mental health',
+                  context.t.questionnaires('lowerScoresBetter'),
                   style: GoogleFonts.roboto(
                     fontSize: 12,
                     color: const Color(0xFF2B7CD3),
@@ -414,12 +412,9 @@ class _DASS21QuestionnaireStartPageState
     final insights = isSinhala
         ? verdict.subscaleInsightsSi
         : verdict.subscaleInsights;
-    final insightsHeader = isSinhala
-        ? 'යටි-ශ්‍රේණි විශ්ලේෂණය'
-        : 'Subscale Insights';
-    final headerTitle = isSinhala
-        ? '${verdict.emoji}  අවසාන ප්‍රතිඵල විශ්ලේෂණය'
-        : '${verdict.emoji}  Final Result Analysis';
+    final insightsHeader = context.t.questionnaires('subscaleInsights');
+    final headerTitle =
+        '${verdict.emoji}  ${context.t.questionnaires('finalResultAnalysis')}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),

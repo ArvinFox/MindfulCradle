@@ -59,7 +59,6 @@ class JournalAnalysis {
     'connected',
     'bonded',
     'bonding',
-    'precious',
     'miracle',
   ];
 
@@ -120,6 +119,15 @@ class JournalAnalysis {
     'unwell',
     'bleeding',
     'scared',
+    'die',
+    'dying',
+    'dead',
+    'death',
+    'suicide',
+    'suicidal',
+    'kill myself',
+    'want to die',
+    'end my life',
   ];
 
   // ─────────────── Sinhala keyword lists ───────────────
@@ -319,11 +327,25 @@ class JournalAnalysis {
     'pregnancy': ['ගැබ්', 'ගර්භනී', 'දරු ප්‍රසූතිය', 'ප්‍රසූතිය', 'නිරෝගී'],
     'baby': ['දරුවා', 'බිළිඳා', 'දෙමළ', 'කිරි', 'ශ්‍රී'],
     'family': ['පවුල', 'ස්වාමිපුරුෂ', 'අම්මා', 'තාත්තා', 'නෑදෑ'],
-    'sleep': ['නිදාගැනීම', 'නිදි', 'දිව', 'ක්ලාන්ත', 'නින්ද'],
+    'sleep': ['නිදාගැනීම', 'නිදි', 'ක්ලාන්ත', 'නින්ද'],
     'health': ['සෞඛ්‍ය', 'රෝහල', 'වෛද්‍ය', 'ඖෂධ'],
     'emotions': ['හැඟීම', 'හැඟීම්', 'කෝපය', 'ශෝකය', 'ප්‍රීතිය'],
     'work': ['රැකියා', 'කාර්යාල'],
   };
+
+  // Regex-based negative patterns for English — catches crisis phrases where
+  // inserted words break exact keyword matching (e.g. "end my precious life").
+  static final _negativeEnPatterns = [
+    RegExp(
+      r'\bend\b.{0,25}\blife\b',
+      caseSensitive: false,
+    ), // end my [precious] life
+    RegExp(
+      r'\btake\b.{0,15}\bmy\b.{0,10}\blife\b',
+      caseSensitive: false,
+    ), // take my own life
+    RegExp(r'\bkill\b.{0,10}\bmyself\b', caseSensitive: false), // kill myself
+  ];
 
   // ─────────────── Public API ───────────────
 
@@ -347,6 +369,10 @@ class JournalAnalysis {
     } else {
       for (final word in _positiveEn) {
         if (lower.contains(word)) positiveCount++;
+      }
+      // Regex patterns catch crisis phrases that keyword matching misses.
+      for (final pattern in _negativeEnPatterns) {
+        if (pattern.hasMatch(lower)) negativeCount += 2;
       }
       for (final word in _negativeEn) {
         if (lower.contains(word)) negativeCount++;

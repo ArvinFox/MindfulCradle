@@ -69,7 +69,15 @@
     "ok": "OK",
     "required": "Required",
     "submitting": "Submitting...",
-    "questionsOf": "of"
+    "questionsOf": "of",
+    "finalResultAnalysis": "Final Result Analysis",
+    "subscaleInsights": "Subscale Insights",
+    "scoreInsights": "Score Insights",
+    "lowerScoresBetter": "Lower scores = better mental health",
+    "averageLevelMindfulness": "Average Level of Mindfulness",
+    "flourishing": "Flourishing",
+    "developing": "Developing",
+    "needsGrowth": "Needs Growth"
   },
   "si": {
     "questionnaires": "ප්‍රශ්නාවලි",
@@ -141,6 +149,14 @@
     "ok": "හරි",
     "required": "අනිවාර්යයි",
     "submitting": "ඉදිරිපත් කරනවා...",
-    "questionsOf": "න්"
+    "questionsOf": "න්",
+    "finalResultAnalysis": "අවසාන ප්‍රතිඵල විශ්ලේෂණය",
+    "subscaleInsights": "යටි-ශ්‍රේණි විශ්ලේෂණය",
+    "scoreInsights": "යටි-ශ්‍රේණි විශ්ලේෂණය",
+    "lowerScoresBetter": "අඩු ලකුණු = සෞඛ්‍ය සම්පන්නයි",
+    "averageLevelMindfulness": "සතිමත් බව සාමාන්‍යයි",
+    "flourishing": "ශ්‍රේෂ්ඨ",
+    "developing": "මධ්‍යම",
+    "needsGrowth": "දියුණු විය යුතු"
   }
 }

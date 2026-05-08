@@ -307,10 +307,10 @@ class _MAASQuestionnaireStartPageState
               ?.toDouble();
           return s != null ? '${s.toStringAsFixed(2)} / 6.0' : '-';
         }(),
-        classification: _translateClassification(
+        classification: _classificationLocalized(
+          context,
           (provider.getAttemptData(attemptNum)?['classification'] as String?) ??
-              "-",
-          isSinhala,
+              '-',
         ),
         tileColor:
             (provider.getAttemptData(attemptNum)?['maasScore'] as num?) != null
@@ -326,19 +326,14 @@ class _MAASQuestionnaireStartPageState
   }
 
   // TRANSLATION HELPER
-  String _translateClassification(String classification, bool isSinhala) {
-    if (!isSinhala) return classification;
-
-    switch (classification) {
-      case 'High Level of Mindfulness':
-        return 'සතිමත් බව ඉහළයි';
-      case 'Average Level of Mindfulness':
-        return 'සතිමත් බව සාමාන්‍යයි';
-      case 'Low Level of Mindfulness':
-        return 'සතිමත් බව අඩුයි';
-      default:
-        return classification;
-    }
+  String _classificationLocalized(BuildContext context, String englishClass) {
+    const keyMap = {
+      'High Level of Mindfulness': 'highLevelMindfulness',
+      'Average Level of Mindfulness': 'averageLevelMindfulness',
+      'Low Level of Mindfulness': 'lowLevelMindfulness',
+    };
+    final key = keyMap[englishClass];
+    return key != null ? context.t.questionnaires(key) : englishClass;
   }
 
   // ─── Final Verdict Card ───────────────────────────────────────────────────
@@ -355,12 +350,9 @@ class _MAASQuestionnaireStartPageState
     final insights = isSinhala
         ? verdict.subscaleInsightsSi
         : verdict.subscaleInsights;
-    final insightsHeader = isSinhala
-        ? 'යටි-ශ්‍රේණි විශ්ලේෂණය'
-        : 'Score Insights';
-    final headerTitle = isSinhala
-        ? '${verdict.emoji}  අවසාන ප්‍රතිඵල විශ්ලේෂණය'
-        : '${verdict.emoji}  Final Result Analysis';
+    final insightsHeader = context.t.questionnaires('scoreInsights');
+    final headerTitle =
+        '${verdict.emoji}  ${context.t.questionnaires('finalResultAnalysis')}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),

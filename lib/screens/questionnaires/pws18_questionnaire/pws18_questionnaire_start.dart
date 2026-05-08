@@ -322,11 +322,11 @@ class _PWS18QuestionnaireStartPageState
       crossAxisCount: 2,
       crossAxisSpacing: 12,
       mainAxisSpacing: 12,
-      childAspectRatio: isSinhala ? 1.1 : 1.5,
+      childAspectRatio: isSinhala ? 0.95 : 1.15,
       children: provider.subscales.keys.map((key) {
         final score = scores[key];
         final displayTitle = _getSubscaleLabel(context, key);
-        final label = score != null ? _pws18LevelLabel(score) : null;
+        final label = score != null ? _pws18LevelLabel(context, score) : null;
 
         return QuestionnaireCategoryTile(
           title: displayTitle,
@@ -341,10 +341,10 @@ class _PWS18QuestionnaireStartPageState
     );
   }
 
-  String _pws18LevelLabel(double score) {
-    if (score >= 5.5) return 'Flourishing';
-    if (score >= 4.0) return 'Developing';
-    return 'Needs Growth';
+  String _pws18LevelLabel(BuildContext context, double score) {
+    if (score >= 5.5) return context.t.questionnaires('flourishing');
+    if (score >= 4.0) return context.t.questionnaires('developing');
+    return context.t.questionnaires('needsGrowth');
   }
 
   // ─── Final Verdict Card ───────────────────────────────────────────────────
@@ -361,12 +361,9 @@ class _PWS18QuestionnaireStartPageState
     final insights = isSinhala
         ? verdict.subscaleInsightsSi
         : verdict.subscaleInsights;
-    final insightsHeader = isSinhala
-        ? 'යටි-ශ්‍රේණි විශ්ලේෂණය'
-        : 'Subscale Insights';
-    final headerTitle = isSinhala
-        ? '${verdict.emoji}  අවසාන ප්‍රතිඵල විශ්ලේෂණය'
-        : '${verdict.emoji}  Final Result Analysis';
+    final insightsHeader = context.t.questionnaires('subscaleInsights');
+    final headerTitle =
+        '${verdict.emoji}  ${context.t.questionnaires('finalResultAnalysis')}';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 20),

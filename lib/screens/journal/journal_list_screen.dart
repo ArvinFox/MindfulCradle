@@ -285,7 +285,7 @@ class _JournalListScreenState extends State<JournalListScreen> {
                 onPressed: () => Navigator.of(context).pop(),
               ),
               title: Text(
-                isSinhala ? 'මගේ සඟරාව' : 'My Journal',
+                isSinhala ? 'මගේ ජර්නලය' : 'My Journal',
                 style: GoogleFonts.poppins(
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
@@ -632,7 +632,7 @@ class _JournalListScreenState extends State<JournalListScreen> {
             ),
             const SizedBox(height: 20),
             Text(
-              isSinhala ? 'ඔබේ සඟරාව ආරම්භ කරන්න' : 'Start Your Journal',
+              isSinhala ? 'ඔබේ ජර්නලය ආරම්භ කරන්න' : 'Start Your Journal',
               style: GoogleFonts.poppins(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -642,7 +642,7 @@ class _JournalListScreenState extends State<JournalListScreen> {
             const SizedBox(height: 10),
             Text(
               isSinhala
-                  ? 'ගැබ් ගැනීමේ ගමනේ ඔබේ හැඟීම් සටහන් කරන්න'
+                  ? 'ගැබ් ගැනීමේ ගමනේ ඔබේ හැඟීම් ජර්නලයේ සටහන් කරන්න'
                   : 'Capture your thoughts and feelings throughout your pregnancy journey',
               textAlign: TextAlign.center,
               style: GoogleFonts.roboto(

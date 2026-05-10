@@ -84,8 +84,8 @@ class JournalDateFilterBar extends StatelessWidget {
         label,
         style: GoogleFonts.poppins(
           fontSize: 11.5,
-          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
-          color: isSelected ? Colors.white : AppColors.textMuted,
+          fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+          color: isSelected ? Colors.white : AppColors.primary,
         ),
       ),
       selected: isSelected,
@@ -117,9 +117,14 @@ class JournalDateFilterBar extends StatelessWidget {
         }
       },
       selectedColor: AppColors.primary,
-      backgroundColor: AppColors.surfaceVariant,
+      backgroundColor: Colors.white,
       shape: const StadiumBorder(),
-      side: BorderSide.none,
+      side: isSelected
+          ? BorderSide.none
+          : BorderSide(
+              color: AppColors.primary.withValues(alpha: 0.35),
+              width: 1.2,
+            ),
       showCheckmark: false,
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 0),
       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,

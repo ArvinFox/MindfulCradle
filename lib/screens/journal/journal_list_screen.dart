@@ -7,6 +7,7 @@ import '../../models/journal_entry.dart';
 import '../../providers/auth_provider.dart';
 import '../../providers/journal_provider.dart';
 import '../../providers/language_provider.dart';
+import '../../utils/app_snackbar.dart';
 import '../../widgets/app_background.dart';
 import '../../widgets/journal/journal_date_filter_bar.dart';
 import '../../widgets/journal/journal_entry_card.dart';
@@ -25,6 +26,110 @@ class _JournalListScreenState extends State<JournalListScreen> {
   String _searchQuery = '';
   JournalFilterPreset _preset = JournalFilterPreset.all;
   DateTimeRange? _customRange;
+
+  // ── Select mode ─────────────────────────────────────────────────────────
+  bool _selectMode = false;
+  final Set<String> _selected = {};
+
+  void _enterSelectMode() {
+    HapticFeedback.selectionClick();
+    setState(() {
+      _selectMode = true;
+      _selected.clear();
+    });
+  }
+
+  void _exitSelectMode() {
+    setState(() {
+      _selectMode = false;
+      _selected.clear();
+    });
+  }
+
+  void _toggleSelect(String id) {
+    HapticFeedback.selectionClick();
+    setState(() {
+      if (_selected.contains(id)) {
+        _selected.remove(id);
+      } else {
+        _selected.add(id);
+      }
+    });
+  }
+
+  void _selectAll(List<JournalEntry> entries) {
+    setState(() => _selected.addAll(entries.map((e) => e.id)));
+  }
+
+  Future<void> _deleteSelected(
+    String userId,
+    JournalProvider provider,
+    bool isSinhala,
+  ) async {
+    if (_selected.isEmpty) return;
+    final count = _selected.length;
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.background,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Text(
+          isSinhala
+              ? 'ලිපි මකන්නද?'
+              : 'Delete $count ${count == 1 ? 'entry' : 'entries'}?',
+          style: GoogleFonts.poppins(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            color: AppColors.error,
+          ),
+        ),
+        content: Text(
+          isSinhala
+              ? 'තෝරාගත් ලිපි $count ස්ථිරව ඉවත් කෙරේ.'
+              : 'The selected ${count == 1 ? 'entry' : 'entries'} will be permanently removed.',
+          style: GoogleFonts.poppins(fontSize: 14, color: AppColors.text),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(
+              isSinhala ? 'අවලංගු' : 'Cancel',
+              style: GoogleFonts.poppins(color: AppColors.textMuted),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
+            child: Text(
+              isSinhala ? 'මකන්න' : 'Delete',
+              style: GoogleFonts.poppins(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    HapticFeedback.heavyImpact();
+    // Snapshot selected IDs before exiting select mode so the set isn't
+    // cleared before deleteMultiple receives it.
+    final ids = Set<String>.from(_selected);
+    _exitSelectMode(); // clears _selected & _selectMode immediately → UI updates
+    provider.deleteMultiple(userId: userId, entryIds: ids);
+    if (mounted) {
+      AppSnackBar.success(
+        context,
+        isSinhala
+            ? (count == 1 ? 'ලිපිය මකා දමන ලදී' : 'ලිපි $count මකා දමන ලදී')
+            : (count == 1 ? 'Entry deleted' : '$count entries deleted'),
+      );
+    }
+  }
 
   // Google Keep-inspired pastel palette — cycles by entry id hash so the
   // same entry always gets the same colour even after re-filtering.
@@ -125,43 +230,127 @@ class _JournalListScreenState extends State<JournalListScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_rounded,
-            color: AppColors.primary,
-          ),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-        title: Text(
-          isSinhala ? 'මගේ සඟරාව' : 'My Journal',
-          style: GoogleFonts.poppins(
-            fontWeight: FontWeight.w700,
-            fontSize: 18,
-            color: AppColors.text,
-          ),
-        ),
-        centerTitle: true,
-        systemOverlayStyle: SystemUiOverlayStyle.dark,
-      ),
-      floatingActionButton: FloatingActionButton(
-        backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        onPressed: () async {
-          HapticFeedback.lightImpact();
-          await Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const JournalWriteScreen()),
-          );
-        },
-        child: const Icon(Icons.edit_rounded, size: 22),
-      ),
+      appBar: _selectMode
+          ? AppBar(
+              backgroundColor: AppColors.primary,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              leading: IconButton(
+                icon: const Icon(Icons.close_rounded, color: Colors.white),
+                onPressed: _exitSelectMode,
+              ),
+              title: Text(
+                _selected.isEmpty
+                    ? (isSinhala ? 'ලිපි තෝරාගත කරන්න' : 'Select entries')
+                    : '${_selected.length} ${isSinhala ? 'තෝරාගත් විය' : 'selected'}',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 18,
+                  color: Colors.white,
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    if (_selected.length == filtered.length) {
+                      setState(() => _selected.clear());
+                    } else {
+                      _selectAll(filtered);
+                    }
+                  },
+                  child: Text(
+                    _selected.length == filtered.length
+                        ? (isSinhala ? 'උලරදසික කරන්න' : 'Deselect all')
+                        : (isSinhala ? 'සෙල්ල තෝරාගත්' : 'Select all'),
+                    style: GoogleFonts.poppins(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+              systemOverlayStyle: SystemUiOverlayStyle.light,
+            )
+          : AppBar(
+              backgroundColor: AppColors.background,
+              surfaceTintColor: Colors.transparent,
+              elevation: 0,
+              scrolledUnderElevation: 0,
+              leading: IconButton(
+                icon: const Icon(
+                  Icons.arrow_back_ios_rounded,
+                  color: AppColors.primary,
+                ),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+              title: Text(
+                isSinhala ? 'මගේ සඟරාව' : 'My Journal',
+                style: GoogleFonts.poppins(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  color: AppColors.text,
+                ),
+              ),
+              centerTitle: true,
+              systemOverlayStyle: SystemUiOverlayStyle.dark,
+              actions: [
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    color: AppColors.primary,
+                  ),
+                  color: AppColors.background,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  onSelected: (value) {
+                    if (value == 'select') _enterSelectMode();
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'select',
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.checklist_rounded,
+                            size: 20,
+                            color: AppColors.primary,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            isSinhala ? 'තෝරාගත කරන්න' : 'Select',
+                            style: GoogleFonts.poppins(
+                              fontSize: 14,
+                              color: AppColors.text,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+      floatingActionButton: _selectMode
+          ? null
+          : FloatingActionButton(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              onPressed: () async {
+                HapticFeedback.lightImpact();
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const JournalWriteScreen()),
+                );
+              },
+              child: const Icon(Icons.edit_rounded, size: 22),
+            ),
       body: AppBackground(
+        overlayOpacity: 0.78,
         child: Column(
           children: [
             // ── Search bar ───────────────────────────────────────────────────
@@ -244,7 +433,12 @@ class _JournalListScreenState extends State<JournalListScreen> {
                   : filtered.isEmpty
                   ? _buildNoResults(isSinhala)
                   : SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(12, 2, 12, 100),
+                      padding: EdgeInsets.fromLTRB(
+                        12,
+                        2,
+                        12,
+                        _selectMode ? 120 : 100,
+                      ),
                       child: _buildMasonryGrid(
                         filtered,
                         isSinhala,
@@ -253,6 +447,56 @@ class _JournalListScreenState extends State<JournalListScreen> {
                       ),
                     ),
             ),
+
+            // ── Delete bar (select mode) ──────────────────────────────────────
+            if (_selectMode)
+              Container(
+                padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+                decoration: BoxDecoration(
+                  color: AppColors.background,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.08),
+                      blurRadius: 12,
+                      offset: const Offset(0, -3),
+                    ),
+                  ],
+                ),
+                child: SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _selected.isEmpty
+                        ? null
+                        : () => _deleteSelected(userId, provider, isSinhala),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.error,
+                      disabledBackgroundColor: AppColors.error.withValues(
+                        alpha: 0.35,
+                      ),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(Icons.delete_rounded, size: 20),
+                    label: Text(
+                      _selected.isEmpty
+                          ? (isSinhala
+                                ? 'ලිපි තෝරාගත කරන්න'
+                                : 'Select entries to delete')
+                          : isSinhala
+                          ? 'තෝරාගත් ලිපි ${_selected.length}ක මකන්න'
+                          : 'Delete ${_selected.length} ${_selected.length == 1 ? 'entry' : 'entries'}',
+                      style: GoogleFonts.poppins(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
@@ -275,44 +519,23 @@ class _JournalListScreenState extends State<JournalListScreen> {
       }
     }
 
+    JournalEntryCard card(JournalEntry e) => JournalEntryCard(
+      key: ValueKey('${e.id}_${_selectMode}_${_selected.contains(e.id)}'),
+      entry: e,
+      cardColor: _colorFor(e),
+      isSinhala: isSinhala,
+      selectMode: _selectMode,
+      isSelected: _selected.contains(e.id),
+      onTap: _selectMode ? () => _toggleSelect(e.id) : () => _openDetail(e),
+      onDelete: () => _confirmDelete(context, e, userId, provider, isSinhala),
+    );
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Expanded(
-          child: Column(
-            children: left
-                .map(
-                  (e) => JournalEntryCard(
-                    key: ValueKey(e.id),
-                    entry: e,
-                    cardColor: _colorFor(e),
-                    isSinhala: isSinhala,
-                    onTap: () => _openDetail(e),
-                    onDelete: () =>
-                        _confirmDelete(context, e, userId, provider, isSinhala),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
+        Expanded(child: Column(children: left.map(card).toList())),
         const SizedBox(width: 10),
-        Expanded(
-          child: Column(
-            children: right
-                .map(
-                  (e) => JournalEntryCard(
-                    key: ValueKey(e.id),
-                    entry: e,
-                    cardColor: _colorFor(e),
-                    isSinhala: isSinhala,
-                    onTap: () => _openDetail(e),
-                    onDelete: () =>
-                        _confirmDelete(context, e, userId, provider, isSinhala),
-                  ),
-                )
-                .toList(),
-          ),
-        ),
+        Expanded(child: Column(children: right.map(card).toList())),
       ],
     );
   }
@@ -363,6 +586,10 @@ class _JournalListScreenState extends State<JournalListScreen> {
             onPressed: () {
               Navigator.pop(ctx);
               provider.delete(userId: userId, entryId: entry.id);
+              AppSnackBar.success(
+                context,
+                isSinhala ? 'ලිපිය මකා දමන ලදී' : 'Entry deleted',
+              );
             },
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,

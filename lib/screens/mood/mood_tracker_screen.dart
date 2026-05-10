@@ -884,26 +884,19 @@ Future<void> showMoodCheckInDialog(BuildContext context) async {
           prefs.setString('wellness_trigger_lang', isSinhala ? 'si' : 'en');
         });
         if (!context.mounted) return;
-        // Navigate to MainScreen with Chat tab (index 2) active.
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 2)),
-          (route) => false,
-        );
+        // Pop back to the existing MainScreen then switch to Chat tab.
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        MainScreen.switchToTab(2);
         break;
       case WellnessAction.questionnaire:
-        // Navigate to MainScreen with Questionnaires tab (index 1) active.
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 1)),
-          (route) => false,
-        );
+        // Pop back to the existing MainScreen then switch to Questionnaires.
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        MainScreen.switchToTab(1);
         break;
       case WellnessAction.meditate:
-        // Navigate to MainScreen with Home tab (index 0) active — meditation
-        // sessions are on the home page.
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 0)),
-          (route) => false,
-        );
+        // Pop back to the existing MainScreen then switch to Home (sessions).
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        MainScreen.switchToTab(0);
         break;
       case WellnessAction.none:
         break;
@@ -1051,6 +1044,7 @@ class _MoodCheckInSheetState extends State<_MoodCheckInSheet> {
               style: GoogleFonts.roboto(fontSize: 14, color: AppColors.text),
               maxLines: 2,
               textCapitalization: TextCapitalization.sentences,
+              inputFormatters: [_WordLimitInputFormatter(100)],
             ),
 
             const SizedBox(height: 20),
@@ -1182,4 +1176,29 @@ Color _moodColorStatic(int index) {
     Color(0xFF1F6F78),
   ];
   return colors[index.clamp(0, 4)];
+}
+
+class _WordLimitInputFormatter extends TextInputFormatter {
+  const _WordLimitInputFormatter(this.maxWords);
+  final int maxWords;
+
+  static int _count(String text) {
+    final t = text.trim();
+    return t.isEmpty ? 0 : t.split(RegExp(r'\s+')).length;
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (_count(newValue.text) <= maxWords) return newValue;
+    // On paste / large insertion: truncate to the word limit.
+    final words = newValue.text.trim().split(RegExp(r'\s+'));
+    final truncated = words.take(maxWords).join(' ');
+    return newValue.copyWith(
+      text: truncated,
+      selection: TextSelection.collapsed(offset: truncated.length),
+    );
+  }
 }

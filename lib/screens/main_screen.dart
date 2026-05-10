@@ -373,7 +373,10 @@ class _MainScreenState extends State<MainScreen> {
   @override
   void dispose() {
     _idleTimer?.cancel();
-    _instance = null;
+    // Only null the static instance if it's still pointing to THIS state.
+    // If pushAndRemoveUntil was used and a newer instance already took over,
+    // don't overwrite that reference.
+    if (_instance == this) _instance = null;
     SystemChrome.setPreferredOrientations(DeviceOrientation.values);
     super.dispose();
   }

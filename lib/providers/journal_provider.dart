@@ -44,9 +44,25 @@ class JournalProvider extends ChangeNotifier {
   }
 
   Future<void> delete({required String userId, required String entryId}) async {
-    await _service.deleteEntry(userId: userId, entryId: entryId);
+    // Optimistic update: remove from list and notify immediately so the UI
+    // updates without waiting for Firestore.
     _entries.removeWhere((e) => e.id == entryId);
     notifyListeners();
+    await _service.deleteEntry(userId: userId, entryId: entryId);
+  }
+
+  /// Removes multiple entries at once — one optimistic removal + one
+  /// notifyListeners, then deletes each from Firestore in the background.
+  Future<void> deleteMultiple({
+    required String userId,
+    required Set<String> entryIds,
+  }) async {
+    if (entryIds.isEmpty) return;
+    _entries.removeWhere((e) => entryIds.contains(e.id));
+    notifyListeners();
+    for (final id in entryIds) {
+      await _service.deleteEntry(userId: userId, entryId: id);
+    }
   }
 
   /// Updates the sentiment of a stored entry in-memory and persists to

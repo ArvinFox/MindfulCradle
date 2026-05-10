@@ -26,6 +26,9 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
   final _contentController = TextEditingController();
   bool _saving = false;
 
+  static const int _titleWordLimit = 15;
+  static const int _contentWordLimit = 500;
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -82,7 +85,28 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
       return;
     }
 
-    // ── Step 3: achievements.
+    // ── Step 3: spinner off — entry is safely in DB regardless of what follows.
+    if (mounted) setState(() => _saving = false);
+
+    if (!mounted) return;
+
+    // ── Step 4: wellness dialog (shown BEFORE achievements so a crisis prompt
+    //    is never blocked by an achievement popup).
+    WellnessAction wellnessAction = WellnessAction.none;
+    if (crisisLevel != CrisisLevel.none) {
+      wellnessAction = await WellnessSupportDialog.show(
+        context,
+        crisisLevel,
+        isSinhala,
+      );
+      if (!mounted) return;
+    }
+
+    // ── Step 5: achievements — fully fire-and-forget.
+    // unlockAchievement() writes to Firestore; if the network is slow it can
+    // hang seconds. We must NOT await it here or navigation is blocked.
+    // showPendingAchievements() already uses navigatorKey.currentContext, so
+    // the popup will appear on whichever screen is current after we navigate.
     if (context.mounted) {
       final achievementProvider = Provider.of<AchievementProvider>(
         context,
@@ -92,70 +116,53 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
         context,
         listen: false,
       ).entries.length;
-      if (entryCount >= 1) {
-        await achievementProvider.unlockAchievement(
-          context,
-          'first_journal',
-          showUI: false,
-        );
-      }
-      if (entryCount >= 5) {
-        await achievementProvider.unlockAchievement(
-          context,
-          'journal_writer',
-          showUI: false,
-        );
-      }
-      await achievementProvider.showPendingAchievements(context);
+      // ignore: unawaited_futures
+      () async {
+        if (entryCount >= 1) {
+          await achievementProvider.unlockAchievement(
+            context,
+            'first_journal',
+            showUI: false,
+          );
+        }
+        if (entryCount >= 5) {
+          await achievementProvider.unlockAchievement(
+            context,
+            'journal_writer',
+            showUI: false,
+          );
+        }
+        await achievementProvider.showPendingAchievements(context);
+      }();
     }
 
     if (!mounted) return;
 
-    // ── Step 4: wellness dialog for distress/crisis content.
-    if (crisisLevel != CrisisLevel.none) {
-      final action = await WellnessSupportDialog.show(
-        context,
-        crisisLevel,
-        isSinhala,
-      );
-
-      if (!mounted) return;
-
-      switch (action) {
-        case WellnessAction.chat:
-          // Write wellness context so ChatBotPage can send a caring greeting.
-          await SharedPreferences.getInstance().then((prefs) {
-            prefs.setString(
-              'wellness_trigger',
-              crisisLevel == CrisisLevel.crisis ? 'crisis' : 'distress',
-            );
-            prefs.setString('wellness_trigger_lang', lang);
-          });
-          // Navigate to MainScreen with Chat tab (index 2) active.
-          if (!mounted) return;
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 2)),
-            (route) => false,
+    // ── Step 6: navigate based on wellness action.
+    switch (wellnessAction) {
+      case WellnessAction.chat:
+        // Write wellness context so ChatBotPage can send a caring greeting.
+        await SharedPreferences.getInstance().then((prefs) {
+          prefs.setString(
+            'wellness_trigger',
+            crisisLevel == CrisisLevel.crisis ? 'crisis' : 'distress',
           );
-          return;
-        case WellnessAction.questionnaire:
-          // Navigate to MainScreen with Questionnaires tab (index 1) active.
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 1)),
-            (route) => false,
-          );
-          return;
-        case WellnessAction.meditate:
-          // Navigate to MainScreen with Home tab (index 0) active — meditation
-          // sessions are on the home page.
-          Navigator.of(context).pushAndRemoveUntil(
-            MaterialPageRoute(builder: (_) => const MainScreen(initialTab: 0)),
-            (route) => false,
-          );
-          return;
-        case WellnessAction.none:
-          break; // fall through to normal pop + snackbar
-      }
+          prefs.setString('wellness_trigger_lang', lang);
+        });
+        if (!mounted) return;
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        MainScreen.switchToTab(2);
+        return;
+      case WellnessAction.questionnaire:
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        MainScreen.switchToTab(1);
+        return;
+      case WellnessAction.meditate:
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        MainScreen.switchToTab(0);
+        return;
+      case WellnessAction.none:
+        break;
     }
 
     Navigator.pop(context);
@@ -260,6 +267,7 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: 2,
                 minLines: 1,
+                inputFormatters: [_WordLimitInputFormatter(_titleWordLimit)],
               ),
 
               Divider(color: AppColors.border, height: 28),
@@ -287,9 +295,42 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
                 textCapitalization: TextCapitalization.sentences,
                 maxLines: null,
                 minLines: 12,
+                inputFormatters: [_WordLimitInputFormatter(_contentWordLimit)],
               ),
 
-              const SizedBox(height: 20),
+              // Word counter — right-aligned below the content field
+              ValueListenableBuilder<TextEditingValue>(
+                valueListenable: _contentController,
+                builder: (context, value, _) {
+                  final t = value.text.trim();
+                  final count =
+                      t.isEmpty ? 0 : t.split(RegExp(r'\s+')).length;
+                  final isNear =
+                      count >= (_contentWordLimit * 0.9).round();
+                  final isMax = count >= _contentWordLimit;
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 8),
+                    child: Align(
+                      alignment: Alignment.centerRight,
+                      child: Text(
+                        '$count\u00a0/\u00a0$_contentWordLimit '
+                        '${isSinhala ? 'වචන' : 'words'}',
+                        style: GoogleFonts.roboto(
+                          fontSize: 12,
+                          color: isMax
+                              ? AppColors.error
+                              : isNear
+                                  ? const Color(0xFFE07B2B)
+                                  : AppColors.textMuted
+                                      .withValues(alpha: 0.45),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+
+              const SizedBox(height: 14),
 
               // Analysis preview hint
               Container(
@@ -363,5 +404,30 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
             'December',
           ];
     return '${now.day} ${months[now.month - 1]} ${now.year}';
+  }
+}
+
+class _WordLimitInputFormatter extends TextInputFormatter {
+  const _WordLimitInputFormatter(this.maxWords);
+  final int maxWords;
+
+  static int _count(String text) {
+    final t = text.trim();
+    return t.isEmpty ? 0 : t.split(RegExp(r'\s+')).length;
+  }
+
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    if (_count(newValue.text) <= maxWords) return newValue;
+    // On paste / large insertion: truncate to the word limit.
+    final words = newValue.text.trim().split(RegExp(r'\s+'));
+    final truncated = words.take(maxWords).join(' ');
+    return newValue.copyWith(
+      text: truncated,
+      selection: TextSelection.collapsed(offset: truncated.length),
+    );
   }
 }

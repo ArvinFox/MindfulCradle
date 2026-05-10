@@ -53,6 +53,9 @@ class Translate {
   /// Notifications translations
   String notifications(String key) => _service.notifications(key, _lang);
 
+  /// Privacy Policy screen translations
+  String privacyPolicy(String key) => _service.privacyPolicy(key, _lang);
+
   /// Get current language
   String get lang => _lang;
 

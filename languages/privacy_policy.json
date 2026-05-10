@@ -1,0 +1,84 @@
+{
+  "en": {
+    "title": "Privacy Policy",
+    "appBarTitle": "Privacy Policy",
+    "lastUpdated": "Last updated: May 2026",
+    "headerTitle": "Privacy Policy",
+    "headerSubtitle": "Mindful Cradle takes your privacy seriously. This policy explains what data we collect, why we collect it, how it is protected, and your rights as a user.",
+
+    "s1Title": "1. Introduction",
+    "s1Body": "Mindful Cradle (\"the App\") is a maternal mental-health and wellness companion designed for pregnant women. We are committed to protecting your privacy and handling your personal data with transparency, care, and full respect for your rights under applicable data protection law, including the General Data Protection Regulation (GDPR).\n\nBy using the App, you agree to the collection and use of information as described in this policy.",
+
+    "s2Title": "2. Information We Collect",
+    "s2Body": "We collect only the data necessary to deliver a safe and personalised wellness experience:\n\n• Account details — your full name and email address used to create and identify your account.\n\n• Health questionnaire results — scores from DASS-21 (depression, anxiety, stress), MAAS (mindfulness), and PWS-18 (pregnancy wellbeing) assessments that you voluntarily complete.\n\n• Pregnancy information — your gestational week, which enables week-appropriate content and tracking.\n\n• Journal entries — the title and text of entries you write. These are stored privately and linked only to your account.\n\n• Mood logs — your selected mood emoji and any optional notes you add when logging a check-in.\n\n• Profile photo — uploaded voluntarily; stored securely via Cloudinary.\n\n• App usage data — achievements unlocked, session activity, and notification preferences. This is used to personalise your experience and is never sold.\n\n• Crisis-indicator text — if your journal or mood notes contain keywords associated with distress, a local on-device check flags this to offer you support. This check happens on-device and the text is not sent to any external server for this purpose.",
+
+    "s3Title": "3. How We Use Your Data",
+    "s3Body": "Your data is used exclusively to:\n\n• Provide and personalise your wellness journey within the App.\n\n• Generate mental-health insights, questionnaire trends, and mood history visible only to you.\n\n• Detect signs of distress and surface appropriate in-app support resources (the App is not a substitute for professional medical care).\n\n• Send optional push notification reminders that you can configure or disable at any time.\n\n• Improve app reliability and user experience through anonymised, aggregated analytics.\n\nWe do not use your data for advertising, profiling, or any purpose beyond providing this service to you.",
+
+    "s4Title": "4. Data Storage & Security",
+    "s4Body": "Your data is stored on Google Firebase (Firestore), a globally recognised, enterprise-grade cloud platform.\n\n• All data is encrypted in transit using TLS 1.2+.\n\n• Data at rest is encrypted by Firebase using AES-256.\n\n• Access is authenticated through Firebase Authentication; only you can access your own data.\n\n• We never sell, rent, or share your personal data with third parties for commercial purposes.\n\nProfile photos are stored on Cloudinary, a secure media management platform, and are accessible only via a private URL tied to your account.",
+
+    "s5Title": "5. Third-Party Services",
+    "s5Body": "The App integrates the following third-party services to operate:\n\n• Google Firebase — authentication and database. Governed by Google's Privacy Policy.\n\n• Cloudinary — profile photo storage. Governed by Cloudinary's Privacy Policy.\n\n• Google Gemini AI — used only in the mood check-in to assist in understanding your mood note text. Only the text you write in the notes field is sent; it is not stored by us or associated with your account after analysis.\n\n• YouTube — session videos are streamed from YouTube and subject to Google's Privacy Policy.\n\nWe carefully select partners that meet high data-protection standards.",
+
+    "s6Title": "6. Your Rights",
+    "s6Body": "Under GDPR and applicable law, you have the following rights:\n\n• Right to Access — view all data we hold about you via the \"Data & Privacy\" section in your profile.\n\n• Right to Rectification — update your name, photo, and preferences at any time through the App.\n\n• Right to Erasure — permanently delete your account and all associated data from the \"Data & Privacy\" screen. Deletion is irreversible and takes effect immediately.\n\n• Right to Data Portability — export your data as a CSV file from the \"Data & Privacy\" screen.\n\n• Right to Withdraw Consent — you may stop using the App at any time. Uninstalling the App does not delete your stored data; use the in-app delete option for full removal.\n\nTo exercise any right, use the in-app tools in your profile or contact us at the address below.",
+
+    "s7Title": "7. Data Retention",
+    "s7Body": "We retain your personal data for as long as your account is active. If you delete your account, all your data — including journal entries, mood logs, questionnaire results, and profile information — is permanently and irreversibly removed from our systems within 30 days.",
+
+    "s8Title": "8. Children's Privacy",
+    "s8Body": "The App is intended for use by adults (18 years and older). We do not knowingly collect personal information from individuals under 18. If you believe a minor has provided data through the App, please contact us immediately so we can delete it.",
+
+    "s9Title": "9. Changes to This Policy",
+    "s9Body": "We may update this Privacy Policy from time to time to reflect changes in the App or applicable law. Significant changes will be communicated via an in-app notification. Your continued use of the App after any update constitutes acceptance of the revised policy.",
+
+    "contactTitle": "Contact Us",
+    "contactBody": "If you have any questions about your data or this policy, please reach out to us.",
+    "contactEmail": "mamamindcorp@gmail.com",
+
+    "navCardTitle": "Privacy Policy",
+    "navCardSubtitle": "How we collect and use your data"
+  },
+  "si": {
+    "title": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
+    "appBarTitle": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
+    "lastUpdated": "අවසාන යාවත්කාලීනය: 2026 මැයි",
+    "headerTitle": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
+    "headerSubtitle": "Mindful Cradle ඔබගේ පෞද්ගලිකත්වය ගැන දැඩිව සැලකිලිමත් වේ. ඔබගේ දත්ත භාවිතය, ආරක්ෂාව, සහ ඔබගේ අයිතීන් මෙහිදී විස්තර කෙරේ.",
+
+    "s1Title": "1. හැඳින්වීම",
+    "s1Body": "Mindful Cradle (\"යෙදුම\") යනු ගර්භනී කාන්තාවන් සඳහා නිර්මාණය කරන ලද මාතෘ මානසික සෞඛ්‍ය හා සුවතා සහකාරියකි. අප ඔබගේ පෞද්ගලිකත්වය ආරක්ෂා කිරීමට සහ GDPR ඇතුළු අදාළ දත්ත ආරක්ෂණ නීති යටතේ ඔබගේ දත්ත විනිවිදභාවයෙන් හා ගරුත්වයෙන් හසුරුවීමට කැපවී සිටිමු.\n\nයෙදුම භාවිත කිරීමෙන් ඔබ මෙම ප්‍රතිපත්තියේ විස්තර කර ඇති ආකාරයේ තොරතුරු එකතු කිරීමට සහ භාවිතයට එකඟ වේ.",
+
+    "s2Title": "2. අප එකතු කරන තොරතුරු",
+    "s2Body": "ආරක්ෂිත හා පුද්ගලීකරණය වූ සුවතා අත්දැකීමක් සැපයීමට අවශ්‍ය දත්ත පමණක් අප එකතු කරයි:\n\n• ගිණුම් තොරතුරු — ඔබගේ ගිණුම හඳුනා ගැනීමට භාවිත කරන සම්පූර්ණ නම සහ ඊමේල් ලිපිනය.\n\n• සෞඛ්‍ය ප්‍රශ්නාවලී ප්‍රතිඵල — ඔබ ස්වේච්ඡාවෙන් සම්පූර්ණ කරන DASS-21, MAAS සහ PWS-18 තක්සේරු ලකුණු.\n\n• ගර්භණී තොරතුරු — ඔබගේ ගර්භණී සතිය, සතිවලට ගැළපෙන අන්තර්ගතය සැපයීමට.\n\n• සඟරා ලිපි — ඔබ ලියන ලිපිවල මාතෘකා සහ පාඨය. ඒවා ඔබගේ ගිණුමට පමණක් සම්බන්ධ ලෙස ආරක්ෂිතව ගබඩා කෙරේ.\n\n• මනෝභාවය ලොගය — ඔබ ඇතුළු කළ emoji සහ විකල්ප සටහන්.\n\n• පැතිකඩ ඡායාරූපය — ස්වේච්ඡාවෙන් උඩුගත කෙරෙන; Cloudinary හරහා ආරක්ෂිතව ගබඩා කෙරේ.\n\n• යෙදුම භාවිතා දත්ත — ජයග්‍රහණ, සැසි ක්‍රියාකාරිත්වය සහ දැනුම්දීම් මනාප. ඒවා ඔබගේ අත්දැකීම පුද්ගලීකරණය කිරීමට පමණක් භාවිතා කෙරේ.\n\n• අර්බුද සංඥා — ඔබගේ ලිපි හෝ සටහන්වල දිළිඳුකමට සම්බන්ධ වචන තිබේ නම්, උපකාර පිරිනැමීමට ඒ හඳුනාගැනීම උපාංගයේදීම සිදු කෙරේ; ඊළඟ සේවාදායකයකට දත්ත යවන්නේ නැත.",
+
+    "s3Title": "3. ඔබගේ දත්ත භාවිතය",
+    "s3Body": "ඔබගේ දත්ත ඇතිලිව පහත කාර්යයන් සඳහා පමණක් භාවිත කෙරේ:\n\n• යෙදුම තුළ ඔබගේ සුවතා ගමන පුද්ගලීකරණය කිරීම.\n\n• ඔබට පමණක් දෘශ්‍ය මානසික සෞඛ්‍ය ප්‍රවණතා හා ඉතිහාසය ජනනය කිරීම.\n\n• දිළිඳුකමේ සලකුණු හඳුනාගෙන සුදුසු සහාය සම්පත් ඉදිරිපත් කිරීම (යෙදුම වෛද්‍ය ප්‍රතිකාරය ප්‍රතිස්ථාපනය නොකරයි).\n\n• ඔබ ඕනෑ වූ විට වෙනස් කළ හෝ ක්ෂණිකව ඉවත් කළ හැකි විකල්ප push දැනුම්දීම් යැවීම.\n\nවිජ්ඥාපන, ප්‍රොෆයිලිං හෝ ඔබට මෙම සේවාව සැපයීමෙන් ඔබ්බ කිසිදු කාර්යයක් සඳහා ඔබගේ දත්ත භාවිත නොකෙරේ.",
+
+    "s4Title": "4. දත්ත ගබඩාව සහ ආරක්ෂාව",
+    "s4Body": "ඔබගේ දත්ත Google Firebase (Firestore) හි ගබඩා කෙරේ.\n\n• සියලු දත්ත TLS 1.2+ භාවිතයෙන් හුවමාරුවේදී සංකේතාංකනය කෙරේ.\n\n• ගබඩා කරන ලද දත්ත Firebase AES-256 සංකේතාංකනය සහිතයි.\n\n• ප්‍රවේශය Firebase Authentication හරහා සත්‍යාපනය කෙරේ; ඔබගේ දත්ත ඔබට පමණයි.\n\n• අප කිසිදා ඔබගේ දත්ත වාණිජ්‍ය අරමුණු සඳහා තෙවන පාර්ශ්වයකට විකුණන්නේ, බදු දෙන්නේ හෝ හුවමාරු කරන්නේ නැත.\n\nපැතිකඩ ඡායාරූප Cloudinary හි ගබඩා කෙරෙන අතර ඔබගේ ගිණුමට බැඳුණු URL හරහා පමණක් ප්‍රවේශ විය හැකිය.",
+
+    "s5Title": "5. තෙවන පාර්ශ්ව සේවා",
+    "s5Body": "යෙදුම ක්‍රියාත්මක කිරීමට පහත සේවා ඒකාබද්ධ වේ:\n\n• Google Firebase — සත්‍යාපනය සහ දත්ත සමුදාය. Google's Privacy Policy යටතේ.\n\n• Cloudinary — පැතිකඩ ඡායාරූප ගබඩාව. Cloudinary's Privacy Policy යටතේ.\n\n• Google Gemini AI — මනෝභාව ලොගයේදී ඔබ ලිවූ සටහන් විශ්ලේෂණය කිරීමට පමණක් භාවිතා කෙරේ. ඒ පාඨය පමණක් යැවෙන අතර, ඔබගේ ගිණුමට සම්බන්ධ ලෙස ගබඩා නොකෙරේ.\n\n• YouTube — සැසි වීඩියෝ YouTube හරහා ප්‍රවාහය කෙරෙන අතර Google's Privacy Policy අදාළ වේ.",
+
+    "s6Title": "6. ඔබගේ අයිතීන්",
+    "s6Body": "GDPR යටතේ ඔබට පහත අයිතීන් ඇත:\n\n• ප්‍රවේශ අයිතිය — ඔබගේ පැතිකඩේ \"දත්ත හා පෞද්ගලිකත්වය\" කොටසෙන් ඔබ ගැන ගබඩා කළ දත්ත බලන්න.\n\n• නිවැරදිකිරීමේ අයිතිය — යෙදුම හරහා ඕනෑ වූ විට ඔබගේ නම, ඡායාරූපය සහ මනාපයන් යාවත්කාලීන කරන්න.\n\n• මකා දැමීමේ අයිතිය — \"දත්ත හා පෞද්ගලිකත්වය\" තිරයෙන් ඔබගේ ගිණුම සහ සියලු දත්ත ස්ථිරව මකා දමන්න.\n\n• දත්ත අතේ ගෙන යාමේ අයිතිය — ඔබගේ දත්ත CSV ගොනුවක් ලෙස අපනයනය කරන්න.\n\n• කැමැත්ත ඉල්ලා ගැනීමේ අයිතිය — ඕනෑ වූ විට යෙදුම භාවිතය නතර කළ හැකිය. සම්පූර්ණ ඉවත් කිරීම සඳහා ගිණුම මකා දැමීමේ විකල්පය භාවිත කරන්න.",
+
+    "s7Title": "7. දත්ත රඳා පැවතීම",
+    "s7Body": "ඔබගේ ගිණුම සක්‍රියව ඇති තාක් දත්ත රඳා ගෙන සිටිමු. ඔබ ගිණුම මකා දැමුවහොත්, සඟරා ලිපි, මනෝභාව ලොග, ප්‍රශ්නාවලී ප්‍රතිඵල සහ පැතිකඩ ඇතුළු සියලු දත්ත දින 30 ක් ඇතුළත ස්ථිරව ඉවත් කෙරේ.",
+
+    "s8Title": "8. ළමුන්ගේ පෞද්ගලිකත්වය",
+    "s8Body": "යෙදුම වැඩිහිටියන් (වයස 18+) සඳහා නිර්මාණය කර ඇත. අඩු වයස්කාරයෙකු දත්ත ඇතුළු කළ බව විශ්වාස කරන්නේ නම්, ක්ෂණිකව අප හා සම්බන්ධ වන්න.",
+
+    "s9Title": "9. ප්‍රතිපත්ති වෙනස්කම්",
+    "s9Body": "යෙදුමේ හෝ නීතියේ වෙනස්කම් පිළිබිඹු කිරීමට මෙම ප්‍රතිපත්තිය කාලානුරූපව යාවත්කාලීන කළ හැකිය. සැලකිය යුතු වෙනස්කම් in-app දැනුම්දීමක් හරහා දන්වනු ලැබේ.",
+
+    "contactTitle": "අප හා සම්බන්ධ වන්න",
+    "contactBody": "ඔබගේ දත්ත හෝ පෞද්ගලිකත්වය සම්බන්ධ ප්‍රශ්නයක් ඇත්නම් අප ඊමේල් ලිපිනයෙන් සම්බන්ධ කරගන්න.",
+    "contactEmail": "mamamindcorp@gmail.com",
+
+    "navCardTitle": "පෞද්ගලිකත්ව ප්‍රතිපත්තිය",
+    "navCardSubtitle": "ඔබගේ දත්ත භාවිත කරන ආකාරය"
+  }
+}

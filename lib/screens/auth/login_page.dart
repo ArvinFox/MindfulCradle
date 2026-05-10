@@ -15,6 +15,8 @@ import '../../utils/helpers.dart';
 import 'user_registration_page.dart';
 import '../../widgets/auth/auth_primary_button.dart';
 import '../../widgets/auth/auth_scaffold.dart';
+import '../../widgets/auth/consent_dialog.dart';
+import '../../utils/app_snackbar.dart';
 import '../../utils/translate.dart';
 
 class LoginPage extends StatefulWidget {
@@ -103,13 +105,38 @@ class _LoginPageState extends State<LoginPage> {
 
     if (!mounted) return;
 
-    if (result == null) {
-      HapticFeedback.mediumImpact();
-      await _routeAfterSuccessfulLogin(authProvider);
-    } else {
+    // ── Error from Google/Firebase auth ──────────────────────────────────
+    if (result.error != null) {
       HapticFeedback.vibrate();
-      setState(() => errorMessage = result);
+      setState(() => errorMessage = result.error);
+      return;
     }
+
+    // ── Brand-new user — must accept the privacy policy before proceeding ──
+    if (result.isNewUser) {
+      final consent = await ConsentDialog.show(context, langCode);
+      if (!mounted) return;
+
+      if (consent != true) {
+        // Declined — sign out (Firebase auth user exists but no Firestore doc,
+        // so next sign-in attempt will ask for consent again).
+        await authProvider.logout();
+        if (!mounted) return;
+        HapticFeedback.vibrate();
+        AppSnackBar.info(
+          context,
+          context.t.auth('consentRequiredGoogle'),
+        );
+        return;
+      }
+
+      // Accepted — create the Firestore document now.
+      await authProvider.completeGoogleSignUp(rememberMe: rememberMe);
+      if (!mounted) return;
+    }
+
+    HapticFeedback.mediumImpact();
+    await _routeAfterSuccessfulLogin(authProvider);
   }
 
   Future<void> _routeAfterSuccessfulLogin(AuthProvider authProvider) async {

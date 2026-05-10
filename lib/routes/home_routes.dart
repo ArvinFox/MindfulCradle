@@ -7,6 +7,7 @@ import '../screens/home/home_page.dart';
 import '../screens/main_screen.dart';
 import '../screens/profile/gdpr_account_screen.dart';
 import '../screens/profile/notification_settings_screen.dart';
+import '../screens/profile/privacy_policy_screen.dart';
 import '../models/video_model.dart';
 
 class HomeRoutes {
@@ -18,6 +19,7 @@ class HomeRoutes {
     '/chat': (context) => const ChatBotPage(),
     '/gdpr-account': (context) => const GDPRAccountScreen(),
     '/notification-settings': (context) => const NotificationSettingsScreen(),
+    '/privacy-policy': (context) => const PrivacyPolicyScreen(),
   };
 
   /// Navigate to video player page with user-specific tracking & language

@@ -280,6 +280,14 @@ class _ProfilePageState extends State<ProfilePage> {
                 icon: Icons.privacy_tip_rounded,
                 onTap: () => Navigator.pushNamed(context, '/gdpr-account'),
               ),
+              const SizedBox(height: 12),
+              _buildNavCard(
+                context: context,
+                title: context.t.profile('privacyPolicy'),
+                subtitle: context.t.profile('privacyPolicySubtitle'),
+                icon: Icons.shield_rounded,
+                onTap: () => Navigator.pushNamed(context, '/privacy-policy'),
+              ),
               const SizedBox(height: 18),
               SizedBox(
                 width: double.infinity,

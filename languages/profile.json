@@ -43,6 +43,7 @@
     "version": "Version",
     "termsAndConditions": "Terms and Conditions",
     "privacyPolicy": "Privacy Policy",
+    "privacyPolicySubtitle": "How we collect and use your data",
     "contactSupport": "Contact Support",
     "faq": "Frequently Asked Questions"
   },
@@ -90,6 +91,7 @@
     "version": "අනුවාදය",
     "termsAndConditions": "කොන්දේසි",
     "privacyPolicy": "රහස්‍යතා ප්‍රතිපත්තිය",
+    "privacyPolicySubtitle": "ඔබගේ දත්ත භාවිත කරන ආකාරය",
     "contactSupport": "සහාය සම්බන්ධ කරන්න",
     "faq": "නිතර අසන ප්‍රශ්න"
   }

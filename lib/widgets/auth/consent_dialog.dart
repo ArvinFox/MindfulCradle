@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../constants/colors.dart';
+import '../../screens/profile/privacy_policy_screen.dart';
+import '../../utils/translate.dart';
 import '../gradient_button.dart';
 
-/// GDPR Consent Dialog
-/// Displays data collection information and requires user consent
+/// GDPR / Privacy Policy Consent Dialog shown during new-user sign-up.
 class ConsentDialog extends StatefulWidget {
   final String langCode;
   final VoidCallback onAccept;
@@ -18,7 +19,7 @@ class ConsentDialog extends StatefulWidget {
     required this.onDecline,
   });
 
-  /// Show the consent dialog
+  /// Show the consent dialog and return [true] if the user accepted.
   static Future<bool?> show(BuildContext context, String langCode) {
     return showDialog<bool>(
       context: context,
@@ -38,31 +39,30 @@ class ConsentDialog extends StatefulWidget {
 class _ConsentDialogState extends State<ConsentDialog> {
   bool _isChecked = false;
 
+  void _openPolicy(BuildContext context) {
+    Navigator.of(
+      context,
+    ).push(MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen()));
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isSinhala = widget.langCode == 'si';
+    final t = Translate.withLang(widget.langCode);
     final width = MediaQuery.of(context).size.width;
     final compact = width < 380;
 
-    final title = isSinhala ? 'දත්ත හා පෞද්ගලිකත්වය' : 'Data & Privacy';
-    final content = isSinhala
-        ? 'Mindful Cradle ඔබගේ අත්දැකීම පුද්ගලීකරණය කිරීමට සහ සේවා වැඩිදියුණු කිරීමට දත්ත එකතු කරයි.\n\nඑකතු කරන දත්ත:\n• සෞඛ්‍ය ලකුණු (DASS-21, MAAS, PWS-18)\n• ගර්භණී සතිය සහ මූලික පැතිකඩ\n• යෙදුම භාවිතා සංඛ්‍යාලේඛන'
-        : 'Mindful Cradle collects data to personalize your experience and improve our services.\n\nData we collect:\n• Health scores (DASS-21, MAAS, PWS-18)\n• Pregnancy week and basic profile\n• App usage statistics';
-
-    final acceptText = isSinhala
-        ? 'අනුමත කර ඉදිරියට යන්න'
-        : 'Accept & Continue';
-    final declineText = isSinhala ? 'අවලංගු කරන්න' : 'Cancel';
-    final checkboxText = isSinhala
-        ? 'මම භාවිත නියම හා පෞද්ගලිකත්ව ප්‍රතිපත්තියට එකඟ වෙමි'
-        : 'I agree to the Terms & Conditions and Privacy Policy';
+    final title = t.auth('consentDialogTitle');
+    final acceptText = t.auth('consentAgreeButton');
+    final declineText = t.auth('consentDeclineButton');
+    final checkboxText = t.auth('consentCheckboxText');
+    final viewPolicyText = t.auth('consentReadPolicy');
 
     return Dialog(
       backgroundColor: Colors.transparent,
       child: ConstrainedBox(
         constraints: BoxConstraints(
           maxWidth: width < 720 ? width - 24 : 640,
-          maxHeight: MediaQuery.of(context).size.height * 0.84,
+          maxHeight: MediaQuery.of(context).size.height * 0.88,
         ),
         child: Container(
           decoration: BoxDecoration(
@@ -70,56 +70,144 @@ class _ConsentDialogState extends State<ConsentDialog> {
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: AppColors.border),
           ),
-          child: Padding(
-            padding: EdgeInsets.all(compact ? 16 : 20),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  title,
-                  style: GoogleFonts.poppins(
-                    fontSize: compact ? 18 : 20,
-                    fontWeight: FontWeight.w700,
-                    color: AppColors.primary,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // ── Header ──────────────────────────────────────────────────
+              Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(compact ? 16 : 20),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      AppColors.heroGradientStart,
+                      AppColors.heroGradientMid,
+                    ],
                   ),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
-                const SizedBox(height: 14),
-                Flexible(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          content,
-                          style: GoogleFonts.poppins(
-                            fontSize: compact ? 13 : 14,
-                            height: 1.55,
-                            color: AppColors.text,
-                          ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.shield_rounded,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: GoogleFonts.poppins(
+                          fontSize: compact ? 16 : 18,
+                          fontWeight: FontWeight.w700,
+                          color: Colors.white,
                         ),
-                        const SizedBox(height: 14),
-                        CheckboxListTile(
-                          value: _isChecked,
-                          onChanged: (value) {
-                            setState(() => _isChecked = value ?? false);
-                          },
-                          contentPadding: EdgeInsets.zero,
-                          controlAffinity: ListTileControlAffinity.leading,
-                          title: Text(
-                            checkboxText,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Scrollable body ──────────────────────────────────────────
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.all(compact ? 16 : 20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Intro blurb
+                      Text(
+                        t.auth('consentDialogSubtitle'),
+                        style: GoogleFonts.roboto(
+                          fontSize: compact ? 13 : 14,
+                          height: 1.55,
+                          color: AppColors.textMuted,
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
+                      // Data points
+                      _ConsentPoint(
+                        icon: Icons.folder_open_rounded,
+                        compact: compact,
+                        title: t.auth('consentPoint1Title'),
+                        body: t.auth('consentPoint1Body'),
+                      ),
+                      _ConsentPoint(
+                        icon: Icons.psychology_rounded,
+                        compact: compact,
+                        title: t.auth('consentPoint2Title'),
+                        body: t.auth('consentPoint2Body'),
+                      ),
+                      _ConsentPoint(
+                        icon: Icons.lock_rounded,
+                        compact: compact,
+                        title: t.auth('consentPoint3Title'),
+                        body: t.auth('consentPoint3Body'),
+                      ),
+                      _ConsentPoint(
+                        icon: Icons.verified_user_rounded,
+                        compact: compact,
+                        title: t.auth('consentPoint4Title'),
+                        body: t.auth('consentPoint4Body'),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      // View full policy link
+                      GestureDetector(
+                        onTap: () => _openPolicy(context),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 6),
+                          child: Text(
+                            viewPolicyText,
                             style: GoogleFonts.poppins(
                               fontSize: compact ? 12 : 13,
-                              height: 1.4,
-                              color: AppColors.text,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.primary,
+                              decoration: TextDecoration.underline,
+                              decorationColor: AppColors.primary,
                             ),
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+
+                      const SizedBox(height: 8),
+
+                      // Agreement checkbox
+                      CheckboxListTile(
+                        value: _isChecked,
+                        onChanged: (value) {
+                          setState(() => _isChecked = value ?? false);
+                        },
+                        contentPadding: EdgeInsets.zero,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        activeColor: AppColors.primary,
+                        title: Text(
+                          checkboxText,
+                          style: GoogleFonts.poppins(
+                            fontSize: compact ? 12 : 13,
+                            height: 1.45,
+                            color: AppColors.text,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 14),
-                Row(
+              ),
+
+              // ── Buttons ──────────────────────────────────────────────────
+              Padding(
+                padding: EdgeInsets.fromLTRB(
+                  compact ? 16 : 20,
+                  0,
+                  compact ? 16 : 20,
+                  compact ? 16 : 20,
+                ),
+                child: Row(
                   children: [
                     Expanded(
                       child: OutlinedButton(
@@ -132,7 +220,7 @@ class _ConsentDialogState extends State<ConsentDialog> {
                           side: BorderSide(
                             color: AppColors.error.withValues(alpha: 0.35),
                           ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: 13),
                         ),
                         child: Text(
                           declineText,
@@ -152,7 +240,7 @@ class _ConsentDialogState extends State<ConsentDialog> {
                                 widget.onAccept();
                               }
                             : null,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        padding: const EdgeInsets.symmetric(vertical: 13),
                         borderRadius: BorderRadius.circular(12),
                         child: Text(
                           acceptText,
@@ -167,10 +255,72 @@ class _ConsentDialogState extends State<ConsentDialog> {
                     ),
                   ],
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Helper widget ─────────────────────────────────────────────────────────────
+
+class _ConsentPoint extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String body;
+  final bool compact;
+
+  const _ConsentPoint({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.compact,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 1),
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.10),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: GoogleFonts.poppins(
+                    fontSize: compact ? 12 : 13,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.text,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  style: GoogleFonts.roboto(
+                    fontSize: compact ? 12 : 13,
+                    height: 1.5,
+                    color: AppColors.textMuted,
+                  ),
+                ),
               ],
             ),
           ),
-        ),
+        ],
       ),
     );
   }

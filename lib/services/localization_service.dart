@@ -22,6 +22,7 @@ class LocalizationService {
   Map<String, dynamic> _achievements = {};
   Map<String, dynamic> _validators = {};
   Map<String, dynamic> _notifications = {};
+  Map<String, dynamic> _privacyPolicy = {};
 
   bool _isLoaded = false;
 
@@ -41,6 +42,7 @@ class LocalizationService {
         rootBundle.loadString('languages/achievements.json'),
         rootBundle.loadString('languages/validators.json'),
         rootBundle.loadString('languages/notifications.json'),
+        rootBundle.loadString('languages/privacy_policy.json'),
       ]);
 
       _common = json.decode(results[0]);
@@ -52,6 +54,7 @@ class LocalizationService {
       _achievements = json.decode(results[6]);
       _validators = json.decode(results[7]);
       _notifications = json.decode(results[8]);
+      _privacyPolicy = json.decode(results[9]);
 
       _isLoaded = true;
     } catch (e) {
@@ -103,6 +106,11 @@ class LocalizationService {
   /// Get translation from notifications module
   String notifications(String key, String lang) {
     return _getText(_notifications, key, lang);
+  }
+
+  /// Get translation from privacy policy screen
+  String privacyPolicy(String key, String lang) {
+    return _getText(_privacyPolicy, key, lang);
   }
 
   /// Internal method to get text from a translation map

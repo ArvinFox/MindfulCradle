@@ -114,8 +114,12 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Google login
-  Future<String?> loginWithGoogle({
+  /// Google sign-in.
+  /// Returns `(error, isNewUser)`. When `isNewUser` is true the Firestore
+  /// document has NOT been created yet — the caller must show the privacy
+  /// policy consent and then call [completeGoogleSignUp] if accepted, or
+  /// [signOut] if declined.
+  Future<({String? error, bool isNewUser})> loginWithGoogle({
     bool rememberMe = false,
     String langCode = 'en',
   }) async {
@@ -123,11 +127,13 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final result = await _authService
-          .loginWithGoogle(langCode: langCode)
-          .timeout(const Duration(seconds: 20));
+      // No outer timeout here — the Google OAuth screen involves user
+      // interaction (picking an account) and cannot be given a fixed timeout.
+      // Network timeouts are handled inside AuthService.loginWithGoogle.
+      final result = await _authService.loginWithGoogle(langCode: langCode);
 
-      if (result == null) {
+      if (result.error == null && !result.isNewUser) {
+        // Existing user — start listening to their document.
         final user = FirebaseAuth.instance.currentUser;
         if (user != null) {
           if (rememberMe) {
@@ -140,17 +146,31 @@ class AuthProvider with ChangeNotifier {
       }
 
       return result;
-    } on TimeoutException {
-      return langCode == 'si'
-          ? 'සම්බන්ධතාවය ප්‍රමාද වී ඇත. කරුණාකර නැවත උත්සාහ කරන්න.'
-          : 'Connection timed out. Please try again.';
     } catch (e) {
-      return langCode == 'si'
-          ? 'සත්‍යාපනය අසාර්ථකයි. කරුණාකර නැවත උත්සාහ කරන්න.'
-          : 'Authentication failed. Please try again.';
+      return (
+        error: langCode == 'si'
+            ? 'සත්‍යාපනය අසාර්ථකයි. කරුණාකර නැවත උත්සාහ කරන්න.'
+            : 'Authentication failed. Please try again.',
+        isNewUser: false,
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  /// Called after a new Google user accepts the privacy policy consent.
+  /// Creates the Firestore document and starts listening to it.
+  Future<void> completeGoogleSignUp({bool rememberMe = false}) async {
+    await _authService.createGoogleUserDocument();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      if (rememberMe) {
+        await _secureStorage.write(key: _userIdKey, value: user.uid);
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove(_userIdKey);
+      }
+      _listenToUser(user.uid);
     }
   }
 

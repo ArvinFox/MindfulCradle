@@ -9,6 +9,7 @@ import '../../widgets/gradient_button.dart';
 import '../../models/user_model.dart';
 import '../../utils/helpers.dart';
 import '../../utils/app_snackbar.dart';
+import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/translate.dart';
 import '../../services/localization_service.dart';
@@ -695,7 +696,13 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
           );
           return;
         }
-        if (mounted) Navigator.of(context).pop();
+        // LoginPage was replaced (pushReplacement), so popping leads to a
+        // black screen. Instead sign the user out and go back to login.
+        if (mounted) {
+          final auth = context.read<AuthProvider>();
+          await auth.logout();
+          Navigator.pushReplacementNamed(context, '/login');
+        }
       },
       child: Scaffold(
         backgroundColor: Colors.transparent,

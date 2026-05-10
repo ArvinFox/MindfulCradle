@@ -303,10 +303,8 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
                 valueListenable: _contentController,
                 builder: (context, value, _) {
                   final t = value.text.trim();
-                  final count =
-                      t.isEmpty ? 0 : t.split(RegExp(r'\s+')).length;
-                  final isNear =
-                      count >= (_contentWordLimit * 0.9).round();
+                  final count = t.isEmpty ? 0 : t.split(RegExp(r'\s+')).length;
+                  final isNear = count >= (_contentWordLimit * 0.9).round();
                   final isMax = count >= _contentWordLimit;
                   return Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -320,9 +318,8 @@ class _JournalWriteScreenState extends State<JournalWriteScreen> {
                           color: isMax
                               ? AppColors.error
                               : isNear
-                                  ? const Color(0xFFE07B2B)
-                                  : AppColors.textMuted
-                                      .withValues(alpha: 0.45),
+                              ? const Color(0xFFE07B2B)
+                              : AppColors.textMuted.withValues(alpha: 0.45),
                         ),
                       ),
                     ),

@@ -13,6 +13,7 @@ import '../../providers/auth_provider.dart';
 import '../../providers/language_provider.dart';
 import '../../utils/translate.dart';
 import '../../services/localization_service.dart';
+import '../../services/notification_service.dart';
 import '../../widgets/app_background.dart';
 
 class UserRegistrationPage extends StatefulWidget {
@@ -179,6 +180,7 @@ class _UserRegistrationPageState extends State<UserRegistrationPage> {
         'isUserRegistrationComplete': true,
         'isTutorialDone': false,
         'registrationDate': FieldValue.serverTimestamp(),
+        'fcmToken': NotificationService().fcmToken,
       }, SetOptions(merge: true));
 
       // Prefs writes — also inside try so they're rolled back on failure

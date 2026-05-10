@@ -123,10 +123,7 @@ class _LoginPageState extends State<LoginPage> {
         await authProvider.logout();
         if (!mounted) return;
         HapticFeedback.vibrate();
-        AppSnackBar.info(
-          context,
-          context.t.auth('consentRequiredGoogle'),
-        );
+        AppSnackBar.info(context, context.t.auth('consentRequiredGoogle'));
         return;
       }
 

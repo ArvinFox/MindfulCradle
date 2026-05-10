@@ -5,6 +5,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/notification_service.dart';
 import '../services/user_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -96,6 +97,7 @@ class AuthProvider with ChangeNotifier {
             await prefs.remove(_userIdKey);
           }
           _listenToUser(user.uid);
+          await NotificationService().saveFcmToken();
         }
       }
 
@@ -142,6 +144,7 @@ class AuthProvider with ChangeNotifier {
             await prefs.remove(_userIdKey);
           }
           _listenToUser(user.uid);
+          await NotificationService().saveFcmToken();
         }
       }
 
@@ -171,6 +174,7 @@ class AuthProvider with ChangeNotifier {
         await prefs.remove(_userIdKey);
       }
       _listenToUser(user.uid);
+      await NotificationService().saveFcmToken();
     }
   }
 

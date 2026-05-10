@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/notification_service.dart';
 
 class LanguageProvider with ChangeNotifier {
   String _currentLang = 'en'; // default
@@ -24,5 +25,8 @@ class LanguageProvider with ChangeNotifier {
     notifyListeners();
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('appLanguage', lang);
+    // Keep FCM language topic in sync so targeted notifications reach
+    // the right users.
+    await NotificationService().subscribeToLanguageTopic(lang);
   }
 }

@@ -487,7 +487,7 @@ class _HomePageState extends State<HomePage> {
               ),
               const SizedBox(height: 12),
               Text(
-                isSinhala ? 'සඟරාව' : 'Journal',
+                isSinhala ? 'ජර්නලය' : 'Journal',
                 style: GoogleFonts.poppins(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,

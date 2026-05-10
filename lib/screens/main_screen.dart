@@ -234,7 +234,7 @@ class _MainScreenState extends State<MainScreen> {
         final msgs = isSinhala
             ? [
                 'ලිවීම ආතතිය අඩු කිරීමට උදව් කරයි',
-                'ඔබේ හැඟීම් සඟරාවේ සටහන් කරන්න',
+                'ඔබේ හැඟීම් ජර්නලයේ සටහන් කරන්න',
                 'ලිපි කිහිපයක් ඔබේ මනෝ සෞඛ්‍යය වැඩිදියුණු කරයි',
               ]
             : [
@@ -244,7 +244,7 @@ class _MainScreenState extends State<MainScreen> {
               ];
         return PromoCardData(
           emoji: '📖',
-          title: isSinhala ? 'සඟරාව ලියමුද?' : 'Time to journal?',
+          title: isSinhala ? 'ජර්නලය ලියමුද?' : 'Time to journal?',
           message: msgs[rng.nextInt(msgs.length)],
           color: const Color(0xFF2D9D78),
           actionLabel: isSinhala ? 'ලිවීමට යමු' : "Let's Write",

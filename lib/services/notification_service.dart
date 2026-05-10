@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:ui' show Color;
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -169,8 +171,7 @@ class NotificationService {
   /// Initialize local notifications
   Future<void> _initializeLocalNotifications() async {
     const AndroidInitializationSettings androidSettings =
-        AndroidInitializationSettings('@mipmap/ic_launcher');
-    AndroidInitializationSettings('@drawable/ic_notification');
+        AndroidInitializationSettings('@drawable/ic_notification');
 
     const DarwinInitializationSettings iosSettings =
         DarwinInitializationSettings(
@@ -206,23 +207,64 @@ class NotificationService {
         ?.createNotificationChannel(channel);
   }
 
+  /// Save the FCM token to Firestore under the current user's document.
+  /// Safe to call even when no user is signed in — it will no-op.
+  Future<void> saveFcmToken([String? token]) async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+    final t = token ?? _fcmToken;
+    if (t == null) return;
+    try {
+      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        'fcmToken': t,
+      });
+      if (kDebugMode) debugPrint('FCM token saved for user $uid');
+    } catch (e) {
+      if (kDebugMode) debugPrint('Failed to save FCM token: $e');
+    }
+  }
+
+  /// Switch language topic subscription.
+  /// Unsubscribes from the previous language topic and subscribes to the new
+  /// one. Call this whenever the user changes their app language.
+  Future<void> subscribeToLanguageTopic(String langCode) async {
+    // Unsubscribe from all language topics first
+    await _fcm.unsubscribeFromTopic('lang_en');
+    await _fcm.unsubscribeFromTopic('lang_si');
+    // Subscribe to the chosen language
+    await _fcm.subscribeToTopic('lang_$langCode');
+    if (kDebugMode) debugPrint('Subscribed to lang_$langCode topic');
+  }
+
   /// Initialize Firebase Cloud Messaging
   Future<void> _initializeFirebaseMessaging() async {
     // Set background message handler
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // Get FCM token
+    // Get FCM token and persist it if a user is already signed in
     _fcmToken = await _fcm.getToken();
     if (kDebugMode) {
       debugPrint('FCM Token: $_fcmToken');
     }
+    await saveFcmToken();
 
-    // Listen for token refresh
+    // Subscribe to the broadcast topic so you can send to ALL users at once
+    // from Firebase Console without managing individual tokens.
+    await _fcm.subscribeToTopic('all_users');
+
+    // Subscribe to the language topic based on saved preference
+    final prefs = await SharedPreferences.getInstance();
+    final lang = prefs.getString('appLanguage') ?? 'en';
+    await _fcm.subscribeToTopic('lang_$lang');
+    if (kDebugMode) debugPrint('Subscribed to topics: all_users, lang_$lang');
+
+    // Listen for token refresh and keep Firestore up to date
     _fcm.onTokenRefresh.listen((token) {
       _fcmToken = token;
       if (kDebugMode) {
         debugPrint('FCM Token refreshed: $token');
       }
+      saveFcmToken(token);
     });
 
     // Handle foreground messages

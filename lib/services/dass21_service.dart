@@ -20,7 +20,7 @@ class DASS21LoadResult {
 }
 
 class DASS21Service {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
   final LocalizationService _loc = LocalizationService.instance;
 
   bool _isCurrentUser(String userId) {

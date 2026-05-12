@@ -19,7 +19,7 @@ class PWS18LoadResult {
 }
 
 class PWS18Service {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
 
   bool _isCurrentUser(String userId) {
     final current = FirebaseAuth.instance.currentUser?.uid;

@@ -55,6 +55,7 @@ flutter:
     - assets/main/
     - assets/video_player/
     - assets/data/
+    - assets/onboarding/
     - languages/
 
   uses-material-design: true

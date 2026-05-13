@@ -22,28 +22,28 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   static const List<_OnboardingPageData> _pages = [
     _OnboardingPageData(
-      icon: Icons.favorite_rounded,
+      imagePath: 'assets/onboarding/onboarding_1.png',
       accentColor: AppColors.heroGradientStart,
       title: 'Welcome to\nMindful Cradle',
       subtitle:
           'Your caring companion throughout pregnancy. Track your wellbeing, access support, and grow every day.',
     ),
     _OnboardingPageData(
-      icon: Icons.insights_rounded,
+      imagePath: 'assets/onboarding/onboarding_3.png',
       accentColor: Color(0xFF2B7CD3),
       title: 'Track Your\nWellbeing',
       subtitle:
           'Complete evidence-based assessments like DASS-21, MAAS and PWS-18 to understand and monitor your mental health journey.',
     ),
     _OnboardingPageData(
-      icon: Icons.smart_toy_rounded,
+      imagePath: 'assets/onboarding/onboarding_2.png',
       accentColor: Color(0xFF2D9D78),
       title: 'Your AI\nCompanion',
       subtitle:
           'Ask our AI-powered chatbot anything about pregnancy, mental health, or everyday concerns — anytime you need support.',
     ),
     _OnboardingPageData(
-      icon: Icons.emoji_events_rounded,
+      imagePath: 'assets/onboarding/onboarding_4.png',
       accentColor: Color(0xFFE28E28),
       title: 'Achieve &\nGrow',
       subtitle:
@@ -83,36 +83,60 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   @override
   Widget build(BuildContext context) {
-    final size = MediaQuery.of(context).size;
     final isLastPage = _currentPage == _pages.length - 1;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F5F2),
       body: Stack(
         children: [
-          // Background gradient blobs
-          Positioned(
-            top: -size.height * 0.12,
-            right: -size.width * 0.25,
-            child: Container(
-              width: size.width * 0.7,
-              height: size.width * 0.7,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.heroGradientStart.withValues(alpha: 0.15),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: -size.height * 0.08,
-            left: -size.width * 0.2,
-            child: Container(
-              width: size.width * 0.65,
-              height: size.width * 0.65,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.accent.withValues(alpha: 0.13),
-              ),
+          // Background — same PNG used by the login page
+          Positioned.fill(
+            child: Image.asset(
+              'assets/login/Mindful_Cradle_Login_Background.png',
+              fit: BoxFit.cover,
+              color: Colors.white.withValues(alpha: 0.55),
+              colorBlendMode: BlendMode.lighten,
+              errorBuilder: (context, error, stackTrace) {
+                return Stack(
+                  children: [
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: const BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFFF8F5F2), Color(0xFFF4F0EC)],
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      top: -80,
+                      right: -60,
+                      child: Container(
+                        width: 260,
+                        height: 260,
+                        decoration: const BoxDecoration(
+                          color: Color(0x265E8C7B),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                    Positioned(
+                      bottom: -80,
+                      left: -60,
+                      child: Container(
+                        width: 240,
+                        height: 240,
+                        decoration: const BoxDecoration(
+                          color: Color(0x1FD4856A),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
 
@@ -127,14 +151,26 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     padding: const EdgeInsets.only(top: 8, right: 16),
                     child: TextButton(
                       onPressed: isLastPage ? null : _skipOnboarding,
+                      style: TextButton.styleFrom(
+                        backgroundColor: isLastPage
+                            ? Colors.transparent
+                            : Colors.white.withValues(alpha: 0.75),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 6,
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                      ),
                       child: Text(
                         'Skip',
                         style: GoogleFonts.poppins(
                           fontSize: 14,
-                          fontWeight: FontWeight.w500,
+                          fontWeight: FontWeight.w600,
                           color: isLastPage
                               ? Colors.transparent
-                              : AppColors.textMuted,
+                              : AppColors.primary,
                         ),
                       ),
                     ),
@@ -270,15 +306,8 @@ class _OnboardingPage extends StatelessWidget {
             child: Container(
               width: iconContainerSize,
               height: iconContainerSize,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    data.accentColor,
-                    data.accentColor.withValues(alpha: 0.7),
-                  ],
-                ),
                 borderRadius: BorderRadius.circular(36),
                 boxShadow: [
                   BoxShadow(
@@ -288,11 +317,7 @@ class _OnboardingPage extends StatelessWidget {
                   ),
                 ],
               ),
-              child: Icon(
-                data.icon,
-                color: Colors.white,
-                size: iconContainerSize * 0.46,
-              ),
+              child: Image.asset(data.imagePath, fit: BoxFit.cover),
             ),
           ),
           SizedBox(height: isMobile ? 36 : 48),
@@ -339,13 +364,13 @@ class _OnboardingPage extends StatelessWidget {
 }
 
 class _OnboardingPageData {
-  final IconData icon;
+  final String imagePath;
   final Color accentColor;
   final String title;
   final String subtitle;
 
   const _OnboardingPageData({
-    required this.icon,
+    required this.imagePath,
     required this.accentColor,
     required this.title,
     required this.subtitle,

@@ -1,5 +1,4 @@
 import 'dart:io';
-import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mamamind/services/rag_service.dart';
@@ -19,14 +18,6 @@ String _loadFaqJson() {
     reason: 'pregnancy_faq.json must exist at assets/data/',
   );
   return file.readAsStringSync();
-}
-
-/// Builds a [RagService] pre-loaded from the real FAQ JSON without needing
-/// the Flutter asset bundle (rootBundle).
-RagService _buildService() {
-  final service = RagService(apiKey: 'test-key');
-  service.initializeFromJson(_loadFaqJson());
-  return service;
 }
 
 // ---------------------------------------------------------------------------

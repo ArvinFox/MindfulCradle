@@ -85,9 +85,6 @@ void main() {
   group('PWS18Service', () {
     final pws18 = PWS18Service();
 
-    // Helper: build a 18-item response list where every item = value.
-    List<int?> allValue(int v) => List<int?>.filled(18, v);
-
     group('calculateScores() – reverse items', () {
       // Reverse items: [1,2,3,8,9,11,12,13,17,18] → score = 8 - value
       // Non-reverse: all others → score = value

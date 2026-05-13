@@ -66,6 +66,13 @@ jobs:
       - name: Install Flutter dependencies
         run: flutter pub get
 
+      # ── Analyse & Test ────────────────────────────────────────────────────
+      - name: Flutter analyze
+        run: flutter analyze --fatal-infos
+
+      - name: Run unit & widget tests
+        run: flutter test --coverage
+
       # ── Build ─────────────────────────────────────────────────────────────
       - name: Build release APK
         if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_apk }}

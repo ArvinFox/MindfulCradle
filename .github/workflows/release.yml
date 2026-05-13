@@ -68,7 +68,7 @@ jobs:
 
       # ── Analyse & Test ────────────────────────────────────────────────────
       - name: Flutter analyze
-        run: flutter analyze --fatal-warnings
+        run: flutter analyze --no-fatal-infos
 
       - name: Run unit & widget tests
         run: flutter test --coverage

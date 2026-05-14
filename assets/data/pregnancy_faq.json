@@ -1,0 +1,417 @@
+[
+	{
+		"question": "Is it normal to feel tired during the first trimester?",
+		"answer": "Yes, fatigue is very common during the first trimester due to hormonal changes, especially rising progesterone levels, and your body's increased energy demands. Your body is working hard to support the developing baby. Getting adequate rest, staying hydrated, eating balanced meals with protein and complex carbohydrates, and taking prenatal vitamins can help manage fatigue.",
+		"category": "first_trimester"
+	},
+	{
+		"question": "What foods should I avoid during pregnancy?",
+		"answer": "Avoid raw or undercooked meat, fish, and eggs; unpasteurized dairy products and juices; high-mercury fish like shark, swordfish, king mackerel, and tilefish; deli meats unless heated until steaming; raw sprouts; and excessive caffeine (limit to 200mg per day). Always wash fruits and vegetables thoroughly. These precautions help prevent foodborne illnesses that could harm your baby.",
+		"category": "nutrition"
+	},
+	{
+		"question": "When should I contact a doctor?",
+		"answer": "Contact your doctor immediately if you experience heavy bleeding, severe abdominal pain, persistent vomiting that prevents you from keeping food or water down, sudden severe headaches, vision changes, severe swelling of hands or face, high fever (over 100.4°F), reduced fetal movement after 28 weeks, or fluid leaking from the vagina. These could be signs of serious complications.",
+		"category": "warning_signs"
+	},
+	{
+		"question": "What are common first trimester symptoms?",
+		"answer": "Common first trimester symptoms include nausea and morning sickness, breast tenderness, frequent urination, fatigue, food aversions or cravings, mood swings, mild cramping, and light spotting. These symptoms are typically caused by hormonal changes and are usually normal, but always consult your healthcare provider if you have concerns.",
+		"category": "first_trimester"
+	},
+	{
+		"question": "How can I manage morning sickness?",
+		"answer": "To manage morning sickness, try eating small, frequent meals throughout the day; keep crackers by your bedside and eat a few before getting up; avoid strong smells and greasy or spicy foods; stay hydrated with small sips of water or ginger tea; try ginger candy or acupressure wristbands; and get plenty of rest. If vomiting is severe or you can't keep fluids down, contact your doctor.",
+		"category": "first_trimester"
+	},
+	{
+		"question": "What prenatal vitamins should I take?",
+		"answer": "Take a prenatal vitamin containing at least 400-800 mcg of folic acid, iron, calcium, vitamin D, DHA (omega-3), and other essential vitamins and minerals. Folic acid is especially important in early pregnancy to prevent neural tube defects. Start prenatal vitamins before conception if possible, or as soon as you know you're pregnant. Consult your doctor for specific recommendations based on your needs.",
+		"category": "nutrition"
+	},
+	{
+		"question": "Is exercise safe during pregnancy?",
+		"answer": "Yes, moderate exercise is generally safe and beneficial during pregnancy. Recommended activities include walking, swimming, prenatal yoga, and low-impact aerobics. Exercise can help reduce back pain, improve mood, maintain healthy weight gain, and prepare your body for labor. Avoid contact sports, activities with fall risk, and exercises lying flat on your back after the first trimester. Always consult your doctor before starting any exercise program.",
+		"category": "exercise"
+	},
+	{
+		"question": "How much weight should I gain during pregnancy?",
+		"answer": "Recommended weight gain depends on your pre-pregnancy BMI. Generally: underweight women should gain 28-40 lbs, normal weight women 25-35 lbs, overweight women 15-25 lbs, and obese women 11-20 lbs. For twins, gain 37-54 lbs (normal weight). Weight gain should be gradual, with most occurring in the second and third trimesters. Your healthcare provider will monitor your weight gain and provide personalized guidance.",
+		"category": "nutrition"
+	},
+	{
+		"question": "What changes happen in the second trimester?",
+		"answer": "The second trimester (weeks 13-27) often brings increased energy, reduced nausea, visible baby bump, and feeling the baby move (quickening) around 16-25 weeks. You may experience round ligament pain, nasal congestion, skin changes, and increased appetite. This is often called the 'honeymoon phase' of pregnancy as many uncomfortable first trimester symptoms subside.",
+		"category": "second_trimester"
+	},
+	{
+		"question": "When will I feel my baby move?",
+		"answer": "First-time mothers typically feel fetal movement (quickening) between 18-25 weeks, while experienced mothers may notice it as early as 16 weeks. Initial movements feel like flutters, gas bubbles, or gentle pokes. As pregnancy progresses, movements become stronger and more frequent. By 28 weeks, you should monitor fetal movement patterns; contact your doctor if you notice significant changes.",
+		"category": "second_trimester"
+	},
+	{
+		"question": "How can I deal with pregnancy back pain?",
+		"answer": "To manage back pain: maintain good posture, wear low-heeled supportive shoes, avoid heavy lifting, sleep on your side with a pillow between your knees, use a pregnancy support belt, practice prenatal yoga or gentle stretching, apply heat or cold packs, get prenatal massages, and do pelvic tilts. If pain is severe or sudden, consult your healthcare provider.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What are Braxton Hicks contractions?",
+		"answer": "Braxton Hicks are 'practice' contractions that can start in the second trimester but are more common in the third. They feel like tightening of the uterus, are irregular, don't increase in intensity or frequency, and usually stop with change in position or activity. True labor contractions are regular, increase in intensity, get closer together, and don't stop with movement. Contact your doctor if contractions are regular before 37 weeks.",
+		"category": "third_trimester"
+	},
+	{
+		"question": "What happens during the third trimester?",
+		"answer": "The third trimester (weeks 28-40) brings rapid baby growth, increased discomfort including back pain, heartburn, shortness of breath, and frequent urination. You may experience swelling in feet and ankles, difficulty sleeping, and Braxton Hicks contractions. Your baby will move into position for birth. Regular prenatal visits become more frequent to monitor you and baby's health.",
+		"category": "third_trimester"
+	},
+	{
+		"question": "How do I know if I'm in labor?",
+		"answer": "Signs of true labor include regular contractions that get stronger, longer, and closer together (typically 5-10 minutes apart); lower back pain and cramping; water breaking (amniotic fluid release); bloody show (mucus plug discharge with blood); and strong pressure in the pelvis. If you're unsure, contact your healthcare provider. Go to the hospital if contractions are 5 minutes apart for an hour, your water breaks, or you experience severe bleeding.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "What should I pack in my hospital bag?",
+		"answer": "Pack: insurance cards and ID, birth plan, comfortable clothes including a nursing-friendly outfit for going home, toiletries, phone charger, maternity pads, nursing bras, comfortable slippers, snacks for after delivery, baby clothes (newborn and 0-3 month sizes), car seat (required to leave hospital), receiving blankets, and any comfort items like music or photos. Pack by 36 weeks in case of early labor.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "What are the stages of labor?",
+		"answer": "Labor has three stages: Stage 1 (early, active, and transition phases) involves cervical dilation from 0-10 cm and can last 12-19 hours for first babies; Stage 2 is pushing and delivery, usually 20 minutes to 2 hours; Stage 3 is placenta delivery, typically 5-30 minutes. Each woman's experience varies. Your healthcare team will guide you through each stage.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "What pain relief options are available during labor?",
+		"answer": "Pain relief options include: breathing techniques and position changes; water therapy (shower or tub); massage and counter-pressure; epidural (most common medical option); spinal block; IV pain medication; nitrous oxide (laughing gas); and local anesthesia for episiotomy or stitching. Discuss your preferences with your healthcare provider beforehand, but remain flexible as circumstances may change.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "How long does postpartum recovery take?",
+		"answer": "Physical recovery takes 6-8 weeks, sometimes longer. Vaginal delivery typically has faster recovery than C-section. You'll experience vaginal bleeding (lochia) for 2-6 weeks, uterine contractions while breastfeeding, breast engorgement, fatigue, and hormonal changes. Emotional adjustment continues for months. Attend your postpartum check-up at 6 weeks. Full recovery, especially core strength and hormone balance, can take several months to a year.",
+		"category": "postpartum"
+	},
+	{
+		"question": "What is postpartum depression?",
+		"answer": "Postpartum depression (PPD) is depression occurring after childbirth, affecting 1 in 7 women. Symptoms include persistent sadness, anxiety, irritability, guilt, loss of interest in activities, changes in appetite or sleep, difficulty bonding with baby, and thoughts of harming yourself or baby. PPD is different from 'baby blues' (mild, short-lived mood changes). It's a medical condition requiring treatment. Contact your doctor immediately if you experience these symptoms.",
+		"category": "postpartum"
+	},
+	{
+		"question": "How can I manage postpartum bleeding?",
+		"answer": "Postpartum bleeding (lochia) is normal for 2-6 weeks after delivery. Use heavy-duty pads (not tampons) for the first few weeks. Flow will be heavy and red initially, then lighten and change to pink or brown. Change pads frequently to prevent infection. Call your doctor if you soak through a pad in an hour, pass large clots, have foul-smelling discharge, or experience fever, as these may indicate complications.",
+		"category": "postpartum"
+	},
+	{
+		"question": "When can I exercise after giving birth?",
+		"answer": "For uncomplicated vaginal delivery, gentle activities like walking can start within days. Wait until your 6-week postpartum check-up before resuming regular exercise. C-section recovery requires more time - typically 6-8 weeks before exercise. Start slowly with walking and pelvic floor exercises, gradually increasing intensity. Listen to your body, and get clearance from your healthcare provider before starting any exercise program.",
+		"category": "postpartum"
+	},
+	{
+		"question": "What are the benefits of breastfeeding?",
+		"answer": "Breastfeeding provides optimal nutrition for baby, antibodies for immune protection, easier digestion, and reduced risk of infections, SIDS, obesity, and chronic diseases. For mothers, benefits include faster uterine recovery, reduced postpartum bleeding, natural child spacing, lower risk of breast and ovarian cancer, and enhanced bonding. However, fed is best - if breastfeeding isn't possible, formula feeding is a healthy alternative.",
+		"category": "breastfeeding"
+	},
+	{
+		"question": "How do I know if my baby is getting enough breast milk?",
+		"answer": "Signs baby is getting enough milk: 6-8 wet diapers per day after the first week, regular bowel movements (frequency varies), steady weight gain, baby seems satisfied after feeding, your breasts feel softer after feeding, and you can hear swallowing during feeding. Newborns typically feed 8-12 times in 24 hours. Contact a lactation consultant if you're concerned about milk supply.",
+		"category": "breastfeeding"
+	},
+	{
+		"question": "What should I do if breastfeeding is painful?",
+		"answer": "Some tenderness is normal initially, but breastfeeding shouldn't be painful. Common causes of pain include improper latch, tongue tie, engorgement, blocked ducts, or infection (mastitis). To address: ensure proper latch, try different positions, apply warm compresses before feeding and cold after, express a little milk to soften breast, and keep nipples clean and dry. Consult a lactation consultant or doctor if pain persists.",
+		"category": "breastfeeding"
+	},
+	{
+		"question": "How often should a newborn eat?",
+		"answer": "Newborns typically eat 8-12 times per day (every 2-3 hours), including at night. Some babies feed more frequently during growth spurts. Breastfed babies often eat more frequently than formula-fed babies. Feed on demand, watching for hunger cues like rooting, hand-to-mouth movements, and fussiness. Wake your baby for feedings if they sleep longer than 4 hours in the first few weeks to ensure adequate nutrition and weight gain.",
+		"category": "newborn_care"
+	},
+	{
+		"question": "What is normal newborn sleep?",
+		"answer": "Newborns sleep 14-17 hours per day but in short periods (2-4 hours) since they need frequent feeding. They don't distinguish day from night initially. Sleep cycles are shorter than adults. By 3-4 months, many babies develop more regular patterns and can sleep longer stretches at night. Always place baby on their back to sleep on a firm surface without loose bedding to reduce SIDS risk.",
+		"category": "newborn_care"
+	},
+	{
+		"question": "How do I care for the umbilical cord stump?",
+		"answer": "Keep the cord stump clean and dry. Fold diapers below the stump to prevent urine contact. Give sponge baths until the stump falls off (usually 1-3 weeks). Don't pull the stump off - let it fall naturally. A small amount of bleeding when it falls off is normal. Contact your doctor if you notice redness around the base, swelling, pus, foul odor, or if baby cries when you touch the area.",
+		"category": "newborn_care"
+	},
+	{
+		"question": "When should I call the pediatrician about my newborn?",
+		"answer": "Call if baby has: fever over 100.4°F rectally, difficulty breathing or bluish skin, persistent vomiting or diarrhea, fewer than 6 wet diapers per day after one week, yellow skin or eyes (jaundice), extreme fussiness or lethargy, not eating well, or anything that concerns you. Trust your instincts - it's better to call and be reassured than to wait when something could be wrong.",
+		"category": "newborn_care"
+	},
+	{
+		"question": "Is it safe to sleep on my back during pregnancy?",
+		"answer": "After the first trimester (around 20 weeks), it's best to avoid sleeping flat on your back for extended periods. The weight of the growing uterus can compress the vena cava (major vein), reducing blood flow to you and baby. Sleep on your left side (optimal for circulation) or right side, using pillows for support. If you wake up on your back, simply shift to your side - occasional back sleeping won't harm your baby.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "Can I travel during pregnancy?",
+		"answer": "Travel is generally safe during pregnancy, with the second trimester (14-28 weeks) being the ideal time. Avoid travel after 36 weeks or if you have complications. When traveling: stay hydrated, move around frequently, wear comfortable clothes and compression stockings, have medical records accessible, research healthcare facilities at your destination, and consult your doctor beforehand. Some airlines have restrictions for pregnant passengers after 36 weeks.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "What medications are safe during pregnancy?",
+		"answer": "Generally safe medications include: acetaminophen (Tylenol) for pain and fever, certain antihistamines for allergies, and some antacids for heartburn. Avoid ibuprofen (Advil) and aspirin unless prescribed by your doctor. Always consult your healthcare provider before taking any medication, including over-the-counter drugs, supplements, and herbal remedies. Many common medications can affect fetal development, especially in the first trimester.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "How can I reduce pregnancy heartburn?",
+		"answer": "To reduce heartburn: eat small, frequent meals; avoid trigger foods (spicy, fatty, acidic, caffeine); don't eat close to bedtime; stay upright after eating; elevate your head while sleeping; wear loose clothing; drink fluids between meals rather than with meals; and chew gum to stimulate saliva production. Safe antacids include calcium carbonate (Tums). If heartburn is severe, consult your doctor about prescription medications safe for pregnancy.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes pregnancy leg cramps and how can I prevent them?",
+		"answer": "Leg cramps, especially at night, are common due to weight changes, circulation changes, and mineral imbalances. To prevent: stretch calf muscles before bed, stay hydrated, maintain adequate calcium and magnesium intake, avoid sitting or standing for long periods, wear supportive shoes, and apply heat to cramped muscles. When a cramp occurs, flex your foot upward and massage the muscle. If cramps are severe or frequent, consult your doctor.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "Is it normal to have mood swings during pregnancy?",
+		"answer": "Yes, mood swings are very common during pregnancy due to hormonal changes, physical discomfort, and the emotional aspects of impending parenthood. You may feel excited one moment and anxious or tearful the next. These are normal. However, if you experience persistent sadness, anxiety that interferes with daily life, or thoughts of harming yourself, contact your healthcare provider immediately as these may indicate prenatal depression or anxiety disorders requiring treatment.",
+		"category": "mental_health"
+	},
+	{
+		"question": "How can I manage pregnancy anxiety?",
+		"answer": "To manage anxiety: practice relaxation techniques like deep breathing and meditation, exercise regularly, maintain a healthy sleep routine, talk about your concerns with your partner or friends, join a pregnancy support group, limit caffeine, stay informed but avoid excessive googling of symptoms, and focus on what you can control. If anxiety is overwhelming or interferes with daily life, seek help from a mental health professional experienced in perinatal mental health.",
+		"category": "mental_health"
+	},
+	{
+		"question": "What prenatal tests are typically recommended?",
+		"answer": "Common prenatal tests include: blood tests for blood type, Rh factor, anemia, and infections; ultrasounds (dating scan at 8-12 weeks, anatomy scan at 18-22 weeks); glucose screening for gestational diabetes (24-28 weeks); Group B strep screening (35-37 weeks); and optional genetic screening tests like NIPT, first trimester screening, or amniocentesis if indicated. Your healthcare provider will recommend tests based on your health history and risk factors.",
+		"category": "prenatal_care"
+	},
+	{
+		"question": "What is a high-risk pregnancy?",
+		"answer": "A high-risk pregnancy has increased potential for complications due to factors like: maternal age (under 17 or over 35), pre-existing conditions (diabetes, high blood pressure, autoimmune disorders), pregnancy complications (preeclampsia, placenta previa, multiples), lifestyle factors (smoking, alcohol), or previous pregnancy complications. High-risk doesn't mean problems will occur, but requires closer monitoring by specialists (maternal-fetal medicine doctors) and more frequent appointments.",
+		"category": "prenatal_care"
+	},
+	{
+		"question": "What is gestational diabetes?",
+		"answer": "Gestational diabetes is diabetes that develops during pregnancy, usually around 24-28 weeks. It occurs when your body can't produce enough insulin to meet increased needs during pregnancy, causing high blood sugar. Most women manage it through diet, exercise, and blood sugar monitoring; some need insulin. It usually resolves after delivery but increases risk for type 2 diabetes later. Uncontrolled gestational diabetes can cause large babies, early delivery, and low blood sugar in newborns.",
+		"category": "pregnancy_complications"
+	},
+	{
+		"question": "What is preeclampsia?",
+		"answer": "Preeclampsia is a serious pregnancy complication characterized by high blood pressure and protein in urine after 20 weeks. Warning signs include: severe headaches, vision changes, upper abdominal pain, sudden weight gain, and severe swelling. Risk factors include first pregnancy, previous preeclampsia, chronic hypertension, obesity, diabetes, and multiples. It requires immediate medical attention as it can progress to seizures (eclampsia). Treatment may include blood pressure medication, bed rest, or early delivery depending on severity.",
+		"category": "pregnancy_complications"
+	},
+	{
+		"question": "What is a C-section and when is it necessary?",
+		"answer": "A cesarean section (C-section) is surgical delivery through incisions in the abdomen and uterus. It may be planned (for breech baby, placenta previa, multiples, previous C-section) or emergency (for fetal distress, labor not progressing, cord prolapse). Recovery takes longer than vaginal delivery (6-8 weeks), with restrictions on lifting and driving. While major surgery, C-sections are safe and sometimes necessary. Discuss risks and benefits with your healthcare provider.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "Can I have a vaginal birth after cesarean (VBAC)?",
+		"answer": "Many women can safely have a vaginal birth after cesarean (VBAC), with 60-80% success rate. Factors affecting VBAC candidacy include: reason for previous C-section, type of uterine incision, number of previous C-sections, and current pregnancy conditions. Benefits include shorter recovery, lower infection risk, and avoiding repeated surgery. Risks include uterine rupture (rare but serious). Discuss with your healthcare provider to determine if VBAC is right for you.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "How do I create a birth plan?",
+		"answer": "A birth plan outlines your preferences for labor and delivery, including: pain management options, labor positions, who will be present, interventions you prefer to avoid if possible, newborn care preferences (skin-to-skin, delayed cord clamping, breastfeeding), and cultural or religious practices. Keep it brief and flexible. Discuss with your healthcare provider beforehand. Remember, plans may change based on circumstances, and the priority is a safe delivery for you and baby.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "What is the difference between baby blues and postpartum depression?",
+		"answer": "Baby blues affect 70-80% of new mothers, starting 2-3 days postpartum and lasting up to 2 weeks. Symptoms include mood swings, crying, anxiety, and difficulty sleeping, but don't interfere significantly with daily functioning. Postpartum depression (PPD) affects 10-15% of mothers, can start anytime in the first year, lasts weeks to months without treatment, and includes severe sadness, hopelessness, difficulty bonding with baby, and impacts daily functioning. PPD requires professional treatment.",
+		"category": "postpartum"
+	},
+	{
+		"question": "How can my partner support me during pregnancy?",
+		"answer": "Partners can support by: attending prenatal appointments, learning about pregnancy and childbirth together, helping with household tasks, being patient with mood swings and discomforts, preparing for baby's arrival together, being emotionally supportive and listening without judgment, taking over tasks that are difficult or risky during pregnancy, attending childbirth and parenting classes, and being involved in decision-making. Communication about needs and expectations is essential.",
+		"category": "partner_support"
+	},
+	{
+		"question": "When should I start preparing the nursery?",
+		"answer": "Most parents start preparing the nursery in the second trimester (around 20-28 weeks) after hearing good news from anatomy scans and having more energy. This gives time to purchase items, assemble furniture, and organize without rushing. Essential items include: safe sleep space (crib/bassinet), changing area, clothes storage, and basic supplies (diapers, wipes, clothes). Have the basics ready by 36 weeks in case of early delivery.",
+		"category": "preparation"
+	},
+	{
+		"question": "What are the signs of premature labor?",
+		"answer": "Signs of premature labor (before 37 weeks) include: regular contractions (6+ per hour), menstrual-like cramps, low back pressure or pain, pelvic pressure, abdominal cramping with or without diarrhea, increase in vaginal discharge, or leaking fluid. Contact your healthcare provider immediately if you experience these symptoms before 37 weeks. Early recognition and treatment can sometimes delay delivery, giving baby more time to develop.",
+		"category": "warning_signs"
+	},
+	{
+		"question": "What is the mucus plug and bloody show?",
+		"answer": "The mucus plug seals the cervical opening during pregnancy. As your cervix begins to dilate and soften before labor, this plug is expelled - this is 'bloody show' when mixed with blood. It can appear as thick mucus that's clear, pink, or blood-tinged. You may lose it all at once or gradually over days. Bloody show can occur weeks before labor or just hours before. Contact your doctor if you have heavy bleeding (more than a tablespoon) which could indicate a problem.",
+		"category": "labor_delivery"
+	},
+	{
+		"question": "What is a good diet schedule during pregnancy?",
+		"answer": "A balanced pregnancy diet includes 3 meals and 2-3 snacks daily. Breakfast: oatmeal with fruits and nuts. Mid-morning snack: yogurt with berries. Lunch: grilled chicken salad with vegetables. Afternoon snack: apple with peanut butter. Dinner: fish or lean meat with quinoa and vegetables. Evening snack: cottage cheese. Focus on protein, complex carbs, healthy fats, and plenty of water. Consult your doctor for personalized nutrition plans.",
+		"category": "nutrition"
+	},
+	{
+		"question": "How can I create a meal plan for pregnancy?",
+		"answer": "Create a meal plan by including: 3-4 servings of fruits/vegetables daily, 3-4 servings of whole grains, 2-3 servings of protein (lean meats, fish, eggs, beans), 2-3 servings of dairy or calcium-rich foods, and healthy fats (avocados, nuts, olive oil). Sample daily plan: Breakfast - whole grain toast with avocado and eggs. Lunch - turkey wrap with veggies. Dinner - salmon with sweet potatoes. Snacks - nuts, fruits, cheese. Adjust portions based on your needs and consult a nutritionist.",
+		"category": "nutrition"
+	},
+	{
+		"question": "What foods should I eat more of during pregnancy?",
+		"answer": "Increase intake of: leafy greens (spinach, kale) for folate, citrus fruits and bell peppers for vitamin C, nuts and seeds for healthy fats, whole grains for fiber, lean proteins (chicken, fish, beans) for iron and protein, dairy or fortified alternatives for calcium, and colorful vegetables for antioxidants. These support baby's development and your health. Aim for variety and balance in your diet.",
+		"category": "nutrition"
+	},
+	{
+		"question": "Why does my tummy hurt during pregnancy?",
+		"answer": "Tummy or abdominal pain during pregnancy can have many causes. **Common and normal causes** include round ligament pain (sharp twinge on the lower sides when you move), gas, bloating, constipation, Braxton Hicks contractions, and the uterus stretching. **Causes needing prompt attention** include: severe or persistent pain, pain with fever or vomiting, burning pain with urination (UTI), or one-sided pain. Always contact your doctor if abdominal pain is severe, doesn't go away after resting, or is accompanied by bleeding.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes bloating and gas during pregnancy and how do I manage it?",
+		"answer": "Bloating and gas are very common in pregnancy due to the hormone progesterone, which relaxes intestinal muscles and slows digestion. **Tips to manage:** eat slowly and chew food thoroughly, avoid gas-producing foods (beans, cabbage, broccoli, fizzy drinks), eat smaller and more frequent meals, stay active with gentle walks, drink plenty of water, wear loose comfortable clothing, and avoid swallowing air by not chewing gum or using straws. Gas discomfort usually eases by the second trimester.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "How can I relieve constipation during pregnancy?",
+		"answer": "Constipation affects up to half of pregnant women due to progesterone slowing the bowel and iron supplements. **Relief tips:** increase fibre intake (fruits, vegetables, whole grains, beans), drink 8–10 glasses of water daily, exercise regularly such as walking, eat prunes or drink prune juice, and go to the toilet when you feel the urge — don't wait. If diet changes don't help, ask your doctor about pregnancy-safe fibre supplements or stool softeners. Avoid harsh laxatives unless prescribed.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "Is diarrhoea normal during pregnancy?",
+		"answer": "Occasional loose stools can happen in pregnancy due to hormonal changes, dietary shifts, or prenatal vitamins. In late pregnancy, diarrhoea can be a sign that labour is approaching as the body prepares. **When to see a doctor:** diarrhoea lasting more than 2 days, signs of dehydration (dark urine, dizziness, dry mouth), blood or mucus in stool, or diarrhoea with fever and severe cramping. Stay hydrated with water and electrolyte drinks, eat bland foods (bananas, rice, toast, applesauce), and avoid dairy temporarily.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes stomach cramps during pregnancy?",
+		"answer": "Stomach or uterine cramps during pregnancy are common and often harmless. **Normal causes** include implantation cramping in early pregnancy, round ligament stretching, gas and constipation, and Braxton Hicks contractions in the third trimester. **Concerning cramps** include: cramping with heavy bleeding (possible miscarriage or placenta issue), severe one-sided pain in early pregnancy (ectopic pregnancy), and regular cramps before 37 weeks (preterm labour). Mild cramps that ease with rest are usually fine, but always tell your midwife or doctor about new or worsening cramps.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes headaches during pregnancy and how do I treat them?",
+		"answer": "Headaches are common in the first and third trimesters due to hormonal changes, increased blood volume, low blood sugar, dehydration, stress, or poor posture. **Relief tips:** rest in a quiet, dark room; apply a cold or warm compress; drink water; eat small regular meals to maintain blood sugar; gentle neck stretches; and take acetaminophen (paracetamol/Tylenol) if needed — it is safe in pregnancy. **See your doctor immediately** if you have a sudden severe 'thunderclap' headache, headache with vision changes or swelling — these can be signs of preeclampsia.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "Why do I feel dizzy or lightheaded during pregnancy?",
+		"answer": "Dizziness is common in pregnancy for several reasons: blood vessels dilate due to hormones causing blood pressure to drop, lying on your back compresses a major vein, standing too quickly (orthostatic hypotension), low blood sugar, anaemia, or dehydration. **To manage:** stand up slowly, avoid lying flat on your back, eat small frequent meals, stay hydrated, and wear loose clothing. **Seek urgent help** if you faint, have prolonged dizziness, or dizziness with chest pain or palpitations.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "Why am I short of breath during pregnancy?",
+		"answer": "Shortness of breath is normal and very common during pregnancy, especially in the third trimester when the growing uterus pushes up against the diaphragm. In early pregnancy, the hormone progesterone also makes you breathe more deeply. **Tips to cope:** sit up straight and avoid slouching, sleep propped up with extra pillows, slow down and rest when needed, and avoid overexertion. **Seek urgent care** if you have sudden severe breathlessness, chest pain, rapid heart rate, or blue-tinged lips, as these can signal a serious condition.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes swelling in feet and ankles during pregnancy?",
+		"answer": "Mild swelling (oedema) in the feet, ankles, and hands is very common — especially in the third trimester — because pregnancy increases body fluid and the growing uterus puts pressure on leg veins. **Tips to reduce swelling:** elevate your feet when resting, stay physically active, avoid standing for long periods, drink plenty of water, reduce salt intake, wear comfortable supportive shoes, and sleep on your left side. **Contact your doctor immediately** if swelling is sudden, severe, or occurs in your face, or is accompanied by headache and vision changes — these are warning signs of preeclampsia.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What are haemorrhoids during pregnancy and how can I treat them?",
+		"answer": "Haemorrhoids (piles) are swollen veins in or around the rectum, common in pregnancy due to increased blood flow, the growing uterus putting pressure on veins, and constipation straining. Symptoms include itching, pain, and sometimes bleeding after a bowel movement. **Treatment:** eat a high-fibre diet and drink plenty of water to soften stools, avoid straining, apply witch hazel pads or a cold pack for relief, take warm sitz baths, and keep the area clean. Ask your doctor about pregnancy-safe topical creams. They usually resolve after delivery.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes round ligament pain and is it dangerous?",
+		"answer": "Round ligament pain is a sharp, stabbing, or aching pain on one or both sides of the lower abdomen or groin area, most common in the second trimester. The round ligaments support the uterus, and as it grows they stretch and can spasm — often triggered by sudden movement, rolling over in bed, coughing, or sneezing. **It is not dangerous.** To manage: move slowly, bend toward the pain, apply a warm pack, rest, and avoid sudden movements. However, contact your doctor if pain is severe, persistent, or accompanied by fever, chills, or burning urination.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What is pelvic girdle pain (PGP) in pregnancy?",
+		"answer": "Pelvic girdle pain (PGP), sometimes called symphysis pubis dysfunction (SPD), causes pain in the front or back of the pelvis, hips, and sometimes the inner thighs. It is caused by hormones making pelvic joints more flexible combined with the weight of the growing baby. **Management:** avoid activities that worsen pain (wide leg movements, climbing stairs repeatedly), sleep with a pillow between your knees, wear a pelvic support belt, do physiotherapy exercises, and sit down to get dressed. Ask your midwife for a referral to a physiotherapist specialising in pelvic health.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes carpal tunnel syndrome in pregnancy?",
+		"answer": "Carpal tunnel syndrome causes tingling, numbness, or pain in the hands and fingers, often worse at night or in the morning. During pregnancy, fluid retention causes swelling that compresses the carpal tunnel nerve in the wrist. **Management:** rest your wrists, wear a wrist splint especially at night, elevate your hands when resting, gently shake or move your hands to relieve numbness, and do wrist stretches. Most cases resolve after delivery once swelling reduces. Inform your doctor or midwife as they may refer you to a physiotherapist.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "How do I manage varicose veins during pregnancy?",
+		"answer": "Varicose veins (swollen, visible veins — usually in the legs) occur in pregnancy because increased blood volume and the uterus pressing on leg veins slows blood return to the heart. They can cause aching, heaviness, or throbbing. **Tips:** wear compression/support stockings, elevate your legs when resting, avoid standing or sitting for long periods, exercise regularly (walking), sleep on your left side, and avoid crossing your legs. They often improve after delivery. Contact your doctor if veins become very painful, red, or warm.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes skin itching during pregnancy?",
+		"answer": "Mild itching on the abdomen is common as skin stretches over the growing bump. Hormonal changes can also cause general skin dryness or sensitivity. **Relief:** use fragrance-free moisturisers, wear loose cotton clothing, take lukewarm (not hot) showers, and stay hydrated. **Seek urgent medical advice** if you develop intense, persistent itching especially on the palms of hands and soles of feet, particularly in the third trimester — this can be a sign of intrahepatic cholestasis of pregnancy (ICP/OC), a liver condition that requires prompt treatment.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What are the symptoms of a urinary tract infection (UTI) during pregnancy?",
+		"answer": "UTIs are more common in pregnancy and must be treated promptly to avoid kidney infection. Symptoms include: burning or pain when urinating, frequent urge to urinate (beyond normal pregnancy frequency), cloudy or foul-smelling urine, and pelvic or lower abdominal discomfort. **Seek treatment immediately** — untreated UTIs can lead to kidney infection (with fever, back pain, and chills) and have been linked to preterm labour. Drink plenty of water, and your doctor will prescribe pregnancy-safe antibiotics.",
+		"category": "pregnancy_complications"
+	},
+	{
+		"question": "What are the symptoms of anaemia during pregnancy?",
+		"answer": "Anaemia (low iron/haemoglobin) is common in pregnancy as your blood volume increases. Symptoms include: unusual tiredness and weakness, pale skin, gums, or nails, shortness of breath, dizziness, rapid heartbeat, and difficulty concentrating. Your iron levels are checked at routine blood tests. **Management:** eat iron-rich foods (red meat, spinach, lentils, fortified cereals), consume vitamin C alongside iron-rich foods to improve absorption, and take iron supplements as prescribed by your doctor. Avoid tea or coffee with meals as they reduce iron absorption.",
+		"category": "pregnancy_complications"
+	},
+	{
+		"question": "Is it safe to have a cold or flu during pregnancy?",
+		"answer": "Colds are common and generally not dangerous in pregnancy. However, the flu (influenza) can be more severe in pregnant women due to immune system changes. **For a cold:** rest, stay hydrated, use saline nasal rinses, gargle with warm salt water, and take acetaminophen (Tylenol/paracetamol) for fever and pain. **Flu vaccination** is safe and strongly recommended in pregnancy. Avoid ibuprofen. Contact your doctor if you have a high fever (above 38°C/100.4°F), difficulty breathing, or symptoms that are severe or getting worse — antiviral medication may be needed.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "What should I do if I have food poisoning during pregnancy?",
+		"answer": "Food poisoning is more risky during pregnancy as the immune system is altered. Symptoms include nausea, vomiting, diarrhoea, stomach cramps, and sometimes fever. **Steps to take:** stay hydrated by sipping water and electrolyte drinks frequently, rest, and eat bland foods when you can. **Contact your doctor promptly** if you have a high fever, blood in stool, signs of dehydration (inability to keep fluids down, dizziness, dark urine), or if symptoms last more than 24-48 hours. Listeria and salmonella infections require medical treatment and can be serious in pregnancy.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "What causes nasal congestion and nosebleeds during pregnancy?",
+		"answer": "Nasal congestion ('pregnancy rhinitis') affects up to 30% of pregnant women due to increased blood flow and hormones causing nasal membranes to swell. Nosebleeds also become more common for the same reason. **For congestion:** use a saline nasal spray, run a humidifier, sleep with your head slightly elevated, and stay hydrated. **For nosebleeds:** sit upright, lean slightly forward (not back), pinch the soft part of your nose for 10 minutes, and apply a cold pack to the bridge of the nose. See a doctor if nosebleeds are frequent, heavy, or won't stop.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes tooth and gum pain during pregnancy?",
+		"answer": "Pregnancy hormones cause increased blood flow to the gums, making them more sensitive, swollen, and prone to bleeding — known as 'pregnancy gingivitis'. Increased stomach acid from morning sickness can also erode tooth enamel. **Care tips:** brush gently with a soft toothbrush twice daily, floss regularly, rinse your mouth with water after vomiting (wait 30 minutes before brushing), and attend dental check-ups (dental treatment is safe in pregnancy). Inform your dentist you are pregnant. Untreated gum disease has been linked to preterm birth, so do not ignore dental pain.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "What causes insomnia and sleep problems during pregnancy?",
+		"answer": "Sleep difficulties are extremely common in all trimesters. Causes include: frequent urination at night, nausea, heartburn, back pain, baby movements, difficulty getting comfortable, anxiety, and vivid dreams. **Tips for better sleep:** use a pregnancy pillow to support your bump and hips, sleep on your left side, avoid screens an hour before bed, keep the room cool and dark, limit fluids in the evening (while staying hydrated during the day), establish a calming bedtime routine, and try relaxation techniques such as deep breathing or meditation. Discuss chronic insomnia with your midwife.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes rib pain during pregnancy?",
+		"answer": "Rib pain or discomfort is common, especially in the second and third trimesters, as the uterus grows upward and the baby may kick or push against the ribs. Hormones also cause the rib cage to widen. **Relief tips:** sit up straight with good posture, lean to the opposite side when the baby is kicking your ribs, stretch gently with arms raised, wear loose clothing, avoid slouching, and try gentle prenatal yoga. The baby may shift position and relieve the pressure. If pain is severe or on one side with shortness of breath and is not related to baby movement, contact your doctor.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes hip pain during pregnancy?",
+		"answer": "Hip pain during pregnancy is very common, especially in the second and third trimesters. Causes include: the hormone relaxin loosening the hip joints, increased weight shifting your centre of gravity, and the growing uterus putting pressure on the sciatic nerve (sciatica), which causes pain from the lower back down the hip and leg. **Management:** sleep on your side with a pillow between your knees, wear supportive footwear, do gentle prenatal yoga or stretches, apply heat or cold, and avoid activities that aggravate the pain. A physiotherapist can provide targeted exercises.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What is sciatica during pregnancy and how is it managed?",
+		"answer": "Sciatica is pain, tingling, or numbness that radiates from the lower back through the buttock and down one or both legs. During pregnancy, the growing uterus and baby's position can press on the sciatic nerve. It often worsens in the third trimester. **Management:** apply a warm or cold pack to the lower back, do gentle stretches (cat-cow, piriformis stretch), try swimming or walking, sleep on the side opposite the pain with a pillow between knees, and see a physiotherapist. Sciatica usually resolves after delivery. Contact your doctor if pain is severe or causes weakness in the legs.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes nausea and vomiting beyond the first trimester?",
+		"answer": "While morning sickness usually improves by week 12-14, some women experience nausea throughout pregnancy. Causes include hormonal fluctuations, a sensitive stomach, certain smells, rich or fatty foods, heartburn, and stress. **Management:** eat small, frequent bland meals; avoid trigger smells and foods; try ginger in tea, biscuits, or supplements; eat protein with each meal to stabilise blood sugar; rest when needed; and stay hydrated. **Hyperemesis gravidarum** is a severe form of pregnancy nausea and vomiting requiring medical treatment — contact your doctor if you cannot keep food or fluids down for 24 hours.",
+		"category": "first_trimester"
+	},
+	{
+		"question": "What is hyperemesis gravidarum?",
+		"answer": "Hyperemesis gravidarum (HG) is a severe pregnancy condition characterised by extreme nausea and vomiting that leads to dehydration, weight loss, and electrolyte imbalances. Unlike typical morning sickness, HG does not improve with standard home remedies and prevents normal eating and drinking. Symptoms include vomiting more than 3-4 times per day, inability to keep any food or fluid down, dark urine, dizziness, weight loss, and exhaustion. **HG requires medical treatment:** your doctor may prescribe anti-nausea medication, recommend dietary adjustments, or provide IV fluids and hospital admission in severe cases.",
+		"category": "pregnancy_complications"
+	},
+	{
+		"question": "What causes excessive saliva during pregnancy?",
+		"answer": "Excessive saliva (ptyalism or sialorrhea) is an uncommon but real pregnancy symptom, often associated with nausea in the first trimester. Hormonal changes and nausea can trigger overproduction of saliva. **Management:** rinse your mouth frequently with mouthwash or mint water, suck on hard candies or chew gum, stay hydrated, eat small frequent meals, and try brushing your teeth more often. It usually improves as morning sickness subsides. Tell your midwife or doctor if it is severe, as it can sometimes be linked to hyperemesis gravidarum.",
+		"category": "first_trimester"
+	},
+	{
+		"question": "What causes breast pain and changes during pregnancy?",
+		"answer": "Breast tenderness and changes are among the earliest and most common pregnancy symptoms. Hormones (oestrogen and progesterone) cause the breasts to swell, feel heavy, and become very sensitive or sore. The nipples may darken, and the areolae may enlarge. Small bumps may appear on the areolae (Montgomery's tubercles). Blue veins may become more visible. **Relief:** wear a well-fitting supportive maternity bra, even at night if needed, and avoid underwire bras. Breast tenderness usually eases after the first trimester. Nipples may also leak colostrum (early breast milk) from the second trimester onwards — this is normal.",
+		"category": "first_trimester"
+	},
+	{
+		"question": "What causes frequent urination during pregnancy?",
+		"answer": "Frequent urination is one of the earliest pregnancy symptoms and continues throughout. In the first trimester, the hormone hCG increases blood flow to the kidneys, making them work more efficiently. As the pregnancy progresses, the growing uterus puts pressure directly on the bladder. **Tips:** do not cut back on fluids — staying hydrated is essential; lean forward slightly when urinating to help fully empty the bladder; do pelvic floor (Kegel) exercises to strengthen bladder control and reduce leakage. Frequent urination is normal but contact your doctor if you also have pain, burning, or blood in the urine — signs of a UTI.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes yeast infections during pregnancy?",
+		"answer": "Yeast infections (thrush) are more common in pregnancy because hormonal changes alter the vaginal environment, making it easier for yeast to overgrow. Symptoms include thick white discharge (like cottage cheese), itching, burning, and redness around the vagina. **Treatment:** your doctor can prescribe topical antifungal creams or pessaries that are safe during pregnancy — do not use oral antifungal tablets (fluconazole) without medical advice in pregnancy. **Prevention:** wear breathable cotton underwear, avoid tight clothing, keep the genital area dry, and avoid scented soaps or douches.",
+		"category": "pregnancy_health"
+	},
+	{
+		"question": "What causes back pain in early pregnancy?",
+		"answer": "Back pain can start as early as the first trimester. Causes include: the hormone relaxin loosening spinal ligaments, posture shifts as the centre of gravity changes, the uterus growing and pressing on nerves, and muscle fatigue from carrying extra weight. **Relief:** use proper posture (stand tall, don't arch your back), wear low-heeled supportive shoes, sleep on your side with a pillow between knees, apply warm compresses, do gentle prenatal yoga or swimming, and avoid heavy lifting. Strengthening exercises for the back and core, recommended by a physiotherapist, can also help.",
+		"category": "common_discomforts"
+	},
+	{
+		"question": "What causes vivid dreams during pregnancy?",
+		"answer": "Vivid, strange, or intense dreams are very common during pregnancy, often about the baby, birth, or your changing life. Causes include: hormonal surges affecting brain activity, waking more frequently during the night (which means waking during dream sleep), emotional processing of anxieties and excitement, and pregnancy-related discomforts disturbing sleep. They are completely normal and not predictions. **Tips for better sleep and calmer dreams:** practice relaxation before bed, write worries in a journal, reduce screen time at night, and talk about any persistent anxieties with your partner or midwife.",
+		"category": "mental_health"
+	}
+]

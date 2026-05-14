@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:mamamind/constants/colors.dart';
@@ -46,15 +47,18 @@ class AchievementProvider with ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint("Error unlocking achievement: $e");
+      if (kDebugMode) debugPrint("Error unlocking achievement.");
     }
   }
 
-  void showPendingAchievements(BuildContext context) async {
+  Future<void> showPendingAchievements(BuildContext context) async {
     if (_pendingBadges.isEmpty) return;
+    // Use the global navigator context so this works even after the calling
+    // page has been popped (e.g. questionnaire screens pop before calling this)
+    final showCtx = navigatorKey.currentContext ?? context;
     for (final badge in List.from(_pendingBadges)) {
-      if (context.mounted) {
-        await _showUnlockDialog(context, badge);
+      if (showCtx.mounted) {
+        await _showUnlockDialog(showCtx, badge);
       }
     }
     _pendingBadges.clear();
@@ -72,102 +76,200 @@ class AchievementProvider with ChangeNotifier {
       context: context,
       barrierDismissible: false,
       barrierLabel: "Achievement Unlocked",
-      barrierColor: Colors.black54,
-      transitionDuration: const Duration(milliseconds: 700),
+      barrierColor: Colors.black.withOpacity(0.60),
+      transitionDuration: const Duration(milliseconds: 500),
 
       // Dialog Content
       pageBuilder: (ctx, anim1, anim2) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          backgroundColor: Colors.white,
-          elevation: 10,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Icon
-                Container(
-                  width: 90,
-                  height: 90,
-                  decoration: BoxDecoration(
-                    color: badge.color.withOpacity(0.15),
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(badge.icon, size: 48, color: badge.color),
+        return Center(
+          child: Material(
+            color: Colors.transparent,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 340),
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: 24),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: badge.color.withOpacity(0.30),
+                      blurRadius: 40,
+                      spreadRadius: 2,
+                      offset: const Offset(0, 12),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 24),
-
-                // Title
-                Text(
-                  isSinhala ? "සුබ පැතුම්!" : "Congratulations!",
-                  style: GoogleFonts.poppins(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 8),
-
-                // Badge Name
-                Text(
-                  isSinhala ? badge.titleSi : badge.titleEn,
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.poppins(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.text,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                // Description
-                Text(
-                  isSinhala
-                      ? "ඔබ නව ජයග්‍රහණයක් අත්කර ගෙන ඇත."
-                      : "You've unlocked a new badge!",
-                  textAlign: TextAlign.center,
-                  style: GoogleFonts.roboto(
-                    fontSize: 15,
-                    color: Colors.grey[600],
-                  ),
-                ),
-                const SizedBox(height: 32),
-
-                // Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => Navigator.of(ctx).pop(),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: badge.color,
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Gradient header with icon
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 28),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [badge.color.withOpacity(0.85), badge.color],
+                        ),
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(28),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          // Star accent row
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.star_rounded,
+                                color: Colors.white.withOpacity(0.60),
+                                size: 14,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                isSinhala
+                                    ? 'ජයග්‍රහණය!'
+                                    : 'Achievement Unlocked!',
+                                style: GoogleFonts.poppins(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withOpacity(0.92),
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.star_rounded,
+                                color: Colors.white.withOpacity(0.60),
+                                size: 14,
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          // Glowing icon circle
+                          Container(
+                            width: 86,
+                            height: 86,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withOpacity(0.20),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.55),
+                                width: 2.5,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.white.withOpacity(0.30),
+                                  blurRadius: 20,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Icon(
+                              badge.icon,
+                              size: 42,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: Text(
-                      isSinhala ? "නියමයි!" : "Awesome!",
-                      style: GoogleFonts.poppins(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w600,
+
+                    // Body content
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 22, 24, 24),
+                      child: Column(
+                        children: [
+                          // Congratulations subtitle
+                          Text(
+                            isSinhala ? "සුභ පැතුම්!" : "Congratulations!",
+                            style: GoogleFonts.poppins(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: badge.color,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+
+                          // Badge name
+                          Text(
+                            isSinhala ? badge.titleSi : badge.titleEn,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.poppins(
+                              fontSize: 24,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.text,
+                              height: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+
+                          Divider(color: Colors.grey.shade100, thickness: 1.5),
+                          const SizedBox(height: 12),
+
+                          // Badge description
+                          Text(
+                            isSinhala
+                                ? badge.descriptionSi
+                                : badge.descriptionEn,
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.roboto(
+                              fontSize: 14,
+                              height: 1.6,
+                              color: AppColors.textMuted,
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+
+                          // Awesome button
+                          SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton(
+                              onPressed: () => Navigator.of(ctx).pop(),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: badge.color,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 15,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 4,
+                                shadowColor: badge.color.withOpacity(0.45),
+                              ),
+                              child: Text(
+                                isSinhala ? "නියමයි!" : "Awesome!",
+                                style: GoogleFonts.poppins(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
           ),
         );
       },
       transitionBuilder: (context, anim1, anim2, child) {
-        final curvedValue = Curves.easeOut.transform(anim1.value);
-
+        final bounceValue = Curves.elasticOut.transform(
+          anim1.value.clamp(0.0, 1.0),
+        );
         return Transform.scale(
-          scale: 0.8 + (0.2 * curvedValue),
-          child: Opacity(opacity: anim1.value, child: child),
+          scale: 0.5 + (0.5 * bounceValue),
+          child: Opacity(
+            opacity: (anim1.value * 2).clamp(0.0, 1.0),
+            child: child,
+          ),
         );
       },
     );

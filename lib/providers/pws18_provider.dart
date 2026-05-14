@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
@@ -5,6 +6,7 @@ import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/achievement_provider.dart';
 import '../services/pws18_service.dart';
+import '../services/questionnaire_verdict_service.dart';
 
 class PWS18Provider with ChangeNotifier {
   final PWS18Service _pws18Service = PWS18Service();
@@ -24,6 +26,9 @@ class PWS18Provider with ChangeNotifier {
   // Standard questionnaire state
   List<int?> responses = List<int?>.filled(18, null);
   bool isLoading = false;
+
+  // Final verdict (available only after all 3 attempts)
+  QuestionnaireVerdict? finalVerdict;
 
   PWS18Provider();
 
@@ -71,8 +76,25 @@ class PWS18Provider with ChangeNotifier {
       currentAttemptNumber = result.currentAttemptNumber;
       isLocked = result.isLocked;
       lockReason = result.lockReason;
+
+      if (_user != null && userAttempts.length == 3) {
+        finalVerdict = await VerdictFirestoreService.loadVerdict(
+          userId: _user!.id,
+          subcollection: 'pws18_responses',
+        );
+        if (finalVerdict == null) {
+          finalVerdict = PWS18VerdictEngine.compute(userAttempts);
+          await VerdictFirestoreService.saveVerdict(
+            userId: _user!.id,
+            subcollection: 'pws18_responses',
+            verdict: finalVerdict!,
+          );
+        }
+      } else {
+        finalVerdict = null;
+      }
     } catch (e) {
-      print("Error loading PWS18 data: $e");
+      if (kDebugMode) debugPrint("Error loading PWS18 data.");
     } finally {
       isLoading = false;
       notifyListeners();
@@ -144,6 +166,7 @@ class PWS18Provider with ChangeNotifier {
     _user = null;
     responses = List<int?>.filled(18, null);
     userAttempts.clear();
+    finalVerdict = null;
     isLoading = false;
     notifyListeners();
   }

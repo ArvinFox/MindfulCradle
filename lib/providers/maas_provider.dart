@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
@@ -5,6 +6,7 @@ import '../providers/auth_provider.dart';
 import 'package:provider/provider.dart';
 import '../providers/achievement_provider.dart';
 import '../services/maas_service.dart';
+import '../services/questionnaire_verdict_service.dart';
 
 class MAASProvider with ChangeNotifier {
   final MAASService _maasService = MAASService();
@@ -23,6 +25,9 @@ class MAASProvider with ChangeNotifier {
 
   List<int?> responses = List<int?>.filled(15, null);
   bool isLoading = false;
+
+  // Final verdict (available only after all 3 attempts)
+  QuestionnaireVerdict? finalVerdict;
 
   MAASProvider();
 
@@ -65,8 +70,25 @@ class MAASProvider with ChangeNotifier {
       currentAttemptNumber = result.currentAttemptNumber;
       isLocked = result.isLocked;
       lockReason = result.lockReason;
+
+      if (_user != null && userAttempts.length == 3) {
+        finalVerdict = await VerdictFirestoreService.loadVerdict(
+          userId: _user!.id,
+          subcollection: 'maas_responses',
+        );
+        if (finalVerdict == null) {
+          finalVerdict = MAASVerdictEngine.compute(userAttempts);
+          await VerdictFirestoreService.saveVerdict(
+            userId: _user!.id,
+            subcollection: 'maas_responses',
+            verdict: finalVerdict!,
+          );
+        }
+      } else {
+        finalVerdict = null;
+      }
     } catch (e) {
-      print("Error loading MAAS data: $e");
+      if (kDebugMode) debugPrint("Error loading MAAS data.");
     } finally {
       isLoading = false;
       notifyListeners();
@@ -115,6 +137,7 @@ class MAASProvider with ChangeNotifier {
     _user = null;
     responses = List<int?>.filled(15, null);
     userAttempts.clear();
+    finalVerdict = null;
     isLoading = false;
     notifyListeners();
   }

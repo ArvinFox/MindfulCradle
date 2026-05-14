@@ -20,12 +20,12 @@ class VideoModel {
   factory VideoModel.fromMap(Map<String, dynamic> map, String docId) {
     return VideoModel(
       id: docId,
-      title: map['title'] ?? '',
-      titleSi: map['titleSi'] ?? '',
-      youtubeId: map['youtubeId'] ?? '',
-      youtubeIdSi: map['youtubeIdSi'] ?? '',
-      duration: map['duration'] ?? 0,
-      sessionNumber: map['sessionNumber'] ?? 1,
+      title: map['title'] as String? ?? '',
+      titleSi: map['titleSi'] as String? ?? '',
+      youtubeId: map['youtubeId'] as String? ?? '',
+      youtubeIdSi: map['youtubeIdSi'] as String? ?? '',
+      duration: map['duration'] as int? ?? 0,
+      sessionNumber: map['sessionNumber'] as int? ?? 1,
     );
   }
 

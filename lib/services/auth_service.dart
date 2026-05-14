@@ -1,20 +1,25 @@
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
   /// Sign up
   Future<String?> signUp({
     required String email,
     required String password,
     required String fullName,
+    String langCode = 'en',
   }) async {
     try {
       UserCredential userCredential = await _auth
-          .createUserWithEmailAndPassword(email: email, password: password);
+          .createUserWithEmailAndPassword(email: email, password: password)
+          .timeout(const Duration(seconds: 20));
 
       String uid = userCredential.user!.uid;
 
@@ -25,20 +30,21 @@ class AuthService {
       );
 
       // Add isUserRegistrationComplete field directly here
-      await _firestore.collection('users').doc(uid).set({
-        ...user.toMap(),
-        'isUserRegistrationComplete': false,
-      });
+      await _firestore
+          .collection('users')
+          .doc(uid)
+          .set({...user.toMap(), 'isUserRegistrationComplete': false})
+          .timeout(const Duration(seconds: 20));
 
       return null; // success
+    } on TimeoutException {
+      return langCode == 'si'
+          ? 'සම්බන්ධතාවය ප්‍රමාද වී ඇත. කරුණාකර නැවත උත්සාහ කරන්න.'
+          : 'Connection timed out. Please try again.';
     } on FirebaseAuthException catch (e) {
-      if (e.code == 'email-already-in-use') {
-        return 'Email already exists.';
-      } else {
-        return e.message;
-      }
+      return _localizeAuthError(e, langCode);
     } catch (e) {
-      return e.toString();
+      return _localizeGenericError(langCode);
     }
   }
 
@@ -46,31 +52,180 @@ class AuthService {
   Future<String?> login({
     required String email,
     required String password,
+    String langCode = 'en',
   }) async {
     try {
       await _auth.signInWithEmailAndPassword(email: email, password: password);
       return null; // success
     } on FirebaseAuthException catch (e) {
-      return e.message;
+      return _localizeAuthError(e, langCode);
     } catch (e) {
-      return e.toString();
+      return _localizeGenericError(langCode);
     }
   }
 
+  /// Google sign-in.
+  /// For NEW users (no Firestore document) the document is NOT created here;
+  /// the caller must call [createGoogleUserDocument] after obtaining consent.
+  /// For EXISTING users the document is updated and the flow continues normally.
+  Future<({String? error, bool isNewUser})> loginWithGoogle({
+    String langCode = 'en',
+  }) async {
+    try {
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        return (
+          error: langCode == 'si'
+              ? 'ගූගල් ඇතුළුවීම අවලංගු කරන ලදී.'
+              : 'Google sign in was cancelled.',
+          isNewUser: false,
+        );
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      final userCredential = await _auth
+          .signInWithCredential(credential)
+          .timeout(const Duration(seconds: 20));
+
+      final firebaseUser = userCredential.user;
+      if (firebaseUser == null) {
+        return (error: _localizeGenericError(langCode), isNewUser: false);
+      }
+
+      // Check whether this user already has a Firestore document.
+      // Force a server fetch to bypass any stale offline cache — critical
+      // for correctly identifying new vs. existing users after consent changes.
+      final userDocRef = _firestore.collection('users').doc(firebaseUser.uid);
+      final userDoc = await userDocRef.get(
+        const GetOptions(source: Source.server),
+      );
+
+      if (userDoc.exists) {
+        // Existing user — keep email/name up-to-date and continue.
+        await userDocRef.set({
+          'email': firebaseUser.email ?? '',
+          'fullName':
+              (firebaseUser.displayName != null &&
+                  firebaseUser.displayName!.trim().isNotEmpty)
+              ? firebaseUser.displayName!.trim()
+              : (userDoc.data()?['fullName'] ?? ''),
+        }, SetOptions(merge: true));
+        return (error: null, isNewUser: false);
+      }
+
+      // New user — do NOT create the document yet; wait for consent.
+      return (error: null, isNewUser: true);
+    } on TimeoutException {
+      return (
+        error: langCode == 'si'
+            ? 'සම්බන්ධතාවය ප්‍රමාද වී ඇත. කරුණාකර නැවත උත්සාහ කරන්න.'
+            : 'Connection timed out. Please try again.',
+        isNewUser: false,
+      );
+    } on FirebaseAuthException catch (e) {
+      return (error: _localizeAuthError(e, langCode), isNewUser: false);
+    } catch (_) {
+      return (error: _localizeGenericError(langCode), isNewUser: false);
+    }
+  }
+
+  /// Creates the Firestore user document for a brand-new Google sign-in user,
+  /// called only after the user has accepted the privacy policy consent.
+  Future<void> createGoogleUserDocument() async {
+    final firebaseUser = _auth.currentUser;
+    if (firebaseUser == null) return;
+
+    final user = UserModel.newUser(
+      id: firebaseUser.uid,
+      fullName:
+          (firebaseUser.displayName != null &&
+              firebaseUser.displayName!.trim().isNotEmpty)
+          ? firebaseUser.displayName!.trim()
+          : 'New User',
+      email: firebaseUser.email ?? '',
+    );
+
+    await _firestore.collection('users').doc(firebaseUser.uid).set({
+      ...user.toMap(),
+      'isUserRegistrationComplete': false,
+    });
+  }
+
   /// Reset password
-  Future<String?> resetPassword({required String email}) async {
+  Future<String?> resetPassword({
+    required String email,
+    String langCode = 'en',
+  }) async {
     try {
       await _auth.sendPasswordResetEmail(email: email);
       return null;
     } on FirebaseAuthException catch (e) {
-      return e.message;
+      return _localizeAuthError(e, langCode);
     } catch (e) {
-      return e.toString();
+      return _localizeGenericError(langCode);
     }
   }
 
   /// Logout
   Future<void> signOut() async {
+    await _googleSignIn.signOut();
     await _auth.signOut();
+  }
+
+  String _localizeGenericError(String langCode) {
+    if (langCode == 'si') {
+      return 'සත්‍යාපනය අසාර්ථකයි. කරුණාකර නැවත උත්සාහ කරන්න.';
+    }
+    return 'Authentication failed. Please try again.';
+  }
+
+  String _localizeAuthError(FirebaseAuthException e, String langCode) {
+    final isSinhala = langCode == 'si';
+
+    switch (e.code) {
+      case 'email-already-in-use':
+        return isSinhala
+            ? 'මෙම ඊමේල් එක දැනටමත් භාවිතා වේ.'
+            : 'Email already exists.';
+      case 'invalid-email':
+        return isSinhala
+            ? 'වලංගු ඊමේල් ලිපිනයක් ඇතුළත් කරන්න.'
+            : 'Enter a valid email address.';
+      case 'user-not-found':
+        return isSinhala
+            ? 'මෙම ඊමේල් සඳහා ගිණුමක් හමු නොවීය.'
+            : 'No user found for this email.';
+      case 'wrong-password':
+        return isSinhala ? 'මුරපදය වැරදියි.' : 'Incorrect password.';
+      case 'weak-password':
+        return isSinhala ? 'මුරපදය ඉතා දුර්වලයි.' : 'Password is too weak.';
+      case 'user-disabled':
+        return isSinhala
+            ? 'මෙම ගිණුම අක්‍රිය කර ඇත.'
+            : 'This account has been disabled.';
+      case 'operation-not-allowed':
+        return isSinhala
+            ? 'මෙම ක්‍රියාව අනුමත නොවේ.'
+            : 'This operation is not allowed.';
+      case 'too-many-requests':
+        return isSinhala
+            ? 'බොහෝ උත්සාහයන්. ටික වේලාවකට පසුව නැවත උත්සාහ කරන්න.'
+            : 'Too many attempts. Try again later.';
+      case 'network-request-failed':
+        return isSinhala
+            ? 'ජාල සම්බන්ධතාවය අසාර්ථකයි.'
+            : 'Network connection failed.';
+      case 'sign_in_canceled':
+        return isSinhala
+            ? 'ගූගල් ඇතුළුවීම අවලංගු කරන ලදී.'
+            : 'Google sign in was cancelled.';
+      default:
+        return _localizeGenericError(langCode);
+    }
   }
 }

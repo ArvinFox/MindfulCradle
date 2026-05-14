@@ -2,23 +2,25 @@ class UserModel {
   final String id;
   final String fullName;
   final String email;
+  final String? photoUrl;
   final List<String> achievements;
   final List<int> unlockedVideos;
   final int totalSessionTime;
-  final Map<String, int> videoProgress;
-  final Map<String, int> videoWatchTime;
+  final int videoWatchTime;
   final bool isUserRegistrationComplete;
+  final bool isTutorialDone;
 
   UserModel({
     required this.id,
     required this.fullName,
     required this.email,
+    this.photoUrl,
     required this.achievements,
     required this.unlockedVideos,
     required this.totalSessionTime,
-    required this.videoProgress,
     required this.videoWatchTime,
     required this.isUserRegistrationComplete,
+    this.isTutorialDone = true,
   });
 
   factory UserModel.newUser({
@@ -33,23 +35,38 @@ class UserModel {
       achievements: [],
       unlockedVideos: [1],
       totalSessionTime: 0,
-      videoProgress: {},
-      videoWatchTime: {},
+      videoWatchTime: 0,
       isUserRegistrationComplete: false,
+      isTutorialDone: false,
     );
   }
 
   factory UserModel.fromMap(Map<String, dynamic> map, String docId) {
+    final rawWatchTime = map['videoWatchTime'];
+    int resolvedWatchTime = 0;
+    if (rawWatchTime is int) {
+      resolvedWatchTime = rawWatchTime;
+    } else if (rawWatchTime is Map) {
+      for (final value in rawWatchTime.values) {
+        if (value is int) {
+          resolvedWatchTime += value;
+        }
+      }
+    }
+
     return UserModel(
       id: docId,
-      fullName: map['fullName'] ?? '',
-      email: map['email'] ?? '',
+      fullName: map['fullName'] as String? ?? '',
+      email: map['email'] as String? ?? '',
+      photoUrl: map['photoUrl'] as String?,
       achievements: List<String>.from(map['achievements'] ?? []),
       unlockedVideos: List<int>.from(map['unlockedVideos'] ?? []),
-      totalSessionTime: map['totalSessionTime'] ?? 0,
-      videoProgress: Map<String, int>.from(map['videoProgress'] ?? {}),
-      videoWatchTime: Map<String, int>.from(map['videoWatchTime'] ?? {}),
-      isUserRegistrationComplete: map['isUserRegistrationComplete'] ?? false,
+      totalSessionTime: map['totalSessionTime'] as int? ?? 0,
+      videoWatchTime: resolvedWatchTime,
+      isUserRegistrationComplete:
+          map['isUserRegistrationComplete'] as bool? ?? false,
+      // Default true for existing users who don't have this field yet
+      isTutorialDone: map['isTutorialDone'] as bool? ?? true,
     );
   }
 
@@ -57,12 +74,13 @@ class UserModel {
     return {
       'fullName': fullName,
       'email': email,
+      if (photoUrl != null) 'photoUrl': photoUrl,
       'achievements': achievements,
       'unlockedVideos': unlockedVideos,
       'totalSessionTime': totalSessionTime,
-      'videoProgress': videoProgress,
       'videoWatchTime': videoWatchTime,
       'isUserRegistrationComplete': isUserRegistrationComplete,
+      'isTutorialDone': isTutorialDone,
     };
   }
 
@@ -70,24 +88,26 @@ class UserModel {
     String? id,
     String? fullName,
     String? email,
+    String? photoUrl,
     List<String>? achievements,
     List<int>? unlockedVideos,
     int? totalSessionTime,
-    Map<String, int>? videoProgress,
-    Map<String, int>? videoWatchTime,
+    int? videoWatchTime,
     bool? isUserRegistrationComplete,
+    bool? isTutorialDone,
   }) {
     return UserModel(
       id: id ?? this.id,
       fullName: fullName ?? this.fullName,
       email: email ?? this.email,
+      photoUrl: photoUrl ?? this.photoUrl,
       achievements: achievements ?? this.achievements,
       unlockedVideos: unlockedVideos ?? this.unlockedVideos,
       totalSessionTime: totalSessionTime ?? this.totalSessionTime,
-      videoProgress: videoProgress ?? this.videoProgress,
       videoWatchTime: videoWatchTime ?? this.videoWatchTime,
       isUserRegistrationComplete:
           isUserRegistrationComplete ?? this.isUserRegistrationComplete,
+      isTutorialDone: isTutorialDone ?? this.isTutorialDone,
     );
   }
 }

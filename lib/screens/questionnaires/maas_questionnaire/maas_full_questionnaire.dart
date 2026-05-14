@@ -10,6 +10,13 @@ import '../../../providers/maas_provider.dart';
 import '/providers/language_provider.dart';
 import '../../../utils/maas_hints.dart';
 import '../../../providers/achievement_provider.dart';
+import '/widgets/questionnaires/questionnaire_question_card.dart';
+import '../../../widgets/connectivity_banner.dart';
+import '../../../providers/connectivity_provider.dart';
+import '../../../utils/app_snackbar.dart';
+import '/widgets/app_background.dart';
+import '../../../utils/translate.dart';
+import '../../main_screen.dart';
 
 class MAASFullQuestionnairePage extends StatefulWidget {
   const MAASFullQuestionnairePage({super.key});
@@ -29,7 +36,6 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
   int _pageIndex = 0;
   final int _perPage = 5;
   late final LanguageProvider _langProvider;
-  bool _hintVisible = false;
   bool _attemptedSubmit = false;
 
   @override
@@ -84,7 +90,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
         _options = Map<String, String>.from(data['options'] ?? {});
       });
     } catch (e) {
-      if (kDebugMode) print('MAAS JSON load error: $e');
+      if (kDebugMode) debugPrint('MAAS JSON load error.');
       setState(() {
         _questions = [];
         _options = {};
@@ -124,17 +130,13 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
       // Show dialog
       _showResultDialog(maasScore, classification);
     } catch (e) {
-      if (kDebugMode) print('Error saving MAAS: $e');
+      if (kDebugMode) debugPrint('Error saving MAAS.');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            _currentLang == 'si'
-                ? 'දෝෂයක් ඇතිවිය. නැවත උත්සාහ කරන්න.'
-                : 'Error submitting answers. Try again.',
-          ),
-          backgroundColor: Colors.redAccent,
-        ),
+      AppSnackBar.error(
+        context,
+        _currentLang == 'si'
+            ? 'දෝෂයක් ඇතිවිය. නැවත උත්සාහ කරන්න.'
+            : 'Error submitting answers. Try again.',
       );
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -156,6 +158,18 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
     final isSinhala = _currentLang == 'si';
     final screenWidth = MediaQuery.of(context).size.width;
     final isSmallScreen = screenWidth < 400;
+    final bool isHighMindfulness = score >= 4.0;
+    final Color levelColor = isHighMindfulness
+        ? const Color(0xFF49AF3F)
+        : const Color(0xFFFFA500);
+    final String emoji = isHighMindfulness ? '🧘' : '💙';
+    final String summaryMsg = isHighMindfulness
+        ? (isSinhala
+              ? 'ඔබ ඉතා හොඳ සිහිකල්පනාවේ සිටිනවා! දිගටම ඉදිරියට!'
+              : 'You have strong mindful awareness. Keep it up!')
+        : (isSinhala
+              ? 'සිහිකල්පනාව වර්ධනය කර ගැනීමට Mindful Companion ඔබට උදව් කළ හැකිය.'
+              : 'Mindfulness takes practice. Mindful Companion can help you grow.');
 
     showDialog(
       context: context,
@@ -164,7 +178,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
         children: [
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-            child: Container(color: Colors.black.withOpacity(0.1)),
+            child: Container(color: Colors.black.withValues(alpha: 0.1)),
           ),
           Center(
             child: ConstrainedBox(
@@ -184,10 +198,10 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                 content: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
+                    Text(emoji, style: const TextStyle(fontSize: 36)),
+                    const SizedBox(height: 8),
                     Text(
-                      isSinhala
-                          ? "අවසාන සතිමත් බවේ ලකුණ"
-                          : "Final Mindfulness Score",
+                      isSinhala ? 'සිහිකල්පනා ප්‍රතිඵල' : 'Mindfulness Results',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.poppins(
                         fontSize: isSmallScreen ? 20 : 22,
@@ -196,81 +210,134 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    // Score Section
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(14),
+                        color: levelColor.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(16),
                         border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3),
+                          color: levelColor.withValues(alpha: 0.35),
                           width: 1.2,
                         ),
                       ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isSinhala ? 'ලකුණ' : 'Score',
+                            isSinhala ? 'ඔබේ ලකුණ' : 'Your Score',
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.text.withOpacity(0.9),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                              color: AppColors.textMuted,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(height: 4),
                           Text(
-                            score.toStringAsFixed(2),
+                            '${score.toStringAsFixed(2)} / 6.0',
                             style: GoogleFonts.poppins(
-                              fontSize: isSmallScreen ? 22 : 26,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.primary,
+                              fontSize: isSmallScreen ? 26 : 30,
+                              fontWeight: FontWeight.w700,
+                              color: levelColor,
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: LinearProgressIndicator(
+                              value: score / 6.0,
+                              minHeight: 10,
+                              backgroundColor: levelColor.withValues(
+                                alpha: 0.15,
+                              ),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                levelColor,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: levelColor,
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: Text(
+                              classification,
+                              style: GoogleFonts.poppins(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 18),
-                    // Classification Section
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(
-                          color: AppColors.primary.withOpacity(0.3),
-                          width: 1.2,
-                        ),
+                    const SizedBox(height: 14),
+                    Text(
+                      summaryMsg,
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.roboto(
+                        fontSize: 13,
+                        color: AppColors.textMuted,
                       ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      isSinhala
+                          ? '💡 ඉහළ ලකුණු = ශ්‍රේෂ්ඨ සිහිකල්පනාව (1–6 ශ්‍රේණිය)'
+                          : '💡 Higher score = greater mindfulness (1–6 scale)',
+                      textAlign: TextAlign.center,
+                      style: GoogleFonts.roboto(
+                        fontSize: 11,
+                        color: AppColors.textMuted,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    if (!isHighMindfulness) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          icon: const Icon(
+                            Icons.chat_bubble_outline_rounded,
+                            size: 18,
+                          ),
+                          label: Text(
                             isSinhala
-                                ? 'සතිමත් බවේ වර්ගීකරණය'
-                                : 'Level of Mindfulness',
+                                ? 'Mindful Companion සමඟ කතා කරන්න'
+                                : 'Chat with Mindful Companion',
                             style: GoogleFonts.poppins(
-                              fontSize: 16,
                               fontWeight: FontWeight.w600,
-                              color: AppColors.text.withOpacity(0.9),
+                              fontSize: 14,
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Text(
-                            classification,
-                            textAlign: TextAlign.start,
-                            style: GoogleFonts.poppins(
-                              fontSize: isSmallScreen ? 17 : 18,
-                              fontWeight: FontWeight.bold,
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: AppColors.primary,
+                            side: BorderSide(
                               color: AppColors.primary,
+                              width: 1.5,
                             ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
                           ),
-                        ],
+                          onPressed: () {
+                            Navigator.of(context).pop();
+                            Navigator.popUntil(
+                              context,
+                              (route) => route.isFirst,
+                            );
+                            MainScreen.switchToTab(2);
+                          },
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 28),
+                      const SizedBox(height: 10),
+                    ],
                     SizedBox(
                       width: double.infinity,
                       child: ElevatedButton(
@@ -282,23 +349,16 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                         onPressed: () {
-                          // Get Reference to Achievement Provider before popping
                           final achProvider = Provider.of<AchievementProvider>(
                             context,
                             listen: false,
                           );
-
-                          // Close Dialog
                           Navigator.of(context).pop();
-
-                          // Close Page
                           Navigator.of(context).pop();
-
-                          // Trigger the Pending Dialog on the Start Screen
                           achProvider.showPendingAchievements(context);
                         },
                         child: Text(
-                          isSinhala ? "හරි" : "OK",
+                          context.t.questionnaires('ok'),
                           style: GoogleFonts.poppins(
                             color: AppColors.buttonText,
                             fontWeight: FontWeight.w600,
@@ -320,9 +380,12 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
   @override
   Widget build(BuildContext context) {
     final provider = Provider.of<MAASProvider>(context);
+    final hasInternet = Provider.of<ConnectivityProvider>(context).hasInternet;
     final isMobile = MediaQuery.of(context).size.width < 600;
     final totalQuestions = _questions.length;
     final totalPages = (totalQuestions / _perPage).ceil();
+    final isLastPage = _pageIndex >= totalPages - 1;
+    final disableSubmit = isLastPage && !hasInternet;
 
     return Stack(
       children: [
@@ -330,349 +393,228 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
           backgroundColor: AppColors.background,
           appBar: AppBar(
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios),
-              color: Colors.white,
+              icon: Icon(Icons.arrow_back_ios),
+              color: AppColors.primary,
               onPressed: () => Navigator.of(context).pop(),
             ),
             title: Text(
-              _currentLang == 'si'
-                  ? 'සතිමත් බව පරීක්ෂාව'
-                  : 'Mindfulness Checker',
+              context.t.questionnaires('mindfulnessChecker'),
               style: GoogleFonts.poppins(
-                color: Colors.white,
+                color: AppColors.text,
                 fontWeight: FontWeight.w600,
                 fontSize: isMobile ? 18 : 20,
               ),
             ),
-            backgroundColor: AppColors.primary,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
             centerTitle: true,
           ),
-          body: _loading
-              ? Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                )
-              : Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 12,
-                  ),
-                  child: Column(
-                    children: [
-                      // Progress Header
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _currentLang == 'si'
-                                  ? 'ප්‍රශ්න: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} න් $totalQuestions'
-                                  : 'Questions: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} of $totalQuestions',
-                              style: GoogleFonts.poppins(
-                                color: AppColors.text.withOpacity(0.7),
-                                fontWeight: FontWeight.w500,
-                                fontSize: isMobile ? 14 : 15,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: LinearProgressIndicator(
-                                value:
-                                    (_pageIndex + 1) /
-                                    (totalPages == 0 ? 1 : totalPages),
-                                color: AppColors.primary,
-                                backgroundColor: AppColors.primary.withOpacity(
-                                  0.2,
-                                ),
-                                minHeight: 8,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      // Questions list
-                      Expanded(
-                        child: ListView.builder(
-                          controller: _scrollController,
-                          physics: const BouncingScrollPhysics(),
-                          itemCount: _questionsForPage(_pageIndex).length,
-                          itemBuilder: (context, idx) {
-                            final q = _questionsForPage(_pageIndex)[idx];
-                            final qId = q['id'] as int;
-                            final bool isMissing =
-                                _attemptedSubmit &&
-                                provider.responses[qId - 1] == null;
-
-                            return Card(
-                              color: AppColors.cardBackground,
-                              margin: const EdgeInsets.symmetric(vertical: 6),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                side: isMissing
-                                    ? const BorderSide(
-                                        color: Colors.red,
-                                        width: 2.0,
-                                      )
-                                    : BorderSide.none,
-                              ),
-                              elevation: 3,
-                              child: Padding(
-                                padding: const EdgeInsets.all(14),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: Text(
-                                            '${qId}. ${q['question']}',
-                                            style: GoogleFonts.poppins(
-                                              fontWeight: FontWeight.w600,
-                                              fontSize: isMobile ? 15 : 17,
-                                              color: AppColors.text,
-                                            ),
-                                          ),
-                                        ),
-                                        if (isMissing)
-                                          Padding(
-                                            padding: const EdgeInsets.only(
-                                              left: 8.0,
-                                            ),
-                                            child: Icon(
-                                              Icons.error_outline,
-                                              color: Colors.red,
-                                              size: 20,
-                                            ),
-                                          ),
-                                      ],
-                                    ),
-                                    const SizedBox(height: 12),
-                                    LayoutBuilder(
-                                      builder: (context, constraints) {
-                                        final chipWidth =
-                                            (constraints.maxWidth / 4) - 8;
-                                        return Wrap(
-                                          spacing: 8,
-                                          runSpacing: 8,
-                                          children: _options.entries.map((
-                                            entry,
-                                          ) {
-                                            final intVal =
-                                                int.tryParse(entry.key) ?? 0;
-                                            final selected =
-                                                provider.responses[qId - 1] ==
-                                                intVal;
-                                            return SizedBox(
-                                              width: chipWidth.clamp(
-                                                60.0,
-                                                150.0,
-                                              ),
-                                              child: ChoiceChip(
-                                                label: Text(
-                                                  entry.value,
-                                                  textAlign: TextAlign.center,
-                                                  style: GoogleFonts.roboto(
-                                                    fontSize: isMobile
-                                                        ? 13
-                                                        : 14,
-                                                    color: selected
-                                                        ? Colors.white
-                                                        : AppColors.text,
-                                                    fontWeight: FontWeight.w500,
-                                                  ),
-                                                ),
-                                                selected: selected,
-                                                selectedColor:
-                                                    AppColors.completed,
-                                                backgroundColor:
-                                                    AppColors.cardBackground,
-                                                checkmarkColor: Colors.white,
-                                                shape: RoundedRectangleBorder(
-                                                  borderRadius:
-                                                      BorderRadius.circular(12),
-                                                  side: BorderSide(
-                                                    color: selected
-                                                        ? AppColors.completed
-                                                        : AppColors.tileInactive
-                                                              .withOpacity(0.5),
-                                                    width: selected ? 2 : 1,
-                                                  ),
-                                                ),
-                                                shadowColor: selected
-                                                    ? AppColors.completed
-                                                          .withOpacity(0.7)
-                                                    : AppColors.completed,
-                                                elevation: selected ? 8 : 0,
-                                                pressElevation: 2,
-                                                onSelected: (_) {
-                                                  HapticFeedback.lightImpact();
-                                                  provider.setAnswer(
-                                                    qId,
-                                                    intVal,
-                                                  );
-                                                  setState(
-                                                    () => _hintVisible = false,
-                                                  );
-                                                },
-                                              ),
-                                            );
-                                          }).toList(),
-                                        );
-                                      },
-                                    ),
-                                    if (isMissing)
-                                      Padding(
-                                        padding: const EdgeInsets.only(
-                                          top: 8.0,
-                                        ),
-                                        child: Text(
-                                          _currentLang == 'si'
-                                              ? '* අනිවාර්යයි'
-                                              : '* Required',
-                                          style: GoogleFonts.roboto(
-                                            color: Colors.red,
-                                            fontSize: 12,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                  ],
+          body: AppBackground(
+            child: _loading
+                ? Center(
+                    child: CircularProgressIndicator(color: AppColors.primary),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 12,
+                    ),
+                    child: Column(
+                      children: [
+                        // Progress Header
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${context.t.questionnaires('questions')}: ${(_pageIndex * _perPage) + 1} - ${((_pageIndex * _perPage + _questionsForPage(_pageIndex).length).clamp(0, totalQuestions)).toInt()} ${context.t.questionnaires('questionsOf')} $totalQuestions',
+                                style: GoogleFonts.poppins(
+                                  color: AppColors.text.withValues(alpha: 0.7),
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: isMobile ? 14 : 15,
                                 ),
                               ),
-                            );
-                          },
+                              const SizedBox(height: 8),
+                              ClipRRect(
+                                borderRadius: BorderRadius.circular(10),
+                                child: LinearProgressIndicator(
+                                  value:
+                                      (_pageIndex + 1) /
+                                      (totalPages == 0 ? 1 : totalPages),
+                                  color: AppColors.primary,
+                                  backgroundColor: AppColors.primary.withValues(
+                                    alpha: 0.2,
+                                  ),
+                                  minHeight: 8,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 8),
+                        // Questions list
+                        Expanded(
+                          child: ListView.builder(
+                            controller: _scrollController,
+                            physics: const BouncingScrollPhysics(),
+                            itemCount: _questionsForPage(_pageIndex).length,
+                            itemBuilder: (context, idx) {
+                              final q = _questionsForPage(_pageIndex)[idx];
+                              final qId = q['id'] as int;
+                              final bool isMissing =
+                                  _attemptedSubmit &&
+                                  provider.responses[qId - 1] == null;
 
-                      // IMPROVED BUTTON LAYOUT ---
-                      Row(
-                        children: [
-                          FloatingActionButton(
-                            mini: true,
-                            backgroundColor: AppColors.primary,
-                            onPressed: () =>
-                                setState(() => _hintVisible = true),
-                            elevation: 0,
-                            child: const Icon(
-                              Icons.help_outline,
-                              color: AppColors.buttonText,
+                              return QuestionnaireQuestionCard(
+                                questionId: qId,
+                                questionText: q['question'],
+                                options: _options,
+                                selectedValue: provider.responses[qId - 1],
+                                onAnswerSelected: (intVal) {
+                                  provider.setAnswer(qId, intVal);
+                                },
+                                isMissing: isMissing,
+                                isMobile: isMobile,
+                                missingText:
+                                    '* ${context.t.questionnaires('required')}',
+                              );
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        if (disableSubmit)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: ConnectivityBanner(
+                              useSafeArea: false,
+                              showShadow: false,
+                              borderRadius: BorderRadius.circular(12),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 8,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 16),
 
-                          // Previous Button (Only show if > Page 0)
-                          if (_pageIndex > 0) ...[
+                        // IMPROVED BUTTON LAYOUT ---
+                        Row(
+                          children: [
+                            FloatingActionButton(
+                              mini: true,
+                              backgroundColor: AppColors.primary,
+                              onPressed: () =>
+                                  MAASHintOverlay.show(context, onClose: () {}),
+                              elevation: 0,
+                              child: Icon(
+                                Icons.help_outline,
+                                color: AppColors.buttonText,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+
+                            // Previous Button (Only show if > Page 0)
+                            if (_pageIndex > 0) ...[
+                              Expanded(
+                                child: ElevatedButton(
+                                  onPressed: _submitting
+                                      ? null
+                                      : () {
+                                          setState(() {
+                                            _pageIndex -= 1;
+                                            _attemptedSubmit = false;
+                                          });
+                                          _scrollToTop();
+                                        },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: AppColors.tileInactive,
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 16,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  child: Text(
+                                    context.t.questionnaires('previous'),
+                                    style: GoogleFonts.poppins(
+                                      color: AppColors.text,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: isMobile ? 15 : 17,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              // Gap between buttons
+                              const SizedBox(width: 16),
+                            ] else
+                              // Push Next button to right on Page 0 without stretching
+                              const Spacer(),
+
+                            // Next / Submit Button
                             Expanded(
                               child: ElevatedButton(
-                                onPressed: _submitting
+                                onPressed: (_submitting || disableSubmit)
                                     ? null
                                     : () {
-                                        setState(() {
-                                          _pageIndex -= 1;
-                                          _attemptedSubmit = false;
-                                        });
-                                        _scrollToTop();
+                                        if (!_pageAnswered(
+                                          provider,
+                                          _pageIndex,
+                                        )) {
+                                          setState(
+                                            () => _attemptedSubmit = true,
+                                          );
+                                          AppSnackBar.warning(
+                                            context,
+                                            context.t.questionnaires(
+                                              'pleaseAnswerAll',
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                        setState(
+                                          () => _attemptedSubmit = false,
+                                        );
+                                        if (_pageIndex < totalPages - 1) {
+                                          setState(() => _pageIndex += 1);
+                                          _scrollToTop();
+                                        } else {
+                                          _submitAll(provider);
+                                        }
                                       },
                                 style: ElevatedButton.styleFrom(
-                                  backgroundColor: AppColors.tileInactive,
+                                  backgroundColor: AppColors.primary,
                                   padding: const EdgeInsets.symmetric(
                                     vertical: 16,
                                   ),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                   ),
-                                  elevation: 0,
                                 ),
                                 child: Text(
-                                  _currentLang == 'si' ? 'පෙරට' : 'Previous',
+                                  _pageIndex < totalPages - 1
+                                      ? context.t.questionnaires('next')
+                                      : context.t.questionnaires('submit'),
                                   style: GoogleFonts.poppins(
-                                    color: AppColors.text,
+                                    color: Colors.white,
                                     fontWeight: FontWeight.w600,
                                     fontSize: isMobile ? 15 : 17,
                                   ),
                                 ),
                               ),
                             ),
-                            // Gap between buttons
-                            const SizedBox(width: 16),
-                          ] else
-                            // Push Next button to right on Page 0 without stretching
-                            const Spacer(),
-
-                          // Next / Submit Button
-                          Expanded(
-                            child: ElevatedButton(
-                              onPressed: _submitting
-                                  ? null
-                                  : () {
-                                      if (!_pageAnswered(
-                                        provider,
-                                        _pageIndex,
-                                      )) {
-                                        setState(() => _attemptedSubmit = true);
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              _currentLang == 'si'
-                                                  ? "කරුණාකර සියලුම ප්‍රශ්නවලට පිළිතුරු ලබා දෙන්න."
-                                                  : "Please answer all questions before proceeding.",
-                                            ),
-                                            backgroundColor:
-                                                Colors.orangeAccent,
-                                          ),
-                                        );
-                                        return;
-                                      }
-                                      setState(() => _attemptedSubmit = false);
-                                      if (_pageIndex < totalPages - 1) {
-                                        setState(() => _pageIndex += 1);
-                                        _scrollToTop();
-                                      } else {
-                                        _submitAll(provider);
-                                      }
-                                    },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppColors.primary,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 16,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              child: Text(
-                                _pageIndex < totalPages - 1
-                                    ? (_currentLang == 'si' ? 'මීළඟට' : 'Next')
-                                    : (_currentLang == 'si'
-                                          ? 'ඉදිරිපත් කරන්න'
-                                          : 'Submit'),
-                                style: GoogleFonts.poppins(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w600,
-                                  fontSize: isMobile ? 15 : 17,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    ),
                   ),
-                ),
+          ),
         ),
-        MAASHintOverlay(
-          visible: _hintVisible,
-          isMobile: isMobile,
-          onClose: () => setState(() => _hintVisible = false),
-        ),
+
         if (_submitting)
           Container(
             color: AppColors.background,
@@ -683,9 +625,7 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
                   CircularProgressIndicator(color: AppColors.primary),
                   const SizedBox(height: 16),
                   Text(
-                    _currentLang == 'si'
-                        ? "ඉදිරිපත් කරනවා..."
-                        : "Submitting...",
+                    context.t.questionnaires('submitting'),
                     style: GoogleFonts.poppins(
                       color: AppColors.primary,
                       fontSize: 16,
@@ -697,6 +637,12 @@ class _MAASFullQuestionnairePageState extends State<MAASFullQuestionnairePage> {
               ),
             ),
           ),
+        const Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: ConnectivityBanner(),
+        ),
       ],
     );
   }

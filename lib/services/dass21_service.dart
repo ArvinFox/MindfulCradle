@@ -1,4 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/foundation.dart';
+import 'localization_service.dart';
 
 class DASS21LoadResult {
   final Map<int, DateTime> unlockDates;
@@ -17,7 +20,13 @@ class DASS21LoadResult {
 }
 
 class DASS21Service {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  final LocalizationService _loc = LocalizationService.instance;
+
+  bool _isCurrentUser(String userId) {
+    final current = FirebaseAuth.instance.currentUser?.uid;
+    return current != null && current == userId;
+  }
 
   final List<int> _depressionQ = [3, 5, 10, 13, 16, 17, 21];
   final List<int> _anxietyQ = [2, 4, 7, 9, 15, 19, 20];
@@ -31,27 +40,30 @@ class DASS21Service {
   }
 
   String classifyDepression(int score, {bool isSinhala = false}) {
-    if (score <= 9) return isSinhala ? 'සාමාන්‍ය' : 'Normal';
-    if (score <= 13) return isSinhala ? 'මදක්' : 'Mild';
-    if (score <= 20) return isSinhala ? 'මධ්‍යම' : 'Moderate';
-    if (score <= 27) return isSinhala ? 'දරුණු' : 'Severe';
-    return isSinhala ? 'අතිශය දරුණු' : 'Extremely Severe';
+    final lang = isSinhala ? 'si' : 'en';
+    if (score <= 9) return _loc.questionnaires('normal', lang);
+    if (score <= 13) return _loc.questionnaires('mild', lang);
+    if (score <= 20) return _loc.questionnaires('moderate', lang);
+    if (score <= 27) return _loc.questionnaires('severe', lang);
+    return _loc.questionnaires('extremelySevere', lang);
   }
 
   String classifyAnxiety(int score, {bool isSinhala = false}) {
-    if (score <= 7) return isSinhala ? 'සාමාන්‍ය' : 'Normal';
-    if (score <= 9) return isSinhala ? 'මදක්' : 'Mild';
-    if (score <= 14) return isSinhala ? 'මධ්‍යම' : 'Moderate';
-    if (score <= 19) return isSinhala ? 'දරුණු' : 'Severe';
-    return isSinhala ? 'අතිශය දරුණු' : 'Extremely Severe';
+    final lang = isSinhala ? 'si' : 'en';
+    if (score <= 7) return _loc.questionnaires('normal', lang);
+    if (score <= 9) return _loc.questionnaires('mild', lang);
+    if (score <= 14) return _loc.questionnaires('moderate', lang);
+    if (score <= 19) return _loc.questionnaires('severe', lang);
+    return _loc.questionnaires('extremelySevere', lang);
   }
 
   String classifyStress(int score, {bool isSinhala = false}) {
-    if (score <= 14) return isSinhala ? 'සාමාන්‍ය' : 'Normal';
-    if (score <= 18) return isSinhala ? 'මදක්' : 'Mild';
-    if (score <= 25) return isSinhala ? 'මධ්‍යම' : 'Moderate';
-    if (score <= 33) return isSinhala ? 'දරුණු' : 'Severe';
-    return isSinhala ? 'අතිශය දරුණු' : 'Extremely Severe';
+    final lang = isSinhala ? 'si' : 'en';
+    if (score <= 14) return _loc.questionnaires('normal', lang);
+    if (score <= 18) return _loc.questionnaires('mild', lang);
+    if (score <= 25) return _loc.questionnaires('moderate', lang);
+    if (score <= 33) return _loc.questionnaires('severe', lang);
+    return _loc.questionnaires('extremelySevere', lang);
   }
 
   Future<DASS21LoadResult> loadData(String userId) async {
@@ -108,6 +120,10 @@ class DASS21Service {
     required List<int?> responses,
     required Map<String, int> scores,
   }) async {
+    if (!_isCurrentUser(userId)) {
+      if (kDebugMode) debugPrint('Blocked saveAttempt for non-owner.');
+      return;
+    }
     final responseMap = Map.fromIterables(
       List.generate(21, (i) => (i + 1).toString()),
       responses.map((e) => e ?? 0),

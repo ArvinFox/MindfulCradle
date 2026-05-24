@@ -198,13 +198,15 @@ class NotificationService {
   Future<void> saveFcmToken([String? token]) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
-    final t = token ?? _fcmToken;
+    // Use the provided token, the cached token, or fetch a fresh one.
+    final t = token ?? _fcmToken ?? await _fcm.getToken();
     if (t == null) return;
+    _fcmToken ??= t; // cache it so subsequent calls don't need to re-fetch
     try {
-      await FirebaseFirestore.instance.collection('users').doc(uid).update({
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'fcmToken': t,
-      });
-      if (kDebugMode) debugPrint('FCM token saved for user $uid');
+      }, SetOptions(merge: true));
+      if (kDebugMode) debugPrint('FCM token saved to Firestore for uid=$uid');
     } catch (e) {
       if (kDebugMode) debugPrint('Failed to save FCM token: $e');
     }
@@ -222,56 +224,56 @@ class NotificationService {
 
   /// Initialize Firebase Cloud Messaging
   Future<void> _initializeFirebaseMessaging() async {
-    // Set background message handler
-    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-    // Get FCM token and persist it if a user is already signed in
-    _fcmToken = await _fcm.getToken();
-    if (kDebugMode) {
-      debugPrint('FCM Token: $_fcmToken');
-    }
-    await saveFcmToken();
-
-    // Subscribe to all_users topic for broadcast notifications.
-    await _fcm.subscribeToTopic('all_users');
-
-    // Subscribe to the language topic based on saved preference
-    final prefs = await SharedPreferences.getInstance();
-    final lang = prefs.getString('appLanguage') ?? 'en';
-    await _fcm.subscribeToTopic('lang_$lang');
-    if (kDebugMode) debugPrint('Subscribed to topics: all_users, lang_$lang');
-
-    // Listen for token refresh and keep Firestore up to date
-    _fcm.onTokenRefresh.listen((token) {
-      _fcmToken = token;
-      if (kDebugMode) {
-        debugPrint('FCM Token refreshed: $token');
-      }
-      saveFcmToken(token);
-    });
-
-    // Handle foreground messages
+    // Register message listeners FIRST — these are synchronous and must be
+    // set up before any awaited work that could potentially throw and skip them.
     FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
-
-    // Handle notification when app is opened from terminated state
+    FirebaseMessaging.onMessageOpenedApp.listen((message) {
+      _handleNotificationTap(message.data);
+    });
     FirebaseMessaging.instance.getInitialMessage().then((message) {
       if (message != null) {
         _handleNotificationTap(message.data);
       }
     });
+    // Background handler (must be top-level, registered before any await).
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-    // Handle notification when app is in background and opened
-    FirebaseMessaging.onMessageOpenedApp.listen((message) {
-      _handleNotificationTap(message.data);
+    // Listen for token refresh — save to Firestore and re-subscribe to topics
+    // so that on fresh install (where getToken returns null at cold start) the
+    // subscriptions are established as soon as FCM registration completes.
+    _fcm.onTokenRefresh.listen((token) {
+      _fcmToken = token;
+      saveFcmToken(token);
+      _subscribeToDefaultTopics();
     });
+
+    // Get FCM token and persist it if a user is already signed in.
+    // On first install the token may not be ready yet — getToken() returns null.
+    // onTokenRefresh above will handle that case.
+    _fcmToken = await _fcm.getToken();
+    await saveFcmToken();
+
+    // Subscribe to broadcast topics. If the token wasn't ready, Firebase
+    // queues these and retries internally; onTokenRefresh also re-subscribes.
+    await _subscribeToDefaultTopics();
+  }
+
+  /// Subscribe to the default broadcast topics.
+  Future<void> _subscribeToDefaultTopics() async {
+    try {
+      await _fcm.subscribeToTopic('all_users');
+      final prefs = await SharedPreferences.getInstance();
+      final lang = prefs.getString('appLanguage') ?? 'en';
+      await _fcm.subscribeToTopic('lang_$lang');
+      if (kDebugMode)
+        debugPrint('FCM subscribed to topics: all_users, lang_$lang');
+    } catch (e) {
+      if (kDebugMode) debugPrint('FCM topic subscription error: $e');
+    }
   }
 
   /// Handle foreground messages
   void _handleForegroundMessage(RemoteMessage message) {
-    if (kDebugMode) {
-      debugPrint('Foreground message: ${message.notification?.title}');
-    }
-
     // Show local notification when app is in foreground
     if (message.notification != null) {
       _showLocalNotification(

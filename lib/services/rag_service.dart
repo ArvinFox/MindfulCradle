@@ -29,8 +29,7 @@ class RagService {
     _initialized = true;
   }
 
-  /// Initialises the service directly from a JSON string instead of loading
-  /// from [assetsPath]. Useful in unit tests where [rootBundle] is unavailable.
+  /// For unit tests — loads from a JSON string instead of assets.
   // ignore: invalid_use_of_visible_for_testing_member
   void initializeFromJson(String jsonText) {
     _faqs = _parseFaq(jsonText);
@@ -46,9 +45,7 @@ class RagService {
       return 'Sorry, I do not have enough information to answer that.';
     }
 
-    // ── Retrieval step ────────────────────────────────────────────────────
-    // Retrieve only the most relevant FAQs using TF-IDF scoring instead of
-    // sending the entire knowledge base in every prompt.
+    // Retrieve top-4 FAQs and build the prompt.
     final retrieved = retrieve(query, topK: 4);
     final String context = _buildContext(retrieved);
 
@@ -91,8 +88,7 @@ class RagService {
     }
   }
 
-  /// Streams the answer in real-time chunks for a more responsive UI
-  /// with conversation context
+  /// Streams the response token by token for the live typing effect.
   Stream<String> answerStream(
     String query, {
     String? languageHint,
@@ -109,7 +105,7 @@ class RagService {
       return;
     }
 
-    // ── Retrieval step ────────────────────────────────────────────────────
+    // Retrieve top-4 FAQs and build the prompt.
     final retrieved = retrieve(query, topK: 4);
     final String context = _buildContext(retrieved);
 
@@ -147,11 +143,11 @@ class RagService {
         await for (final chunk in streamedResponse.stream.transform(
           utf8.decoder,
         )) {
-          // Parse Server-Sent Events (SSE) format
+          // Parse SSE chunks.
           final lines = chunk.split('\n');
           for (final line in lines) {
             if (line.startsWith('data: ')) {
-              final jsonData = line.substring(6); // Remove 'data: ' prefix
+              final jsonData = line.substring(6); // strip 'data: ' prefix
               try {
                 final data = jsonDecode(jsonData);
                 final text =
@@ -160,7 +156,6 @@ class RagService {
                   yield text;
                 }
               } catch (e) {
-                // Skip malformed JSON chunks
                 continue;
               }
             }
@@ -182,10 +177,9 @@ class RagService {
     }
   }
 
-  // ── Retrieval ────────────────────────────────────────────────────────────
+  // Retrieval
 
-  /// Tokenises [text] into lowercase, alphabetic-only terms, removing
-  /// common English stop-words that carry no topical signal.
+  /// Lowercases text, removes stop-words, and returns meaningful tokens.
   static const _stopWords = {
     'i',
     'me',
@@ -274,22 +268,9 @@ class RagService {
         .toList();
   }
 
-  // ── TF-IDF + Cosine Similarity ──────────────────────────────────────────
-  //
-  // Steps:
-  //   1. Compute IDF weights for every term across the entire FAQ corpus.
-  //   2. Represent the user query AND each document as a sparse TF-IDF vector.
-  //   3. Rank documents by cosine similarity to the query vector.
-  //
-  // Cosine similarity measures the angle between two vectors in term-space:
-  //   cos(θ) = (A · B) / (|A| × |B|)
-  // A value of 1 means identical direction (perfect match); 0 means no overlap.
+  // TF-IDF + Cosine Similarity (Retrieval Phase)
 
-  /// Builds smoothed IDF weights for every term in the corpus.
-  ///
-  /// IDF(t) = log((N + 1) / (df(t) + 1)) + 1
-  /// The +1 smoothing prevents division by zero and keeps terms that appear
-  /// in every document from dropping to zero weight.
+  /// Computes smoothed IDF weights: IDF(t) = log((N+1) / (df(t)+1)) + 1
   Map<String, double> _buildIdf() {
     final int N = _faqs.length;
     final df = <String, int>{};
@@ -304,15 +285,12 @@ class RagService {
     );
   }
 
-  /// Converts [text] into a sparse TF-IDF vector using pre-computed [idf].
-  ///
-  /// Each dimension corresponds to a vocabulary term; its value is
-  /// TF(t, d) × IDF(t), where TF is normalised by document length.
+  /// Converts text into a TF-IDF vector using pre-computed IDF weights.
   Map<String, double> _tfidfVector(String text, Map<String, double> idf) {
     final tokens = _tokenise(text);
     if (tokens.isEmpty) return {};
 
-    // Normalised term frequency.
+    // Term frequency (normalised by document length).
     final tf = <String, double>{};
     for (final t in tokens) {
       tf[t] = (tf[t] ?? 0) + 1;
@@ -321,7 +299,7 @@ class RagService {
       tf[t] = tf[t]! / tokens.length;
     }
 
-    // TF × IDF — only keep terms present in the corpus vocabulary.
+    // Multiply TF by IDF; skip terms not in the corpus.
     final vector = <String, double>{};
     for (final entry in tf.entries) {
       final idfWeight = idf[entry.key];
@@ -332,13 +310,11 @@ class RagService {
     return vector;
   }
 
-  /// Computes cosine similarity between two sparse TF-IDF vectors [a] and [b].
-  ///
-  /// Returns a value in [0, 1]: 1 = identical direction, 0 = no shared terms.
+  /// Returns cosine similarity between two TF-IDF vectors (range 0–1).
   double _cosineSimilarity(Map<String, double> a, Map<String, double> b) {
     if (a.isEmpty || b.isEmpty) return 0;
 
-    // Dot product — iterate over the smaller vector for efficiency.
+    // Dot product.
     double dot = 0;
     for (final entry in a.entries) {
       final bVal = b[entry.key];
@@ -346,7 +322,7 @@ class RagService {
     }
     if (dot == 0) return 0;
 
-    // L2 norms (magnitudes).
+    // L2 norms.
     final magA = sqrt(a.values.fold(0.0, (sum, v) => sum + v * v));
     final magB = sqrt(b.values.fold(0.0, (sum, v) => sum + v * v));
     if (magA == 0 || magB == 0) return 0;
@@ -354,18 +330,14 @@ class RagService {
     return dot / (magA * magB);
   }
 
-  /// Retrieves the [topK] most relevant [RagDocument]s for [query] using
-  /// TF-IDF vector cosine similarity.
-  ///
-  /// Falls back to the first [topK] documents when the query produces no
-  /// vocabulary overlap with the corpus (e.g. pure Sinhala query).
+  /// Returns the top [topK] matching FAQs. Falls back to first [topK] if no vocab overlap.
   List<RagDocument> retrieve(String query, {int topK = 4}) {
     if (_faqs.isEmpty) return [];
 
     final idf = _buildIdf();
     final queryVec = _tfidfVector(query, idf);
 
-    // No vocabulary overlap — return fallback documents.
+    // No overlap (e.g. Sinhala query) — use fallback.
     if (queryVec.isEmpty) return _faqs.take(topK).toList();
 
     final scored = _faqs.map((doc) {
@@ -377,7 +349,7 @@ class RagService {
     return scored.take(topK).map((e) => e.doc).toList();
   }
 
-  // ── Context builder ──────────────────────────────────────────────────────
+  // Context builder
 
   String _buildContext(List<RagDocument> docs) {
     return docs
@@ -431,10 +403,9 @@ class RagService {
     buffer.writeln('\nKnowledge Base:');
     buffer.writeln(context);
 
-    // Add conversation history for context
+    // Append last 5 messages for context.
     if (conversationHistory != null && conversationHistory.isNotEmpty) {
       buffer.writeln('\n--- Previous Conversation ---');
-      // Include last 5 messages for context (optimized to save tokens)
       final recentMessages = conversationHistory.length > 5
           ? conversationHistory.sublist(conversationHistory.length - 5)
           : conversationHistory;
@@ -442,7 +413,7 @@ class RagService {
       for (final msg in recentMessages) {
         final role = msg['role'] == 'user' ? 'User' : 'Assistant';
         final text = msg['text'] ?? '';
-        // Truncate very long messages to save tokens
+        // Truncate long messages.
         final truncated = text.length > 200
             ? '${text.substring(0, 200)}...'
             : text;

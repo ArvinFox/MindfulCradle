@@ -1,9 +1,6 @@
 import 'dart:math';
 
-/// Manages promotional nudges for Journal, Mood, Meditation, and Evaluations.
-///
-/// The idle-timer in [MainScreen] controls how often promos appear (2-min idle).
-/// This service just picks which type to show.
+/// Picks promotional nudges for Journal, Mood, Meditation, and Evaluations.
 class PromotionService {
   PromotionService._();
 
@@ -12,11 +9,8 @@ class PromotionService {
   static const typeMeditation = 'meditation';
   static const typeEvaluation = 'evaluation';
 
-  /// Picks a random promotion type to show.
-  ///
-  /// [hasMoodToday] - user already logged mood today (skip mood promo).
-  /// [lastShownType] - the most recently shown type; excluded so the same
-  ///   promo is never shown twice in a row (unless it is the only option).
+  /// Picks a random promotion type, excluding [lastShownType] to avoid repeats.
+  /// Skips mood promo if [hasMoodToday] is true.
   static Future<String?> pickPromotion({
     required bool hasMoodToday,
     required bool hasJournalEntry,
@@ -26,14 +20,14 @@ class PromotionService {
   }) async {
     final candidates = <String>[];
 
-    // Mood is a daily check-in - only nudge if not done today.
+    // Only nudge for mood if not already done today.
     if (!hasMoodToday) candidates.add(typeMood);
-    // All other types are always eligible - the idle timer controls frequency.
+    // Other types are always eligible.
     candidates.add(typeJournal);
     candidates.add(typeMeditation);
     candidates.add(typeEvaluation);
 
-    // Avoid repeating the same type back-to-back (only if other options exist).
+    // Avoid showing the same type twice in a row.
     if (lastShownType != null && candidates.length > 1) {
       candidates.remove(lastShownType);
     }

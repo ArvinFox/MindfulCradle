@@ -29,7 +29,6 @@ class AuthService {
         email: email,
       );
 
-      // Add isUserRegistrationComplete field directly here
       await _firestore
           .collection('users')
           .doc(uid)
@@ -64,10 +63,7 @@ class AuthService {
     }
   }
 
-  /// Google sign-in.
-  /// For NEW users (no Firestore document) the document is NOT created here;
-  /// the caller must call [createGoogleUserDocument] after obtaining consent.
-  /// For EXISTING users the document is updated and the flow continues normally.
+  /// Google sign-in. New users: doc not created until consent. Existing users: doc updated.
   Future<({String? error, bool isNewUser})> loginWithGoogle({
     String langCode = 'en',
   }) async {
@@ -97,16 +93,14 @@ class AuthService {
         return (error: _localizeGenericError(langCode), isNewUser: false);
       }
 
-      // Check whether this user already has a Firestore document.
-      // Force a server fetch to bypass any stale offline cache — critical
-      // for correctly identifying new vs. existing users after consent changes.
+      // Force server fetch to correctly identify new vs. existing users.
       final userDocRef = _firestore.collection('users').doc(firebaseUser.uid);
       final userDoc = await userDocRef.get(
         const GetOptions(source: Source.server),
       );
 
       if (userDoc.exists) {
-        // Existing user — keep email/name up-to-date and continue.
+        // Existing user — update email/name and continue.
         await userDocRef.set({
           'email': firebaseUser.email ?? '',
           'fullName':
@@ -118,7 +112,7 @@ class AuthService {
         return (error: null, isNewUser: false);
       }
 
-      // New user — do NOT create the document yet; wait for consent.
+      // New user — do not create the document until consent is given.
       return (error: null, isNewUser: true);
     } on TimeoutException {
       return (
@@ -134,8 +128,7 @@ class AuthService {
     }
   }
 
-  /// Creates the Firestore user document for a brand-new Google sign-in user,
-  /// called only after the user has accepted the privacy policy consent.
+  /// Creates the Firestore doc for a new Google user after consent is accepted.
   Future<void> createGoogleUserDocument() async {
     final firebaseUser = _auth.currentUser;
     if (firebaseUser == null) return;

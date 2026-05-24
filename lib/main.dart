@@ -17,6 +17,7 @@ import 'providers/journal_provider.dart';
 import 'providers/mood_provider.dart';
 import 'services/localization_service.dart';
 import 'services/notification_service.dart';
+import 'services/crisis_detection_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,6 +52,14 @@ void main() async {
     if (kDebugMode) debugPrint("Notifications initialized successfully.");
   } catch (e) {
     if (kDebugMode) debugPrint("Notifications initialization error: $e");
+  }
+
+  // Load crisis detection keywords from JSON asset
+  try {
+    await CrisisDetectionService.loadKeywords();
+    if (kDebugMode) debugPrint("Crisis keywords loaded successfully.");
+  } catch (e) {
+    if (kDebugMode) debugPrint("Crisis keywords loading error: $e");
   }
 
   // Read onboarding flag before building the widget tree so routing is

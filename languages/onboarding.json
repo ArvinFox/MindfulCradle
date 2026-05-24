@@ -1,0 +1,28 @@
+{
+  "en": {
+    "page1Title": "Welcome to\nMindful Cradle",
+    "page1Subtitle": "Your caring companion throughout pregnancy. Track your wellbeing, access support, and grow every day.",
+    "page2Title": "Track Your\nWellbeing",
+    "page2Subtitle": "Complete evidence-based assessments like DASS-21, MAAS and PWS-18 to understand and monitor your mental health journey.",
+    "page3Title": "Your AI\nCompanion",
+    "page3Subtitle": "Ask our AI-powered chatbot anything about pregnancy, mental health, or everyday concerns — anytime you need support.",
+    "page4Title": "Achieve &\nGrow",
+    "page4Subtitle": "Unlock achievements, watch curated videos, and celebrate every milestone on your journey to a healthier you.",
+    "skip": "Skip",
+    "next": "Next",
+    "getStarted": "Get Started"
+  },
+  "si": {
+    "page1Title": "Mindful Cradle වෙත\nසාදරයෙන් පිළිගනිමු",
+    "page1Subtitle": "ගර්භණී සමය පුරාම ඔබේ සෞඛ්‍යය සහ සුවතාව රැකගනිමින්, ඔබ සමඟින් රැඳෙන ඔබේ සමීපතම හිතවතා.",
+    "page2Title": "ඔබේ සුවතාව\nනිරීක්ෂණය කරන්න",
+    "page2Subtitle": "DASS-21, MAAS සහ PWS-18 වැනි විද්‍යාත්මකව තහවුරු කළ ඇගයීම් මඟින්, ඔබේ මානසික සෞඛ්‍ය මට්ටම නිරීක්ෂණය කරගන්න.",
+    "page3Title": "ඔබේ AI\nසහායකයා",
+    "page3Subtitle": "ගර්භණී සමය, මානසික සෞඛ්‍යය හෝ එදිනෙදා ගැටලු පිළිබඳව ඕනෑම අවස්ථාවක ඔබේ AI සහායකයා සමඟ සාකච්ඡා කරන්න.",
+    "page4Title": "ජයගන්න සහ\nවර්ධනය වන්න",
+    "page4Subtitle": "නව ජයග්‍රහණ ලබාගන්න, ඔබ වෙනුවෙන්ම තෝරාගත් වීඩියෝ නරඹන්න, එමෙන්ම සෞඛ්‍ය සම්පන්න ජීවිතයක් කරා යන ගමනේ සෑම සුවිශේෂී අවස්ථාවක්ම සමරන්න.",
+    "skip": "මඟ හරින්න",
+    "next": "ඉදිරියට",
+    "getStarted": "ආරම්භ කරන්න"
+  }
+}

@@ -199,17 +199,17 @@ class ChatHistoryService {
 
   /// Generate title from first user message
   String generateTitleFromMessage(String message) {
-    // Take first 30 characters or up to first sentence
+    // Truncate to 30 chars or the first sentence.
     final sanitized = message.trim();
     if (sanitized.length <= 30) return sanitized;
 
-    // Try to break at sentence end
+    // Break at sentence end if within 40 chars.
     final sentenceEnd = sanitized.indexOf(RegExp(r'[.!?]'));
     if (sentenceEnd > 0 && sentenceEnd <= 40) {
       return sanitized.substring(0, sentenceEnd + 1);
     }
 
-    // Otherwise just truncate
+    // Truncate with ellipsis.
     return '${sanitized.substring(0, 30)}...';
   }
 }

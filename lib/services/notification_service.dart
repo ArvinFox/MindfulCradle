@@ -54,12 +54,9 @@ class NotificationService {
       // Initialize timezone database
       tz.initializeTimeZones();
 
-      // flutter_timezone calls the native OS API (Android: TimeZone.getDefault(),
-      // iOS: TimeZone.current) and returns a proper IANA timezone name such as
-      // "Asia/Colombo" or "America/New_York". This is what tz.getLocation()
-      // requires. Using DateTime.now().timeZoneName is WRONG because it gives
-      // display abbreviations like "IST" or "GMT+05:30" which are not IANA names
-      // and cause getLocation() to throw, silently falling back to UTC.
+      // Use flutter_timezone to get a proper IANA timezone name (e.g. "Asia/Colombo")
+      // required by tz.getLocation(). Using DateTime.now().timeZoneName gives
+      // abbreviations like "IST" which are not valid IANA names.
       try {
         final String ianaName =
             (await FlutterTimezone.getLocalTimezone()).identifier;
@@ -81,9 +78,8 @@ class NotificationService {
       // Initialize Firebase Messaging
       await _initializeFirebaseMessaging();
 
-      // NOTE: Permissions are NOT requested here because this runs before
-      // runApp() and Android requires an active Activity to show permission
-      // dialogs. Call requestPermissions() from the first visible screen instead.
+      // NOTE: Permissions are not requested here; call requestPermissions() from
+      // the first visible screen (Activity must be active for permission dialogs).
 
       _initialized = true;
       if (kDebugMode) {
@@ -124,23 +120,14 @@ class NotificationService {
 
   /// Internal permission request implementation
   Future<void> _requestPermissions() async {
-    // ── Android + iOS: request notification permission ──
-    // On Android 13+ (API 33+) this triggers the native OS permission dialog.
-    // On Android 12 and below there is no POST_NOTIFICATIONS runtime permission
-    // (it was introduced in API 33), so permission_handler returns
-    // PermissionStatus.granted immediately without showing any UI — which is
-    // correct behaviour since notifications are auto-granted on those versions.
-    // The in-app rationale dialog shown from MainScreen handles the UX for
-    // Android 12 users before this call is ever made.
+    // Android 13+ (API 33+): triggers native OS dialog.
+    // Android 12 and below: auto-granted (no dialog shown).
     final result = await Permission.notification.request();
     if (kDebugMode) {
       debugPrint('Notification permission request result: $result');
     }
 
-    // NOTE: We no longer automatically open app settings when permissions are denied
-    // The UI should handle prompting users to enable permissions when needed
-
-    // ── iOS / macOS: FCM also configures its own alert/badge/sound ──
+    // iOS / macOS: FCM permission for alert/badge/sound.
     final NotificationSettings settings = await _fcm.requestPermission(
       alert: true,
       announcement: false,
@@ -154,7 +141,7 @@ class NotificationService {
       debugPrint('FCM permission status: ${settings.authorizationStatus}');
     }
 
-    // ── Android: also request exact-alarm permission (API 31+) ──
+    // Android: request exact-alarm permission (API 31+).
     final androidImplementation = _localNotifications
         .resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin
@@ -207,8 +194,7 @@ class NotificationService {
         ?.createNotificationChannel(channel);
   }
 
-  /// Save the FCM token to Firestore under the current user's document.
-  /// Safe to call even when no user is signed in — it will no-op.
+  /// Saves the FCM token to Firestore. No-op if no user is signed in.
   Future<void> saveFcmToken([String? token]) async {
     final uid = FirebaseAuth.instance.currentUser?.uid;
     if (uid == null) return;
@@ -224,9 +210,7 @@ class NotificationService {
     }
   }
 
-  /// Switch language topic subscription.
-  /// Unsubscribes from the previous language topic and subscribes to the new
-  /// one. Call this whenever the user changes their app language.
+  /// Switches FCM language topic subscription when the user changes language.
   Future<void> subscribeToLanguageTopic(String langCode) async {
     // Unsubscribe from all language topics first
     await _fcm.unsubscribeFromTopic('lang_en');
@@ -248,8 +232,7 @@ class NotificationService {
     }
     await saveFcmToken();
 
-    // Subscribe to the broadcast topic so you can send to ALL users at once
-    // from Firebase Console without managing individual tokens.
+    // Subscribe to all_users topic for broadcast notifications.
     await _fcm.subscribeToTopic('all_users');
 
     // Subscribe to the language topic based on saved preference
@@ -312,8 +295,7 @@ class NotificationService {
     if (kDebugMode) {
       debugPrint('Notification tapped with data: $data');
     }
-    // TODO: Implement navigation based on notification type
-    // This can be enhanced to navigate to specific screens
+    // TODO: navigate to specific screen based on notification type
   }
 
   /// Show a local notification
@@ -518,12 +500,7 @@ class NotificationService {
         iOS: iosDetails,
       );
 
-      // Use exact alarms when the permission is available (Android 12+
-      // requires SCHEDULE_EXACT_ALARM to be granted by the user in Settings
-      // → Alarms & Reminders). Fall back to inexact scheduling so the call
-      // never throws a PlatformException on devices where it hasn't been
-      // granted yet — reminders will still fire, just potentially a few
-      // minutes late due to battery-optimisation batching.
+      // Use exact alarms if available; fall back to inexact to avoid PlatformException.
       final canExact = await _canScheduleExactAlarms();
       await _localNotifications.zonedSchedule(
         id,
@@ -551,9 +528,7 @@ class NotificationService {
     }
   }
 
-  /// Returns true if the app can schedule exact alarms on this device.
-  /// On Android < 12 this is always true. On Android 12+ it requires the
-  /// SCHEDULE_EXACT_ALARM special permission to be granted by the user.
+  /// Returns true if exact alarms are available (Android 12+ requires SCHEDULE_EXACT_ALARM permission).
   Future<bool> _canScheduleExactAlarms() async {
     final androidImpl = _localNotifications
         .resolvePlatformSpecificImplementation<

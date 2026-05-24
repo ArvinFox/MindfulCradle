@@ -9,8 +9,8 @@ class PromotionService {
   static const typeMeditation = 'meditation';
   static const typeEvaluation = 'evaluation';
 
-  /// Picks a random promotion type, excluding [lastShownType] to avoid repeats.
-  /// Skips mood promo if [hasMoodToday] is true.
+  /// Picks a random promotion type, excluding lastShownType to avoid repeats.
+  /// Skips mood promo if hasMoodToday is true.
   static Future<String?> pickPromotion({
     required bool hasMoodToday,
     required bool hasJournalEntry,

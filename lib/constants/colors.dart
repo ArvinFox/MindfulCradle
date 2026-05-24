@@ -1,18 +1,18 @@
 import 'package:flutter/material.dart';
 
 class AppColors {
-  // Brand and primary palette — lavender-purple from the app logo
+  // Brand and primary palette lavender-purple from the app logo
   static const Color primary = Color(0xFF7B5AA8);
   static const Color primaryLight = Color(0xFF9B7DC4);
   static const Color primaryDark = Color(0xFF5A3F88);
 
-  // Accent — periwinkle blue from the logo's headphones
+  // Accent periwinkle blue from the logo's headphones
   static const Color accent = Color(0xFF6BAED0);
 
-  // Soft lavender — used for highlights and special UI moments
+  // Soft lavender used for highlights and special UI moments
   static const Color rose = Color(0xFFC9A8E0);
 
-  // Surface and text palette — warm lavender-tinted ivory tones
+  // Surface and text palette warm lavender-tinted ivory tones
   static const Color background = Color(0xFFFAF8FD);
   static const Color surface = Color(0xFFFFFFFF);
   static const Color surfaceVariant = Color(0xFFF2EAF9);
@@ -20,7 +20,7 @@ class AppColors {
   static const Color textMuted = Color(0xFF5A5272);
   static const Color border = Color(0xFFD8CEE8);
 
-  // Feedback colors — used in UI indicators
+  // Feedback colors used in UI indicators
   static const Color success = Color(0xFF2D7D5E);
   static const Color warning = Color(0xFFE28E28);
   static const Color error = Color(0xFFCF4D4D);

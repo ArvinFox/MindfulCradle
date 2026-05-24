@@ -93,7 +93,7 @@ class _HomePageState extends State<HomePage> {
     }
   }
 
-  // ─── Warm mood prompt (fires ~3 s after home loads) ─────────────────
+  // Warm mood prompt (fires ~3 s after home loads)
 
   void _scheduleMoodPrompt() {
     Future.delayed(const Duration(seconds: 3), _maybeTriggerMoodPrompt);
@@ -151,8 +151,6 @@ class _HomePageState extends State<HomePage> {
       ),
     );
   }
-
-  // ──────────────────────────────────────────────────────────────────────
 
   @override
   void dispose() {

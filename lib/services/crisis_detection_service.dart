@@ -49,6 +49,7 @@ class CrisisDetectionService {
     'helpless',
     'worthless',
     'so alone',
+    'no one cares',
     'giving up',
     'miserable',
   ];

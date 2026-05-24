@@ -47,11 +47,11 @@ void main() async {
 
   // Initialize notification service
   try {
-    if (kDebugMode) debugPrint("Initializing notifications...");
+    if (kDebugMode) debugPrint('Initializing notifications...');
     await NotificationService().initialize();
-    if (kDebugMode) debugPrint("Notifications initialized successfully.");
+    if (kDebugMode) debugPrint('Notifications initialized successfully.');
   } catch (e) {
-    if (kDebugMode) debugPrint("Notifications initialization error: $e");
+    if (kDebugMode) debugPrint('Notifications initialization error: $e');
   }
 
   // Load crisis detection keywords from JSON asset

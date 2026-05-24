@@ -4,13 +4,12 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 
 /// Uploads images to Cloudinary using unsigned upload presets.
-/// No API secret is required — only cloud name + upload preset.
 class CloudinaryService {
   static String get _cloudName => dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
   static String get _uploadPreset =>
       dotenv.env['CLOUDINARY_UPLOAD_PRESET'] ?? '';
 
-  /// Uploads [imageFile] to Cloudinary and returns the secure URL.
+  /// Uploads imageFile to Cloudinary and returns the secure URL.
   /// Returns null on failure.
   static Future<String?> uploadAvatar(File imageFile, String userId) async {
     if (_cloudName.isEmpty || _cloudName == 'your_cloud_name') {

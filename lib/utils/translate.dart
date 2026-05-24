@@ -56,6 +56,9 @@ class Translate {
   /// Privacy Policy screen translations
   String privacyPolicy(String key) => _service.privacyPolicy(key, _lang);
 
+  /// Onboarding screen translations
+  String onboarding(String key) => _service.onboarding(key, _lang);
+
   /// Get current language
   String get lang => _lang;
 

@@ -2,9 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Model
-// ─────────────────────────────────────────────────────────────────────────────
 
 class QuestionnaireVerdict {
   final String trendLabel;
@@ -65,9 +63,7 @@ class QuestionnaireVerdict {
       );
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // DASS-21 Analytical Engine
-// ─────────────────────────────────────────────────────────────────────────────
 
 class DASS21VerdictEngine {
   static int _depSeverity(int s) {
@@ -305,9 +301,7 @@ class DASS21VerdictEngine {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // MAAS Analytical Engine
-// ─────────────────────────────────────────────────────────────────────────────
 
 class MAASVerdictEngine {
   static String _classLabel(double score) {
@@ -484,9 +478,7 @@ class MAASVerdictEngine {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // PWS-18 Analytical Engine
-// ─────────────────────────────────────────────────────────────────────────────
 
 class PWS18VerdictEngine {
   static String _levelLabel(double score) {
@@ -725,9 +717,7 @@ class PWS18VerdictEngine {
       raw.map((k, v) => MapEntry(k, (v as num).toDouble()));
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Firestore persistence
-// ─────────────────────────────────────────────────────────────────────────────
 
 class VerdictFirestoreService {
   static final _db = FirebaseFirestore.instance;
@@ -775,9 +765,7 @@ class VerdictFirestoreService {
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
 // Helpers
-// ─────────────────────────────────────────────────────────────────────────────
 
 String _capitalize(String s) =>
     s.isEmpty ? s : s[0].toUpperCase() + s.substring(1);

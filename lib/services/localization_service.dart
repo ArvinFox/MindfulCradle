@@ -1,8 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/services.dart';
 
-/// Centralized localization service for loading and accessing translations
-/// Loads all language JSON files from the languages/ directory
+/// Localization service for loading and accessing translations.
 class LocalizationService {
   static LocalizationService? _instance;
   static LocalizationService get instance {
@@ -23,15 +22,16 @@ class LocalizationService {
   Map<String, dynamic> _validators = {};
   Map<String, dynamic> _notifications = {};
   Map<String, dynamic> _privacyPolicy = {};
+  Map<String, dynamic> _onboarding = {};
 
   bool _isLoaded = false;
 
-  /// Load all translation files
+  /// Loads all translation JSON files in parallel.
   Future<void> loadTranslations() async {
     if (_isLoaded) return;
 
     try {
-      // Load all JSON files in parallel
+      // Load all JSON files in parallel.
       final results = await Future.wait([
         rootBundle.loadString('languages/common.json'),
         rootBundle.loadString('languages/auth.json'),
@@ -43,6 +43,7 @@ class LocalizationService {
         rootBundle.loadString('languages/validators.json'),
         rootBundle.loadString('languages/notifications.json'),
         rootBundle.loadString('languages/privacy_policy.json'),
+        rootBundle.loadString('languages/onboarding.json'),
       ]);
 
       _common = json.decode(results[0]);
@@ -55,6 +56,7 @@ class LocalizationService {
       _validators = json.decode(results[7]);
       _notifications = json.decode(results[8]);
       _privacyPolicy = json.decode(results[9]);
+      _onboarding = json.decode(results[10]);
 
       _isLoaded = true;
     } catch (e) {
@@ -63,57 +65,51 @@ class LocalizationService {
     }
   }
 
-  /// Get translation from common translations
   String common(String key, String lang) {
     return _getText(_common, key, lang);
   }
 
-  /// Get translation from auth module
   String auth(String key, String lang) {
     return _getText(_auth, key, lang);
   }
 
-  /// Get translation from home module
   String home(String key, String lang) {
     return _getText(_home, key, lang);
   }
 
-  /// Get translation from profile module
   String profile(String key, String lang) {
     return _getText(_profile, key, lang);
   }
 
-  /// Get translation from chat module
   String chat(String key, String lang) {
     return _getText(_chat, key, lang);
   }
 
-  /// Get translation from questionnaires module
   String questionnaires(String key, String lang) {
     return _getText(_questionnaires, key, lang);
   }
 
-  /// Get translation from achievements module
   String achievements(String key, String lang) {
     return _getText(_achievements, key, lang);
   }
 
-  /// Get translation from validators module
   String validators(String key, String lang) {
     return _getText(_validators, key, lang);
   }
 
-  /// Get translation from notifications module
   String notifications(String key, String lang) {
     return _getText(_notifications, key, lang);
   }
 
-  /// Get translation from privacy policy screen
   String privacyPolicy(String key, String lang) {
     return _getText(_privacyPolicy, key, lang);
   }
 
-  /// Internal method to get text from a translation map
+  String onboarding(String key, String lang) {
+    return _getText(_onboarding, key, lang);
+  }
+
+  /// Returns the key if translation is not found.
   String _getText(Map<String, dynamic> translations, String key, String lang) {
     final langData = translations[lang] as Map<String, dynamic>?;
     if (langData == null) return key;
@@ -123,7 +119,7 @@ class LocalizationService {
   /// Check if translations are loaded
   bool get isLoaded => _isLoaded;
 
-  /// Reset the service (useful for testing)
+  /// Resets loaded state (useful for testing).
   void reset() {
     _isLoaded = false;
     _common = {};
@@ -135,13 +131,13 @@ class LocalizationService {
     _achievements = {};
     _validators = {};
     _notifications = {};
+    _onboarding = {};
   }
 }
 
 /// Extension on String for easier language selection
 extension LocalizedString on String {
-  /// Get the translation for this key in the specified language
-  /// Returns the key itself if not found
+  /// Returns the translation for this key, or the key itself if not found.
   String tr(String module, String lang) {
     final service = LocalizationService.instance;
 

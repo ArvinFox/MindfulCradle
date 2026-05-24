@@ -8,13 +8,16 @@ class RagService {
   RagService({
     required this.apiKey,
     this.assetsPath = 'assets/data/pregnancy_faq.json',
+    this.stopWordsPath = 'assets/data/stopwords.json',
   });
 
   final String apiKey;
   final String assetsPath;
+  final String stopWordsPath;
 
   bool _initialized = false;
   List<RagDocument> _faqs = <RagDocument>[];
+  Set<String> _stopWords = const {};
 
   static const String _baseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models';
@@ -26,13 +29,19 @@ class RagService {
 
     final String jsonText = await rootBundle.loadString(assetsPath);
     _faqs = _parseFaq(jsonText);
+
+    final String stopWordsText = await rootBundle.loadString(stopWordsPath);
+    final List<dynamic> words = jsonDecode(stopWordsText) as List<dynamic>;
+    _stopWords = words.cast<String>().toSet();
+
     _initialized = true;
   }
 
   /// For unit tests — loads from a JSON string instead of assets.
   // ignore: invalid_use_of_visible_for_testing_member
-  void initializeFromJson(String jsonText) {
+  void initializeFromJson(String jsonText, {Set<String> stopWords = const {}}) {
     _faqs = _parseFaq(jsonText);
+    _stopWords = stopWords;
     _initialized = true;
   }
 
@@ -180,87 +189,7 @@ class RagService {
   // Retrieval
 
   /// Lowercases text, removes stop-words, and returns meaningful tokens.
-  static const _stopWords = {
-    'i',
-    'me',
-    'my',
-    'we',
-    'our',
-    'you',
-    'your',
-    'he',
-    'she',
-    'it',
-    'they',
-    'them',
-    'what',
-    'which',
-    'who',
-    'this',
-    'that',
-    'these',
-    'those',
-    'am',
-    'is',
-    'are',
-    'was',
-    'were',
-    'be',
-    'been',
-    'being',
-    'have',
-    'has',
-    'had',
-    'do',
-    'does',
-    'did',
-    'will',
-    'would',
-    'could',
-    'should',
-    'may',
-    'might',
-    'must',
-    'can',
-    'a',
-    'an',
-    'the',
-    'and',
-    'but',
-    'or',
-    'for',
-    'of',
-    'in',
-    'on',
-    'at',
-    'to',
-    'by',
-    'with',
-    'from',
-    'up',
-    'about',
-    'into',
-    'through',
-    'during',
-    'how',
-    'when',
-    'where',
-    'why',
-    'so',
-    'if',
-    'then',
-    'than',
-    'too',
-    'very',
-    'just',
-    'not',
-    'no',
-    'nor',
-    'as',
-    'also',
-  };
-
-  static List<String> _tokenise(String text) {
+  List<String> _tokenise(String text) {
     return text
         .toLowerCase()
         .split(RegExp(r'[^a-z]+'))

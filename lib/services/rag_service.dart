@@ -197,7 +197,7 @@ class RagService {
         .toList();
   }
 
-  // TF-IDF + Cosine Similarity (Retrieval Phase)
+  // TF-IDF + Cosine Similarity (Retrieval Phase) (Term Frequency and Inverse Document Frequency)
 
   /// Computes smoothed IDF weights: IDF(t) = log((N+1) / (df(t)+1)) + 1
   Map<String, double> _buildIdf() {
@@ -259,7 +259,7 @@ class RagService {
     return dot / (magA * magB);
   }
 
-  /// Returns the top [topK] matching FAQs. Falls back to first [topK] if no vocab overlap.
+  /// Returns the top topK matching FAQs. Falls back to first topK if no vocab overlap.
   List<RagDocument> retrieve(String query, {int topK = 4}) {
     if (_faqs.isEmpty) return [];
 

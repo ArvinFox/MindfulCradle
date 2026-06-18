@@ -28,6 +28,7 @@ void main() async {
     if (kDebugMode) debugPrint('Env load error: $e');
   }
 
+  // Initialize Firebase
   try {
     if (kDebugMode) debugPrint("Initializing Firebase...");
     await Firebase.initializeApp();

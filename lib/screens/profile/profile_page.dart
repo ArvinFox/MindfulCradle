@@ -342,60 +342,65 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.language_rounded,
+              color: AppColors.primary,
+              size: 22,
+            ),
           ),
-          child: const Icon(
-            Icons.language_rounded,
-            color: AppColors.primary,
-            size: 22,
+          title: Text(
+            context.t.profile('languageSettings'),
+            style: GoogleFonts.poppins(
+              color: AppColors.text,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
           ),
-        ),
-        title: Text(
-          context.t.profile('languageSettings'),
-          style: GoogleFonts.poppins(
-            color: AppColors.text,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
-          ),
-        ),
-        trailing: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: AppColors.background,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: isSinhala ? 'si' : 'en',
-              style: GoogleFonts.poppins(
-                color: AppColors.text,
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
+          trailing: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10),
+            decoration: BoxDecoration(
+              color: AppColors.background,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: AppColors.border),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: isSinhala ? 'si' : 'en',
+                style: GoogleFonts.poppins(
+                  color: AppColors.text,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+                icon: const Icon(Icons.keyboard_arrow_down, size: 20),
+                dropdownColor: Colors.white,
+                items: [
+                  DropdownMenuItem(
+                    value: 'en',
+                    child: Text(context.t.common('english')),
+                  ),
+                  DropdownMenuItem(
+                    value: 'si',
+                    child: Text(context.t.common('sinhala')),
+                  ),
+                ],
+                onChanged: (val) {
+                  if (val != null) {
+                    langProvider.setLanguage(val);
+                  }
+                },
               ),
-              icon: const Icon(Icons.keyboard_arrow_down, size: 20),
-              dropdownColor: Colors.white,
-              items: [
-                DropdownMenuItem(
-                  value: 'en',
-                  child: Text(context.t.common('english')),
-                ),
-                DropdownMenuItem(
-                  value: 'si',
-                  child: Text(context.t.common('sinhala')),
-                ),
-              ],
-              onChanged: (val) {
-                if (val != null) {
-                  langProvider.setLanguage(val);
-                }
-              },
             ),
           ),
         ),
@@ -423,32 +428,37 @@ class _ProfilePageState extends State<ProfilePage> {
           ),
         ],
       ),
-      child: ListTile(
-        onTap: onTap,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.primary.withValues(alpha: 0.12),
-            shape: BoxShape.circle,
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        clipBehavior: Clip.antiAlias,
+        child: ListTile(
+          onTap: onTap,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.primary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: AppColors.primary, size: 22),
           ),
-          child: Icon(icon, color: AppColors.primary, size: 22),
-        ),
-        title: Text(
-          title,
-          style: GoogleFonts.poppins(
-            color: AppColors.text,
-            fontWeight: FontWeight.w600,
-            fontSize: 15,
+          title: Text(
+            title,
+            style: GoogleFonts.poppins(
+              color: AppColors.text,
+              fontWeight: FontWeight.w600,
+              fontSize: 15,
+            ),
           ),
-        ),
-        subtitle: Text(
-          subtitle,
-          style: GoogleFonts.roboto(color: AppColors.textMuted, fontSize: 12.5),
-        ),
-        trailing: const Icon(
-          Icons.chevron_right_rounded,
-          color: AppColors.textMuted,
+          subtitle: Text(
+            subtitle,
+            style: GoogleFonts.roboto(color: AppColors.textMuted, fontSize: 12.5),
+          ),
+          trailing: const Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.textMuted,
+          ),
         ),
       ),
     );
